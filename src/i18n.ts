@@ -1,0 +1,88 @@
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+const resources = {
+  es: {
+    translation: {
+      welcome: 'Bienvenido',
+      save: 'Guardar',
+      cancel: 'Cancelar',
+      general: 'General',
+      integrations: 'Integraciones',
+      assistant_name: 'Nombre',
+      phone: 'Teléfono',
+      welcome_message: 'Mensaje de bienvenida (opcional)',
+      status: 'Estado',
+      active: 'Activo',
+      inactive: 'Inactivo',
+      response_time: 'Tiempo de respuesta (segundos)',
+      assistant_response: 'Respuesta del asistente',
+      text: 'Texto',
+      audio: 'Audio',
+      message_send_type: 'Envío de mensajes',
+      by_parts: 'Por partes',
+      complete: 'Completo',
+      use_emojis: 'Uso de Emojis',
+      use_styles: 'Uso de estilos',
+      audio_voice: 'Voz del audio',
+      audio_count: 'Cantidad de audios',
+      reply_audio_with_audio: 'Responder audio con audio',
+      whatsapp_number: 'WhatsApp - Número de teléfono',
+      whatsapp_business_id: 'Id. cuenta de WhatsApp Business (Opcional)',
+      meta_app_id: 'Id. de la aplicación de Meta (Opcional)',
+      meta_token: 'Token permanente',
+      webhook_config: 'Configuración de Webhook',
+      webhook_url: 'URL Webhook',
+      webhook_token: 'Token Webhook',
+      save_assistant: 'Guardar',
+      new_assistant: 'Nuevo asistente',
+    },
+  },
+  en: {
+    translation: {
+      welcome: 'Welcome',
+      save: 'Save',
+      cancel: 'Cancel',
+      general: 'General',
+      integrations: 'Integrations',
+      assistant_name: 'Name',
+      phone: 'Phone',
+      welcome_message: 'Welcome message (optional)',
+      status: 'Status',
+      active: 'Active',
+      inactive: 'Inactive',
+      response_time: 'Response time (seconds)',
+      assistant_response: 'Assistant response',
+      text: 'Text',
+      audio: 'Audio',
+      message_send_type: 'Message send type',
+      by_parts: 'By parts',
+      complete: 'Complete',
+      use_emojis: 'Use Emojis',
+      use_styles: 'Use styles',
+      audio_voice: 'Audio voice',
+      audio_count: 'Audio count',
+      reply_audio_with_audio: 'Reply audio with audio',
+      whatsapp_number: 'WhatsApp - Phone number',
+      whatsapp_business_id: 'WhatsApp Business Account Id (Optional)',
+      meta_app_id: 'Meta App Id (Optional)',
+      meta_token: 'Permanent token',
+      webhook_config: 'Webhook configuration',
+      webhook_url: 'Webhook URL',
+      webhook_token: 'Webhook Token',
+      save_assistant: 'Save',
+      new_assistant: 'New assistant',
+    },
+  },
+};
+
+i18n
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: 'es',
+    fallbackLng: 'es',
+    interpolation: { escapeValue: false },
+  });
+
+export default i18n; 
