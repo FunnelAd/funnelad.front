@@ -6,6 +6,7 @@ import Sidebar from "@/presentation/components/layout/Sidebar";
 import { AuthProvider } from '@/presentation/contexts/AuthContext';
 import { useAuth } from '@/presentation/contexts/AuthContext';
 import { usePathname } from 'next/navigation';
+import Navbar from '@/presentation/components/Navbar';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,6 +45,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={inter.className}>
         <AuthProvider>
+          <Navbar />
           <RootLayoutContent>{children}</RootLayoutContent>
         </AuthProvider>
       </body>
