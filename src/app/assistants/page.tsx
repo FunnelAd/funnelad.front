@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Assistant } from '@/core/types/assistant';
 import { assistantService } from '@/core/services/assistantService';
 import ProtectedRoute from '@/presentation/components/ProtectedRoute';
+import CreateAssistantModal from '@/presentation/components/CreateAssistantModal';
+import type { CreateAssistantFormData } from '@/presentation/components/CreateAssistantModal';
 import {
   PlusIcon,
   PencilIcon,
@@ -15,7 +16,8 @@ import {
 export default function AssistantsPage() {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingAssistant, setEditingAssistant] = useState<Assistant | undefined>();
 
   useEffect(() => {
     loadAssistants();
@@ -33,11 +35,26 @@ export default function AssistantsPage() {
   };
 
   const handleCreateAssistant = () => {
-    router.push('/assistants/create');
+    setEditingAssistant(undefined);
+    setIsCreateModalOpen(true);
   };
 
-  const handleEditAssistant = (id: string) => {
-    router.push(`/assistants/${id}/edit`);
+  const handleEditAssistant = (assistant: Assistant) => {
+    setEditingAssistant(assistant);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleSaveAssistant = async (formData: CreateAssistantFormData) => {
+    try {
+      if (editingAssistant) {
+        await assistantService.updateAssistant(editingAssistant.id, formData);
+      } else {
+        await assistantService.createAssistant(formData);
+      }
+      await loadAssistants();
+    } catch (error) {
+      console.error('Error saving assistant:', error);
+    }
   };
 
   const handleDeleteAssistant = async (id: string) => {
@@ -117,7 +134,7 @@ export default function AssistantsPage() {
                       </div>
                       <div className="ml-2 flex-shrink-0 flex space-x-2">
                         <button
-                          onClick={() => handleEditAssistant(assistant.id)}
+                          onClick={() => handleEditAssistant(assistant)}
                           className="text-gray-400 hover:text-gray-500"
                         >
                           <PencilIcon className="h-5 w-5" />
@@ -172,6 +189,17 @@ export default function AssistantsPage() {
             </ul>
           </div>
         )}
+
+        <CreateAssistantModal
+          isOpen={isCreateModalOpen}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setEditingAssistant(undefined);
+          }}
+          onSave={handleSaveAssistant}
+          assistant={editingAssistant}
+          isEditing={!!editingAssistant}
+        />
       </div>
     </ProtectedRoute>
   );

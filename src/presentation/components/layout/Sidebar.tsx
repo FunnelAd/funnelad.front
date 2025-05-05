@@ -11,6 +11,11 @@ import {
    PuzzlePieceIcon,
    BoltIcon,
 } from '@heroicons/react/24/outline';
+import { useAppConfig } from '@/core/contexts/AppConfigContext';
+
+interface SidebarProps {
+  onExpandChange?: (isExpanded: boolean) => void;
+}
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
@@ -21,21 +26,28 @@ const navigation = [
   { name: 'Integraciones', href: '/integrations', icon: PuzzlePieceIcon },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onExpandChange }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const { version } = useAppConfig();
 
   useEffect(() => {
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
     checkIfMobile();
     window.addEventListener('resize', checkIfMobile);
-    
     return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
+
+  // Notificar cuando el sidebar está expandido
+  useEffect(() => {
+    if (!isMobile) {
+      onExpandChange?.(isHovered);
+    }
+  }, [isHovered, isMobile, onExpandChange]);
 
   // Swipe gesture logic mejorado con área sensible superior
   useEffect(() => {
@@ -49,14 +61,12 @@ export default function Sidebar() {
     if (!swipeArea) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      // Solo si el touch inicia en la franja superior (área sensible)
       const touchY = e.touches[0].clientY;
       if (e.target === swipeArea && touchY < 60 && !isOpen) {
         touchStartX = e.touches[0].clientX;
         touchingSidebar = true;
         startedInSwipeArea = true;
       } else if (isOpen) {
-        // Si el sidebar está abierto, permitir swipe para cerrar desde cualquier lado
         touchStartX = e.touches[0].clientX;
         touchingSidebar = true;
         startedInSwipeArea = false;
@@ -69,7 +79,6 @@ export default function Sidebar() {
     const handleTouchMove = (e: TouchEvent) => {
       if (!touchingSidebar) return;
       touchEndX = e.touches[0].clientX;
-      // Si está abriendo el sidebar desde el área sensible, prevenir el back
       if (startedInSwipeArea && !isOpen && touchEndX - touchStartX > 10) {
         e.preventDefault();
       }
@@ -78,11 +87,9 @@ export default function Sidebar() {
     const handleTouchEnd = () => {
       if (!touchingSidebar) return;
       const deltaX = touchEndX - touchStartX;
-      // Swipe right to open
       if (!isOpen && startedInSwipeArea && deltaX > 50) {
         setIsOpen(true);
       }
-      // Swipe left to close
       if (isOpen && deltaX < -50) {
         setIsOpen(false);
       }
@@ -112,27 +119,33 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Área sensible para swipe en móvil (franja superior) */}
+      {isMobile && !isOpen && (
+        <div
+          id="swipe-area"
+          className="fixed top-0 left-0 w-screen h-[60px] z-50"
+          style={{ touchAction: 'pan-y' }}
+        />
+      )}
+
       {/* Sidebar */}
       <div
         className={`
-          fixed md:relative
-          h-full
-          bg-white
-          border-r border-gray-200
-          transition-all duration-300 ease-in-out
+          fixed left-0 top-[56px] h-[calc(100vh-56px)] bg-white border-r border-gray-200 transition-all duration-300 ease-in-out z-40
           ${isMobile
             ? `${isOpen ? 'translate-x-0' : '-translate-x-full'} w-64`
             : 'w-16 hover:w-64 group'
           }
-          z-40
         `}
+        onMouseEnter={() => !isMobile && setIsHovered(true)}
+        onMouseLeave={() => !isMobile && setIsHovered(false)}
       >
         <div className="flex items-center justify-center h-16 border-b border-gray-200">
           <Link href="/dashboard" className="text-xl font-bold text-primary-600 whitespace-nowrap overflow-hidden">
             {(!isMobile || isOpen) && 'FunnelAd'}
           </Link>
         </div>
-        <nav className="flex-1 px-2 py-4 space-y-1">
+        <nav className="flex-1 px-2 py-4 space-y-1 pb-16">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -141,7 +154,6 @@ export default function Sidebar() {
                 href={item.href}
                 className={`
                   flex items-center px-4 py-2 text-sm font-medium rounded-md
-                  transition-all duration-300
                   ${isActive
                     ? 'bg-primary-50 text-primary-600'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -173,22 +185,21 @@ export default function Sidebar() {
             );
           })}
         </nav>
+        {/* Versión de la aplicación */}
+        <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white">
+          <div className="flex items-center justify-center">
+            <span className="text-xs text-gray-400 font-light">
+              v{version}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Overlay for mobile */}
       {isMobile && isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          className="fixed inset-0 bg-white bg-opacity-40 z-30"
           onClick={toggleSidebar}
-        />
-      )}
-
-      {/* Área sensible para swipe en móvil (franja superior) */}
-      {isMobile && !isOpen && (
-        <div
-          id="swipe-area"
-          className="fixed top-0 left-0 w-screen h-[60px] z-50"
-          style={{ touchAction: 'pan-y' }}
         />
       )}
     </>

@@ -12,6 +12,22 @@ export interface Assistant {
   lastUsed?: string;
   totalConversations?: number;
   successRate?: number;
+  phone?: string;
+  welcomeTemplateId?: string;
+  responseTime?: number;
+  responseType?: number;
+  messageSendType?: string;
+  useEmojis?: boolean;
+  useStyles?: boolean;
+  audioVoice?: string;
+  audioCount?: number;
+  replyAudioWithAudio?: boolean;
+  whatsappNumber?: string;
+  whatsappBusinessId?: string;
+  metaAppId?: string;
+  metaToken?: string;
+  webhookUrl?: string;
+  webhookToken?: string;
 }
 
 export interface CreateAssistantData {
@@ -19,6 +35,23 @@ export interface CreateAssistantData {
   description: string;
   model: string;
   storeId: string;
+  phone?: string;
+  welcomeTemplateId?: string;
+  isActive: boolean;
+  responseTime?: number;
+  responseType?: number;
+  messageSendType?: string;
+  useEmojis?: boolean;
+  useStyles?: boolean;
+  audioVoice?: string;
+  audioCount?: number;
+  replyAudioWithAudio?: boolean;
+  whatsappNumber?: string;
+  whatsappBusinessId?: string;
+  metaAppId?: string;
+  metaToken?: string;
+  webhookUrl?: string;
+  webhookToken?: string;
 }
 
 export interface UpdateAssistantData {

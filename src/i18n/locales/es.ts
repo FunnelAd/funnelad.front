@@ -1,0 +1,17 @@
+export default {
+  templates: 'Plantillas',
+  create_template: 'Crear Plantilla',
+  edit_template: 'Editar Plantilla',
+  template_name: 'Nombre de la Plantilla',
+  template_name_placeholder: 'Ingrese el nombre de la plantilla',
+  template_type: 'Tipo de Plantilla',
+  template_content: 'Contenido de la Plantilla',
+  template_content_placeholder: 'Ingrese el contenido de la plantilla',
+  welcome_message: 'Mensaje de Bienvenida',
+  farewell_message: 'Mensaje de Despedida',
+  custom_message: 'Mensaje Personalizado',
+  no_templates: 'No hay plantillas',
+  create_first_template: 'Crea tu primera plantilla para comenzar',
+  confirm_delete_template: '¿Estás seguro de que deseas eliminar esta plantilla?',
+  save_template: 'Guardar Plantilla',
+}; 
