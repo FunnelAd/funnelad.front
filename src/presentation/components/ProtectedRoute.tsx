@@ -1,6 +1,4 @@
-import { useAuth } from '@/presentation/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Permission } from '@/core/types/auth';
 
 interface ProtectedRouteProps {
@@ -8,34 +6,7 @@ interface ProtectedRouteProps {
   requiredPermission?: Permission;
 }
 
-export default function ProtectedRoute({ children, requiredPermission }: ProtectedRouteProps) {
-  const { user, hasPermission, isLoading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) {
-        router.push('/auth');
-        return;
-      }
-
-      if (requiredPermission && !hasPermission(requiredPermission)) {
-        router.push('/dashboard');
-      }
-    }
-  }, [user, requiredPermission, hasPermission, router, isLoading]);
-
-  if (isLoading) {
-    return null;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  if (requiredPermission && !hasPermission(requiredPermission)) {
-    return null;
-  }
-
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  // Temporalmente permitimos todo el acceso
   return <>{children}</>;
-} 
+}

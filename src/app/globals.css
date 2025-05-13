@@ -31,6 +31,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
+
 /* Puedes usar las variables en cualquier parte del CSS así:
    background: var(--fa-bg);
    color: var(--fa-gold);

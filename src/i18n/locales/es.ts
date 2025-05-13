@@ -14,4 +14,27 @@ export default {
   create_first_template: 'Crea tu primera plantilla para comenzar',
   confirm_delete_template: '¿Estás seguro de que deseas eliminar esta plantilla?',
   save_template: 'Guardar Plantilla',
-}; 
+  
+  // Chat translations
+  chat: 'Chat',
+  chats: 'Chats',
+  create_chat: 'Crear Chat',
+  edit_chat: 'Editar Chat',
+  chat_name: 'Nombre del Chat',
+  chat_name_placeholder: 'Ingrese el nombre del chat',
+  no_chats: 'No hay chats',
+  create_first_chat: 'Crea tu primer chat para comenzar',
+  confirm_delete_chat: '¿Estás seguro de que deseas eliminar este chat?',
+  send_message: 'Enviar mensaje',
+  message_placeholder: 'Escribe un mensaje...',
+  attach_file: 'Adjuntar archivo',
+  new_chat: 'Nuevo Chat',
+  search_chats: 'Buscar chats',
+  online: 'En línea',
+  offline: 'Desconectado',
+  typing: 'escribiendo...',
+  today: 'Hoy',
+  yesterday: 'Ayer',
+  no_messages: 'No hay mensajes aún',
+  start_conversation: 'Comienza la conversación enviando un mensaje',
+};

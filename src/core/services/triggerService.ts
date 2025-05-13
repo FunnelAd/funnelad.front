@@ -1,7 +1,7 @@
-import { Assistant, CreateAssistantData, UpdateAssistantData } from '../types/assistant';
 
+import { Trigger, CreateTriggerData, UpdateTriggerData } from '../types/trigger';
 // Simulación de datos para desarrollo
-const MOCK_ASSISTANTS: Assistant[] = [
+const MOCK_ASSISTANTS: Trigger[] = [
   {
     id: '1',
     name: 'Asistente de Ventas',
@@ -34,11 +34,9 @@ const MOCK_ASSISTANTS: Assistant[] = [
   },
 ];
 
-export const assistantService = {
-  async getAssistants(): Promise<Assistant[]> {
+export const triggerService = {
+  async getTriggers(): Promise<Trigger[]> {
     // Simulación de llamada a API
-  
-
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve(MOCK_ASSISTANTS);
@@ -46,11 +44,11 @@ export const assistantService = {
     });
   },
 
-  async createAssistant(data: CreateAssistantData): Promise<Assistant> {
+      async createTrigger(data: CreateTriggerData): Promise<Trigger> {
     // Simulación de llamada a API
     return new Promise((resolve) => {
       setTimeout(() => {
-        const newAssistant: Assistant = {
+        const newAssistant: Trigger = {
           id: Date.now().toString(),
           ...data,
           createdAt: new Date().toISOString(),
@@ -64,7 +62,7 @@ export const assistantService = {
     });
   },
 
-  async updateAssistant(id: string, data: UpdateAssistantData): Promise<Assistant> {
+  async updateTrigger(id: string, data: UpdateTriggerData): Promise<Trigger> {
     // Simulación de llamada a API
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -82,7 +80,7 @@ export const assistantService = {
     });
   },
 
-  async deleteAssistant(id: string): Promise<void> {
+  async deleteTrigger(id: string): Promise<void> {
     // Simulación de llamada a API
     return new Promise((resolve) => {
       setTimeout(() => {

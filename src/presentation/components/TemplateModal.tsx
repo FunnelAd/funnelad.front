@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n';
 import { v4 as uuidv4 } from 'uuid';
 import { FaWhatsapp, FaFacebookMessenger, FaInstagram } from 'react-icons/fa';
+import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 export type TemplateMessageType = 'text' | 'image' | 'audio' | 'video' | 'file';
 export type ChatStyle = 'whatsapp' | 'messenger' | 'instagram';
@@ -19,7 +23,7 @@ interface Template {
   id: string;
   name: string;
   messages: TemplateMessage[];
-  type: string;
+  template_type: string;
   isActive: boolean;
   chatStyle: ChatStyle;
   createdAt: string;
@@ -39,7 +43,7 @@ export interface TemplateFormData {
   id?: string;
   name: string;
   messages: TemplateMessage[];
-  type: string;
+  template_type: string;
   isActive: boolean;
 }
 
@@ -74,13 +78,76 @@ const CHAT_STYLE_CLASSES = {
   },
 };
 
+interface DraggableMessageProps {
+  msg: TemplateMessage;
+  onEdit: () => void;
+  onDelete: () => void;
+  isEditing: boolean;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  editValue: string;
+  setEditValue: React.Dispatch<React.SetStateAction<string>>;
+  children: React.ReactNode;
+}
+
+function DraggableMessage({ msg, onEdit, onDelete, isEditing, onSaveEdit, onCancelEdit, editValue, setEditValue, children }: DraggableMessageProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: msg.id });
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.7 : 1,
+        zIndex: isDragging ? 50 : 'auto',
+        justifyContent: 'flex-end',
+        display: 'flex',
+      }}
+      className="w-full mb-2"
+    >
+      <div className="w-full flex flex-col items-end group">
+        {/* Botones encima de la burbuja, alineados a la derecha, solo en hover */}
+        <div className="flex gap-2 mb-1 justify-end w-full pr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+          <button {...attributes} {...listeners} className="cursor-grab text-gray-500 hover:text-[#C9A14A] text-2xl p-2 rounded-lg bg-white/90 shadow-md" title="Arrastrar" style={{minWidth: 40, minHeight: 40}}>
+            ≡
+          </button>
+          <button onClick={onEdit} className="bg-white/90 rounded-lg p-2 text-2xl text-[#C9A14A] shadow-md hover:bg-[#F5F6FA]" title="Editar" style={{minWidth: 40, minHeight: 40}}>
+            ✎
+          </button>
+          <button onClick={onDelete} className="bg-white/90 rounded-lg p-2 text-2xl text-red-500 shadow-md hover:bg-[#F5F6FA]" title="Eliminar" style={{minWidth: 40, minHeight: 40}}>
+            ✕
+          </button>
+        </div>
+        {/* Renderizado normal o edición */}
+        {isEditing ? (
+          <div className={`relative max-w-[60vw] px-4 py-2 rounded-2xl bg-white/90 text-right`}>
+            <textarea
+              className="w-full rounded border p-1 text-gray-900"
+              value={editValue}
+              onChange={e => setEditValue(e.target.value)}
+              rows={3}
+              style={{whiteSpace: 'pre-line'}}
+            />
+            <div className="flex gap-2 mt-2 justify-end">
+              <button onClick={onSaveEdit} className="px-2 py-1 rounded bg-[#C9A14A] text-white text-xs">Guardar</button>
+              <button onClick={onCancelEdit} className="px-2 py-1 rounded bg-gray-300 text-gray-700 text-xs">Cancelar</button>
+            </div>
+          </div>
+        ) : (
+          <div className="w-full flex justify-end">{children}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TemplateModal({ isOpen, onClose, onSave, template, isEditing = false }: TemplateModalProps) {
   const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<TemplateFormData>({
     name: '',
     messages: [],
-    type: 'welcome',
+    template_type: 'welcome',
     isActive: true,
   });
   const [inputValue, setInputValue] = useState('');
@@ -90,8 +157,10 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [chatStyle, setChatStyle] = useState<ChatStyle>('whatsapp');
-  // refs para imágenes de mensajes
-  const imageRefs = useRef<{ [key: string]: HTMLImageElement | null }>({});
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [imageWidths, setImageWidths] = useState<Record<string, number>>({});
+  const imageRefs = useRef<Record<string, HTMLImageElement | null>>({});
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -131,7 +200,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
         id: template.id,
         name: template.name,
         messages: template.messages || [],
-        type: template.type,
+        template_type: template.template_type,
         isActive: template.isActive,
       });
       setChatStyle('whatsapp');
@@ -143,7 +212,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
       setForm({
         name: '',
         messages: [],
-        type: 'welcome',
+        template_type: 'welcome',
         isActive: true,
       });
       setChatStyle('whatsapp');
@@ -169,6 +238,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
   };
 
   const handleSubmit = () => {
+    console.log(form)
     onSave(form);
     onClose();
   };
@@ -240,14 +310,83 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
     setShowEmojiPicker(false);
   };
 
+  // Drag & drop handlers
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    if (activeId !== overId) {
+      const oldIndex = form.messages.findIndex(m => m.id === activeId);
+      const newIndex = form.messages.findIndex(m => m.id === overId);
+      setForm(prev => ({
+        ...prev,
+        messages: arrayMove(prev.messages, oldIndex, newIndex),
+      }));
+    }
+  };
+
+  // Edit handlers
+  const handleEditMsg = (msg: TemplateMessage) => {
+    setEditingMsgId(msg.id);
+    if (msg.type === 'text') setEditValue(msg.content);
+    else {
+      try {
+        const parsed = JSON.parse(msg.content);
+        setEditValue(parsed.description || '');
+      } catch {
+        setEditValue('');
+      }
+    }
+  };
+  const handleSaveEditMsg = (msg: TemplateMessage) => {
+    setForm(prev => ({
+      ...prev,
+      messages: prev.messages.map(m => {
+        if (m.id !== msg.id) return m;
+        if (m.type === 'text') return { ...m, content: editValue };
+        // archivos: solo cambia la descripción
+        try {
+          const parsed = JSON.parse(m.content);
+          return { ...m, content: JSON.stringify({ ...parsed, description: editValue }) };
+        } catch {
+          return m;
+        }
+      }),
+    }));
+    setEditingMsgId(null);
+    setEditValue('');
+  };
+  const handleCancelEditMsg = () => {
+    setEditingMsgId(null);
+    setEditValue('');
+  };
+
+  // Limitar el drag & drop solo al eje vertical
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      lockAxis: 'y',
+    })
+  );
+
+  // Handler para guardar el ancho de la imagen al cargar
+  const handleImageLoad = (msgId: string, e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const el = e.currentTarget;
+    setImageWidths(prev => ({ ...prev, [msgId]: el.width }));
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-2 md:p-4">
-      <div ref={modalRef} className="bg-white/95 backdrop-blur-sm rounded-xl w-full h-full max-w-[98vw] max-h-[98vh] overflow-y-auto shadow-2xl flex items-center justify-center">
+      <div
+        ref={modalRef}
+        className="bg-white/95 backdrop-blur-sm rounded-xl w-full h-full max-w-[1100px] max-h-[90vh] min-w-[340px] min-h-[400px] overflow-hidden shadow-2xl flex items-center justify-center"
+        style={{ boxSizing: 'border-box' }}
+      >
         <div className="p-4 md:p-6 w-full h-full flex flex-col">
           {/* Header */}
-          <div className="flex justify-between items-center mb-4 md:mb-6">
+          <div className="flex justify-between items-center mb-4 md:mb-6 flex-shrink-0">
             <h2 className="text-3xl font-bold text-[#0B2C3D] tracking-tight flex items-center gap-3">
               <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-[#C9A14A] to-[#A8842C] flex items-center justify-center">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
@@ -268,9 +407,9 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
           </div>
 
           {/* Layout en dos columnas (responsive) */}
-          <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full min-h-0 flex-1">
             {/* Columna izquierda: Configuración (más angosta) */}
-            <div className="md:w-1/4 w-full max-w-xs">
+            <div className="md:w-1/4 w-full max-w-xs flex-shrink-0">
               <form className="space-y-4 mb-4 md:mb-0">
                 <div>
                   <label className="block text-[#0B2C3D] font-semibold mb-1">{t('template_name')}</label>
@@ -285,8 +424,8 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
                   <label className="block text-[#0B2C3D] font-semibold mb-1">{t('template_type')}</label>
                   <select
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.type}
-                    onChange={e => handleChange('type', e.target.value)}
+                    value={form.template_type}
+                    onChange={e => handleChange('template_type', e.target.value)}
                   >
                     <option value="welcome">{t('welcome_message')}</option>
                     <option value="farewell">{t('farewell_message')}</option>
@@ -308,9 +447,9 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
             </div>
 
             {/* Columna derecha: Chat expandido */}
-            <div className="flex-1 flex flex-col h-full">
+            <div className="flex-1 flex flex-col h-full min-h-0">
               {/* Selector de estilo de chat solo visual */}
-              <div className="flex justify-center gap-4 mb-2">
+              <div className="flex justify-center gap-4 mb-2 flex-shrink-0">
                 {CHAT_STYLES.map(style => (
                   <button
                     key={style.key}
@@ -325,7 +464,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
               </div>
               {/* Chat UI expandido */}
               <div
-                className={`${CHAT_STYLE_CLASSES[chatStyle].bg} rounded-lg p-4 flex-1 min-h-[350px] max-h-[calc(80vh-120px)] overflow-y-auto flex flex-col gap-2 mb-2 ${CHAT_STYLE_CLASSES[chatStyle].font}`}
+                className={`${CHAT_STYLE_CLASSES[chatStyle].bg} rounded-lg p-4 flex-1 min-h-0 max-h-full overflow-y-auto flex flex-col gap-2 mb-2 ${CHAT_STYLE_CLASSES[chatStyle].font}`}
                 style={
                   chatStyle === 'whatsapp'
                     ? {
@@ -337,105 +476,115 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
                 }
               >
                 {/* Mensajes de la plantilla */}
-                {form.messages.length === 0 && (
-                  <div className="text-center text-gray-400 mt-20">{t('no_messages')}</div>
-                )}
-                {form.messages.map((msg) => (
-                  <div key={msg.id} className="flex justify-end group">
-                    <div
-                      className={`relative max-w-[60%] px-4 py-2 rounded-2xl ${CHAT_STYLE_CLASSES[chatStyle].bubbleMe}`}
-                      style={chatStyle === 'instagram'
-                        ? { background: 'linear-gradient(90deg, #405DE6 0%, #5851DB 50%, #833AB4 100%)', boxShadow: 'none', maxWidth: '60%' }
-                        : { maxWidth: '60%' }}>
-                      {/* Nombre de usuario */}
-                      <div className={`text-xs mb-1 ${CHAT_STYLE_CLASSES[chatStyle].name}`}>Tú</div>
-                      {/* Contenido del mensaje */}
-                      {msg.type === 'text' && (
-                        <span
-                          style={{
-                            whiteSpace: 'pre-line',
-                            wordBreak: 'break-word',
-                            display: 'block',
-                            maxWidth: '100%',
-                          }}
-                        >
-                          {msg.content}
-                        </span>
-                      )}
-                      {msg.type !== 'text' && (() => {
-                        try {
-                          const parsed = JSON.parse(msg.content);
-                          if (msg.type === 'image') {
-                            return (
-                              <div className="flex flex-col items-start">
-                                <img
-                                  ref={el => { imageRefs.current[msg.id] = el; }}
-                                  src={parsed.url}
-                                  alt={msg.fileName || 'Imagen'}
-                                  className="rounded-lg max-w-full max-h-40"
-                                  style={{ display: 'block' }}
-                                />
-                                {parsed.description && (
-                                  <div
-                                    className="mt-1 text-sm text-white/90"
-                                    style={{
-                                      whiteSpace: 'pre-line',
-                                      wordBreak: 'break-word',
-                                      width: imageRefs.current[msg.id]?.width ? imageRefs.current[msg.id]?.width + 'px' : '100%',
-                                      maxWidth: '100%',
-                                    }}
-                                  >
-                                    {parsed.description}
+                <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd} sensors={sensors} modifiers={[restrictToVerticalAxis]}>
+                  <SortableContext items={form.messages.map(m => m.id)} strategy={verticalListSortingStrategy}>
+                    {form.messages.length === 0 && (
+                      <div className="text-center text-gray-400 mt-20">{t('no_messages')}</div>
+                    )}
+                    {form.messages.map((msg) => (
+                      <DraggableMessage
+                        key={msg.id}
+                        msg={msg}
+                        onEdit={() => handleEditMsg(msg)}
+                        onDelete={() => handleDeleteMessage(msg.id)}
+                        isEditing={editingMsgId === msg.id}
+                        onSaveEdit={() => handleSaveEditMsg(msg)}
+                        onCancelEdit={handleCancelEditMsg}
+                        editValue={editValue}
+                        setEditValue={setEditValue}
+                      >
+                        {/* Renderizado original del mensaje */}
+                        <div
+                          className={`relative max-w-[60vw] px-4 py-2 rounded-2xl ${CHAT_STYLE_CLASSES[chatStyle].bubbleMe} text-right`}
+                          style={chatStyle === 'instagram'
+                            ? { background: 'linear-gradient(90deg, #405DE6 0%, #5851DB 50%, #833AB4 100%)', boxShadow: 'none', maxWidth: '60vw' }
+                            : { maxWidth: '60vw' }}>
+                          <div className={`text-xs mb-1 ${CHAT_STYLE_CLASSES[chatStyle].name}`}>Tú</div>
+                          {msg.type === 'text' && (
+                            <span
+                              style={{
+                                whiteSpace: 'pre-line',
+                                wordBreak: 'break-word',
+                                display: 'block',
+                                maxWidth: '100%',
+                              }}
+                            >
+                              {msg.content}
+                            </span>
+                          )}
+                          {msg.type !== 'text' && (() => {
+                            try {
+                              const parsed = JSON.parse(msg.content);
+                              if (msg.type === 'image') {
+                                return (
+                                  <div className="flex flex-col items-end w-full">
+                                    <img
+                                      ref={el => { imageRefs.current[msg.id] = el; }}
+                                      src={parsed.url}
+                                      alt={msg.fileName || 'Imagen'}
+                                      className="rounded-lg max-w-full max-h-40"
+                                      style={{ display: 'block', marginLeft: 'auto' }}
+                                      onLoad={e => handleImageLoad(msg.id, e)}
+                                    />
+                                    {parsed.description ? (
+                                      <div
+                                        className="mt-1 text-sm text-white/90 text-left"
+                                        style={{
+                                          whiteSpace: 'pre-line',
+                                          wordBreak: 'break-word',
+                                          width: '100%',
+                                          maxWidth: imageWidths[msg.id] ? imageWidths[msg.id] : '100%',
+                                        }}
+                                      >
+                                        {parsed.description}
+                                      </div>
+                                    ) : null}
                                   </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          if (msg.type === 'video') {
-                            return (
-                              <div className="flex flex-col items-start">
-                                <video controls src={parsed.url} className="w-full max-h-40 rounded-lg" style={{ display: 'block' }} />
-                                {parsed.description && (
-                                  <div
-                                    className="mt-1 text-sm text-white/90"
-                                    style={{
-                                      whiteSpace: 'pre-line',
-                                      wordBreak: 'break-word',
-                                      width: '100%',
-                                      maxWidth: '100%',
-                                    }}
-                                  >
-                                    {parsed.description}
+                                );
+                              }
+                              if (msg.type === 'video') {
+                                return (
+                                  <div className="flex flex-col items-end w-full">
+                                    <video controls src={parsed.url} className="w-full max-h-40 rounded-lg" style={{ display: 'block', marginLeft: 'auto' }} />
+                                    {parsed.description ? (
+                                      <div
+                                        className="mt-1 text-sm text-white/90 text-left"
+                                        style={{
+                                          whiteSpace: 'pre-line',
+                                          wordBreak: 'break-word',
+                                          width: '100%',
+                                          maxWidth: '100%',
+                                        }}
+                                      >
+                                        {parsed.description}
+                                      </div>
+                                    ) : null}
                                   </div>
-                                )}
-                              </div>
-                            );
-                          }
-                          if (msg.type === 'audio') {
-                            return <audio controls src={parsed.url} className="w-full" />;
-                          }
-                          if (msg.type === 'file') {
-                            return (
-                              <a href={parsed.url} target="_blank" rel="noopener noreferrer" className="underline">
-                                {msg.fileName || 'Archivo'}
-                              </a>
-                            );
-                          }
-                          return null;
-                        } catch {
-                          return null;
-                        }
-                      })()}
-                      {/* Botón eliminar mensaje */}
-                      <button onClick={() => handleDeleteMessage(msg.id)} className="absolute -top-2 -right-2 bg-white/80 rounded-full p-1 text-xs opacity-0 group-hover:opacity-100 transition-opacity" title="Eliminar">
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                                );
+                              }
+                              if (msg.type === 'audio') {
+                                return <audio controls src={parsed.url} className="w-full" />;
+                              }
+                              if (msg.type === 'file') {
+                                return (
+                                  <a href={parsed.url} target="_blank" rel="noopener noreferrer" className="underline">
+                                    {msg.fileName || 'Archivo'}
+                                  </a>
+                                );
+                              }
+                              return null;
+                            } catch {
+                              return null;
+                            }
+                          })()}
+                        </div>
+                      </DraggableMessage>
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
               {/* Input de mensaje tipo WhatsApp/Messenger/Instagram */}
-              <div className="flex items-center gap-2 p-2 rounded-lg bg-white shadow border border-gray-200 mt-2">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-white shadow border border-gray-200 mt-2 flex-shrink-0">
                 {/* Emoji picker */}
                 <button type="button" onClick={() => setShowEmojiPicker((v) => !v)} className="text-2xl px-1 hover:bg-gray-100 rounded">
                   😊
@@ -482,7 +631,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
               </div>
               {/* Previsualización de archivo adjunto */}
               {attachedPreview && (
-                <div className="mt-2 flex items-center gap-2 bg-gray-100 p-2 rounded">
+                <div className="mt-2 flex items-center gap-2 bg-gray-100 p-2 rounded flex-shrink-0">
                   <span className="text-xs text-gray-700">Adjunto:</span>
                   {attachedFile?.type.startsWith('image/') && <img src={attachedPreview} alt="preview" className="h-10 rounded" />}
                   {attachedFile?.type.startsWith('audio/') && <audio controls src={attachedPreview} className="h-8" />}
@@ -497,7 +646,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200 flex-shrink-0">
             <button
               onClick={onClose}
               className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"

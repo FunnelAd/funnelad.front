@@ -119,33 +119,49 @@ export default function AuthPage() {
     }));
   };
 
+  // Color dorado de FunnelAd
+  const funneladGold = '#FFD700';
+
+  // Custom select style for dark mode
+  const selectClassName =
+    'mt-1 block w-full pl-3 pr-10 py-2 text-base rounded-md border border-gray-600 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 sm:text-sm transition-colors duration-200 appearance-none';
+
+  // Custom arrow for select
+  const customSelectWrapper = 'relative';
+  const customSelectArrow =
+    'pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-yellow-400';
+
   const getInputClassName = (isValid: boolean) => {
-    return `appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-      isValid 
-        ? 'border-green-300 focus:ring-green-500 focus:border-green-500' 
-        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+    return `appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-900 text-white ${
+      isValid
+        ? 'border-green-300 focus:ring-green-500 focus:border-green-500'
+        : 'border-gray-600 focus:ring-blue-500 focus:border-blue-500'
     }`;
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Image
-          className="mx-auto h-12 w-auto"
-          src="/logo.svg"
-          alt="FunnelAd"
-          width={48}
-          height={48}
-        />
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {mode === 'login' ? 'Inicia sesión en tu cuenta' : 'Crea una nueva cuenta'}
-        </h2>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 relative overflow-hidden">
+      {/* Fondo decorativo moderno */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-tr from-yellow-400/30 via-yellow-200/10 to-transparent rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-400/20 via-blue-200/10 to-transparent rounded-full blur-2xl animate-pulse" />
       </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-100">
+      <div className="relative z-10 w-full max-w-md mx-auto">
+        <div className="flex flex-col items-center">
+          <Image
+            className="mx-auto h-16 w-auto drop-shadow-lg"
+            src="/logo.svg"
+            alt="FunnelAd"
+            width={64}
+            height={64}
+          />
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white drop-shadow-md">
+            {mode === 'login' ? 'Inicia sesión en tu cuenta' : 'Crea una nueva cuenta'}
+          </h2>
+        </div>
+        <div className="mt-8 bg-gray-800/90 py-10 px-6 shadow-2xl rounded-2xl border border-gray-700 backdrop-blur-md max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-md border border-red-200">
+            <div className="mb-4 p-4 bg-red-400/10 text-red-300 rounded-md border border-red-400/30 text-center">
               {error}
             </div>
           )}
@@ -156,33 +172,38 @@ export default function AuthPage() {
                   <label htmlFor="role" className="block text-sm font-medium text-gray-700">
                     Tipo de cuenta
                   </label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleChange}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                  >
-                    <option value={UserRole.CLIENT}>Cliente</option>
-                    <option value={UserRole.FUNNELAD}>FunnelAd</option>
-                  </select>
+                  <div className={customSelectWrapper}>
+                    <select
+                      id="role"
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      className={selectClassName}
+                    >
+                      <option value={UserRole.CLIENT}>Cliente</option>
+                      <option value={UserRole.FUNNELAD}>FunnelAd</option>
+                    </select>
+                    <span className={customSelectArrow}>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
+                  </div>
                 </div>
 
                 {formData.role === UserRole.CLIENT && (
-                  <div>
-                    <label htmlFor="clientSubRole" className="block text-sm font-medium text-gray-700">
-                      Rol de cliente
-                    </label>
+                  <div className={customSelectWrapper}>
                     <select
                       id="clientSubRole"
                       name="clientSubRole"
                       value={formData.clientSubRole}
                       onChange={handleChange}
-                      className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                      className={selectClassName}
                     >
                       <option value={ClientSubRole.ADMIN}>Administrador</option>
                       <option value={ClientSubRole.AUXILIARY}>Auxiliar</option>
                     </select>
+                    <span className={customSelectArrow}>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
                   </div>
                 )}
 
@@ -232,17 +253,22 @@ export default function AuthPage() {
                   <label htmlFor="countryCode" className="block text-sm font-medium text-gray-700">
                     Código de país
                   </label>
-                  <select
-                    id="countryCode"
-                    name="countryCode"
-                    value={formData.countryCode}
-                    onChange={handleChange}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                  >
-                    <option value="+1">+1 (USA)</option>
-                    <option value="+52">+52 (México)</option>
-                    <option value="+34">+34 (España)</option>
-                  </select>
+                  <div className={customSelectWrapper}>
+                    <select
+                      id="countryCode"
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleChange}
+                      className={selectClassName}
+                    >
+                      <option value="+1">+1 (USA)</option>
+                      <option value="+52">+52 (México)</option>
+                      <option value="+34">+34 (España)</option>
+                    </select>
+                    <span className={customSelectArrow}>
+                      <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
@@ -340,30 +366,30 @@ export default function AuthPage() {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white"
+                style={{ backgroundColor: funneladGold, color: '#222', fontWeight: 600 }}
               >
                 {mode === 'login' ? 'Iniciar sesión' : 'Registrarse'}
               </button>
             </div>
           </form>
-
-          <div className="mt-6">
+          <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-gray-600" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+                <span className="px-2 bg-gray-800 text-gray-400">
                   {mode === 'login' ? '¿No tienes una cuenta?' : '¿Ya tienes una cuenta?'}
                 </span>
               </div>
             </div>
-
             <div className="mt-6">
               <button
                 type="button"
                 onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                className="w-full flex justify-center py-2 px-4 border border-yellow-400/60 rounded-md shadow-sm text-sm font-semibold bg-gray-900 hover:bg-gray-800 transition-colors duration-200"
+                style={{ color: funneladGold }}
               >
                 {mode === 'login' ? 'Registrarse' : 'Iniciar sesión'}
               </button>
@@ -373,4 +399,4 @@ export default function AuthPage() {
       </div>
     </div>
   );
-} 
+}

@@ -10,21 +10,23 @@ import {
    UsersIcon,
    PuzzlePieceIcon,
    BoltIcon,
-} from '@heroicons/react/24/outline';
+   ChatBubbleLeftRightIcon,
+  } from '@heroicons/react/24/outline';
 import { useAppConfig } from '@/core/contexts/AppConfigContext';
 
 interface SidebarProps {
   onExpandChange?: (isExpanded: boolean) => void;
 }
-
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
-  { name: 'Asistente', href: '/assistants', icon: PlusCircleIcon },
-  { name: 'Plantillas', href: '/templates', icon: RectangleGroupIcon },
-  { name: 'Disparadores', href: '/triggers', icon: BoltIcon },
-  { name: 'Contactos', href: '/contacts', icon: UsersIcon },
-  { name: 'Integraciones', href: '/integrations', icon: PuzzlePieceIcon },
-];
+   
+   const navigation = [
+     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+     { name: 'Chat', href: '/chat', icon: ChatBubbleLeftRightIcon },
+     { name: 'Asistente', href: '/assistants', icon: PlusCircleIcon },
+     { name: 'Plantillas', href: '/templates', icon: RectangleGroupIcon },
+     { name: 'Disparadores', href: '/triggers', icon: BoltIcon },
+     { name: 'Contactos', href: '/contacts', icon: UsersIcon },
+     { name: 'Integraciones', href: '/integrations', icon: PuzzlePieceIcon },
+   ];
 
 export default function Sidebar({ onExpandChange }: SidebarProps) {
   const pathname = usePathname();
@@ -128,35 +130,38 @@ export default function Sidebar({ onExpandChange }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Aumentado z-index y eliminado transformación del layout */}
       <div
         className={`
-          fixed left-0 top-[56px] h-[calc(100vh-56px)] bg-white border-r border-gray-200 transition-all duration-300 ease-in-out z-40
+          fixed left-0 top-[56px] h-[calc(100vh-56px)] bg-[#0B2C3D] border-r border-[#1D3E4E] transition-all duration-300 ease-in-out z-[100]
           ${isMobile
-            ? `${isOpen ? 'translate-x-0' : '-translate-x-full'} w-64`
+            ? `${isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'} w-64`
             : 'w-16 hover:w-64 group'
           }
         `}
+        style={{ 
+          boxShadow: isOpen ? '0 0 15px rgba(0, 0, 0, 0.3)' : 'none'
+        }}
         onMouseEnter={() => !isMobile && setIsHovered(true)}
         onMouseLeave={() => !isMobile && setIsHovered(false)}
       >
-        <div className="flex items-center justify-center h-16 border-b border-gray-200">
-          <Link href="/dashboard" className="text-xl font-bold text-primary-600 whitespace-nowrap overflow-hidden">
+      <div className="flex items-center justify-center h-16 border-b border-[#1D3E4E]">
+          <Link href="/dashboard" className="text-xl font-bold text-[#C9A14A] whitespace-nowrap overflow-hidden">
             {(!isMobile || isOpen) && 'FunnelAd'}
-          </Link>
-        </div>
+        </Link>
+      </div>
         <nav className="flex-1 px-2 py-4 space-y-1 pb-16">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
+        {navigation.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
                 className={`
                   flex items-center px-4 py-2 text-sm font-medium rounded-md
                   ${isActive
-                    ? 'bg-primary-50 text-primary-600'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-[#1D3E4E] text-[#C9A14A]'
+                  : 'text-gray-300 hover:bg-[#1D3E4E] hover:text-white'
                   }
                   ${!isMobile ? 'justify-center group-hover:justify-start' : ''}
                 `}
@@ -165,11 +170,11 @@ export default function Sidebar({ onExpandChange }: SidebarProps) {
                   className={`flex items-center justify-center h-6 w-6 transition-all duration-300
                     ${!isMobile ? 'group-hover:justify-start' : ''}
                   `}
-                >
-                  <item.icon
-                    className={`h-5 w-5 ${isActive ? 'text-primary-600' : 'text-gray-400'} transition-all duration-300`}
-                    aria-hidden="true"
-                  />
+            >
+              <item.icon
+                    className={`h-5 w-5 ${isActive ? 'text-[#C9A14A]' : 'text-gray-400'} transition-all duration-300`}
+                aria-hidden="true"
+              />
                 </span>
                 <span
                   className={`ml-3 whitespace-nowrap transition-all duration-300
@@ -179,29 +184,29 @@ export default function Sidebar({ onExpandChange }: SidebarProps) {
                     }
                   `}
                 >
-                  {item.name}
+              {item.name}
                 </span>
-              </Link>
-            );
-          })}
-        </nav>
+            </Link>
+          );
+        })}
+      </nav>
         {/* Versión de la aplicación */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-gray-200 bg-white">
+        <div className="absolute bottom-0 left-0 right-0 px-4 py-3 border-t border-[#1D3E4E] bg-[#0B2C3D]">
           <div className="flex items-center justify-center">
             <span className="text-xs text-gray-400 font-light">
               v{version}
             </span>
           </div>
         </div>
-      </div>
+    </div>
 
-      {/* Overlay for mobile */}
+      {/* Overlay for mobile - Aumentado z-index */}
       {isMobile && isOpen && (
         <div
-          className="fixed inset-0 bg-white bg-opacity-40 z-30"
+          className="fixed inset-0 bg-black bg-opacity-40 z-[90]"
           onClick={toggleSidebar}
         />
       )}
     </>
   );
-} 
+}

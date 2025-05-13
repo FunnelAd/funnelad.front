@@ -28,11 +28,29 @@ export interface User {
   permissions: Permission[];
 }
 
+
+export interface Company {
+  nit: string;
+  name: string;
+  email: string;
+  storeId?: string;
+  storeName?: string;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 }
+
+
+export interface AuthResponse {
+  user: User | null;
+  email: string;
+  acces_token: string;
+  company:  Company | null;
+}
+
 
 export interface RolePermissions {
   [UserRole.FUNNELAD]: Permission[];

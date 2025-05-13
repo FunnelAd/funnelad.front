@@ -3,6 +3,10 @@ import Image from "next/image";
 export default function Home() {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      {/* DEBUG: Mostrar la variable de entorno de la API */}
+      <div className="fixed top-2 left-2 bg-yellow-100 text-yellow-900 px-4 py-2 rounded shadow z-50 text-xs font-mono border border-yellow-300">
+        <strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || 'No definida'}
+      </div>
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"
