@@ -25,9 +25,50 @@
   }
 }
 
+:root {
+  /* Variables base */
+  --fa-gold: #C9A14A;
+  --fa-gold-hover: #B8912A;
+}
+
+/* Tema claro (por defecto) */
+.light-theme {
+  --fa-bg: #ffffff;
+  --fa-bg-secondary: #F5F6FA;
+  --fa-text: #0B2C3D;
+  --fa-text-secondary: #4A5568;
+  --fa-border: #E2E8F0;
+  --fa-sidebar: #0B2C3D;
+  --fa-sidebar-text: #ffffff;
+  --fa-input-bg: #ffffff;
+  --fa-input-border: #CBD5E0;
+  --fa-input-text: #2D3748;
+  --fa-card-bg: #ffffff;
+  --fa-card-border: #E2E8F0;
+  --fa-hover: #F7FAFC;
+}
+
+/* Tema oscuro */
+.dark-theme {
+  --fa-bg: #0B2C3D;
+  --fa-bg-secondary: #1D3E4E;
+  --fa-text: #ffffff;
+  --fa-text-secondary: #CBD5E0;
+  --fa-border: #2D3748;
+  --fa-sidebar: #0A1A24;
+  --fa-sidebar-text: #ffffff;
+  --fa-input-bg: #1D3E4E;
+  --fa-input-border: #2D3748;
+  --fa-input-text: #ffffff;
+  --fa-card-bg: #1D3E4E;
+  --fa-card-border: #2D3748;
+  --fa-hover: #0F3A4F;
+}
+
+/* Aplicar variables a elementos comunes */
 body {
-  background: var(--fa-bg);
-  color: var(--fa-white);
+  background-color: var(--fa-bg);
+  color: var(--fa-text);
   font-family: Arial, Helvetica, sans-serif;
 }
 

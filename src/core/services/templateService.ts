@@ -39,6 +39,6 @@ export const templateService = {
   },
 
   async deleteTemplate(id: string): Promise<void> {
-    await api.delete(`/templates/${id}`);
+    await api.delete(`api/templates/${id}`);
   },
 }; 

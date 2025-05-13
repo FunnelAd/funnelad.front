@@ -5,7 +5,8 @@ import "./globals.css";
 import Sidebar from "@/presentation/components/layout/Sidebar";
 import { AuthProvider } from '@/presentation/contexts/AuthContext';
 import { AppConfigProvider } from '@/core/contexts/AppConfigContext';
-import { useState } from 'react';
+import { ThemeProvider } from '@/core/contexts/ThemeContext';
+import { useState, Suspense } from 'react'; // Import Suspense
 import { usePathname } from 'next/navigation';
 import Navbar from '@/presentation/components/Navbar';
 
@@ -14,19 +15,20 @@ const inter = Inter({ subsets: ["latin"] });
 function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAuthPage = pathname === '/auth';
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const isOnboardingPage = pathname === '/register';
+  // const [isSidebarExpanded, setIsSidebarExpanded] = useState(false); // Estado no utilizado
 
-  if (isAuthPage) {
+  if (isAuthPage || isOnboardingPage) {
     return <>{children}</>;
   }
 
   return (
     <>
       <Navbar />
-      <div className="flex h-screen bg-gray-100">
-        <Sidebar onExpandChange={setIsSidebarExpanded} />
+      <div className="flex h-screen">
+        <Sidebar /* onExpandChange={setIsSidebarExpanded} */ /> {/* Prop no utilizada actualmente para ajustar el padding del main */}
         <main 
-          className="flex-1 overflow-y-auto w-full md:pl-16 pl-0"
+          className="flex-1 overflow-y-auto w-full md:pl-16 pl-0" // Considerar hacer este padding dinámico según el estado real del sidebar
         >
           {children}
         </main>
@@ -43,11 +45,15 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body className={inter.className}>
-        <AppConfigProvider>
-          <AuthProvider>
-            <RootLayoutContent>{children}</RootLayoutContent>
-          </AuthProvider>
-        </AppConfigProvider>
+        <ThemeProvider>
+          <AppConfigProvider>
+            <AuthProvider>
+              <Suspense fallback={<div className="w-full h-screen flex justify-center items-center">Cargando...</div>}> {/* Suspense Boundary */}
+                <RootLayoutContent>{children}</RootLayoutContent>
+              </Suspense>
+            </AuthProvider>
+          </AppConfigProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -68,8 +68,8 @@ export default function TemplatesPage() {
   const handleDeleteTemplate = async (id: string) => {
     if (window.confirm(t("confirm_delete_template"))) {
       try {
-        await templateService.deleteTemplate(id);
-        setTemplates(templates.filter((t) => t.id !== id));
+        await templateService.deleteTemplate(id); // Asumimos que deleteTemplate espera el _id
+        setTemplates(templates.filter((t) => t._id !== id)); // Cambiado de t.id a t._id para consistencia con la key
       } catch (error) {
         console.error("Error deleting template:", error);
       }
@@ -178,7 +178,7 @@ export default function TemplatesPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {templates.map((template) => (
-                  <tr key={template._id}>
+                  <tr key={template._id}> {/* template._id se usa aquí como clave */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {template.name}

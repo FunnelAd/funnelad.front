@@ -1,37 +1,34 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Rutas públicas que no requieren autenticación
-const publicRoutes = ['/auth', '/terms', '/'];
+// Rutas que no requieren autenticación
+const publicRoutes = ['/auth', '/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Permitir acceso a rutas públicas
-  if (publicRoutes.includes(pathname)) {
+  // Verificar si la ruta es pública
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+  
+  // Si es una ruta pública, permitir el acceso
+  if (isPublicRoute) {
     return NextResponse.next();
   }
-
-  // Verificar autenticación
-  const token = request.cookies.get('auth-token')?.value;
   
-  // Si no hay token y no es una ruta pública, redirigir a auth
-  if (!token && !publicRoutes.includes(pathname)) {
-    return NextResponse.redirect(new URL('/auth', request.url));
-  }
-
+  // COMENTADO TEMPORALMENTE PARA DESARROLLO
+  // Verificar si el usuario está autenticado
+  // const token = request.cookies.get('auth_token')?.value;
+  
+  // if (!token) {
+  //   // Redirigir a la página de inicio de sesión si no hay token
+  //   return NextResponse.redirect(new URL('/auth', request.url));
+  // }
+  
+  // FIN DE SECCIÓN COMENTADA TEMPORALMENTE PARA DESARROLLO
+  // ¡¡¡IMPORTANTE!!! Reactivar la lógica de verificación de token antes de pasar a producción.
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
-}; 
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|images).*)'],
+};

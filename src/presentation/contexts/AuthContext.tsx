@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      console.log(response)
+      // console.log(response) // Eliminar en producción
       TokenService.setAuthData(response);
       setUser(response.user);
       router.push('/dashboard');
@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/auth');
   };
 
+  // TODO: Implementar lógica de permisos real
   const checkPermission = (_permission: Permission) => true; // Temporalmente permitimos todo
 
   return (
