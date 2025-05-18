@@ -8,7 +8,6 @@ import { AppConfigProvider } from '@/core/contexts/AppConfigContext';
 import { ThemeProvider } from '@/core/contexts/ThemeContext';
 import { useState, Suspense } from 'react'; // Import Suspense
 import { usePathname } from 'next/navigation';
-import Navbar from '@/presentation/components/Navbar';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,7 +23,7 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Navbar />
+
       <div className="flex h-screen">
         <Sidebar /* onExpandChange={setIsSidebarExpanded} */ /> {/* Prop no utilizada actualmente para ajustar el padding del main */}
         <main 

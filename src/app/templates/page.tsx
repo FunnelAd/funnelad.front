@@ -178,7 +178,7 @@ export default function TemplatesPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {templates.map((template) => (
-                  <tr key={template._id}> {/* template._id se usa aquí como clave */}
+                  <tr key={template._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {template.name}
@@ -214,7 +214,7 @@ export default function TemplatesPage() {
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleDeleteTemplate(template.id)}
+                        onClick={() => handleDeleteTemplate(template._id)}
                         className="text-red-600 hover:text-red-900"
                       >
                         <TrashIcon className="h-5 w-5" />

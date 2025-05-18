@@ -130,10 +130,10 @@ export default function Sidebar({ onExpandChange }: SidebarProps) {
         />
       )}
 
-      {/* Sidebar - Aumentado z-index y eliminado transformación del layout */}
+      {/* Sidebar - Modificado para ocupar toda la altura de la pantalla */}
       <div
         className={`
-          fixed left-0 top-[56px] h-[calc(100vh-56px)] bg-[var(--fa-sidebar)] border-r border-[var(--fa-border)] transition-all duration-300 ease-in-out z-[100]
+          fixed left-0 top-0 h-screen bg-[var(--fa-sidebar)] border-r border-[var(--fa-border)] transition-all duration-300 ease-in-out z-[100]
           ${isMobile
             ? `${isOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full'} w-64`
             : 'w-16 hover:w-64 group'
@@ -147,7 +147,13 @@ export default function Sidebar({ onExpandChange }: SidebarProps) {
       >
       <div className="flex items-center justify-center h-16 border-b border-[var(--fa-border)]">
           <Link href="/dashboard" className="text-xl font-bold text-[var(--fa-gold)] whitespace-nowrap overflow-hidden">
-            {(!isMobile || isOpen) && 'FunnelAd'}
+            {(!isMobile && !isHovered) ? (
+              <div className="flex justify-center">
+                <span className="text-2xl">F</span>
+              </div>
+            ) : (
+              'FunnelAd'
+            )}
         </Link>
       </div>
         <nav className="flex-1 px-2 py-4 space-y-1 pb-16">

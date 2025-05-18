@@ -1,107 +1,127 @@
-import Image from "next/image";
+
+
+
+
+'use client';
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      {/* DEBUG: Mostrar la variable de entorno de la API */}
-      <div className="fixed top-2 left-2 bg-yellow-100 text-yellow-900 px-4 py-2 rounded shadow z-50 text-xs font-mono border border-yellow-300">
-        <strong>API URL:</strong> {process.env.NEXT_PUBLIC_API_URL || 'No definida'}
-      </div>
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const router = useRouter();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    // Redirigir después de mostrar la animación por un breve momento
+    const redirectTimer = setTimeout(() => {
+      router.push('/auth');
+    }, 2500); // 2.5 segundos para mostrar la animación
+
+    return () => clearTimeout(redirectTimer);
+  }, [router]);
+
+  return (
+    <>
+      {/* Capa de bloqueo que cubre toda la pantalla y evita que se vean otros elementos */}
+      <div 
+        className="fixed inset-0 bg-gray-900 z-[9999]" 
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          margin: 0,
+          padding: 0
+        }}
+      />
+
+      {/* Contenido de la animación */}
+      <div 
+        className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700 z-[10000]"
+        style={{ 
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          margin: 0,
+          padding: 0
+        }}
+      >
+        {/* Fondo decorativo */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-tr from-yellow-400/30 via-yellow-200/10 to-transparent rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-br from-blue-400/20 via-blue-200/10 to-transparent rounded-full blur-2xl animate-pulse" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <div className="relative z-10 flex flex-col items-center">
+          {/* Logo con animación de pulso */}
+          <div className="relative mb-8 animate-bounce">
+            <Image
+              src="/logo.svg"
+              alt="FunnelAd"
+              width={80}
+              height={80}
+              className="drop-shadow-lg"
+            />
+            <div className="absolute inset-0 bg-yellow-400/20 rounded-full blur-xl animate-ping" />
+          </div>
+
+          {/* Animación de automatización/IA */}
+          <div className="relative w-64 h-16 mb-8">
+            {/* Círculos que representan nodos de IA */}
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-700 border-2 border-yellow-400/80 rounded-full animate-pulse" />
+            <div className="absolute left-1/4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-700 border-2 border-yellow-400/80 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-gray-700 border-2 border-yellow-400/80 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+            <div className="absolute left-3/4 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-gray-700 border-2 border-yellow-400/80 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }} />
+            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-700 border-2 border-yellow-400/80 rounded-full animate-pulse" style={{ animationDelay: '0.8s' }} />
+
+            {/* Líneas conectoras con animación */}
+            <div className="absolute left-6 top-1/2 w-10 h-0.5 bg-gradient-to-r from-yellow-400/80 to-yellow-400/40 transform -translate-y-1/2 animate-pulse" />
+            <div className="absolute left-[calc(25%+8px)] top-1/2 w-[calc(25%-16px)] h-0.5 bg-gradient-to-r from-yellow-400/80 to-yellow-400/40 transform -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.3s' }} />
+            <div className="absolute left-[calc(50%+10px)] top-1/2 w-[calc(25%-18px)] h-0.5 bg-gradient-to-r from-yellow-400/80 to-yellow-400/40 transform -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.5s' }} />
+            <div className="absolute left-[calc(75%+8px)] top-1/2 w-[calc(25%-14px)] h-0.5 bg-gradient-to-r from-yellow-400/80 to-yellow-400/40 transform -translate-y-1/2 animate-pulse" style={{ animationDelay: '0.7s' }} />
+          </div>
+
+          {/* Texto con efecto de máquina de escribir */}
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-white mb-2 relative">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200">
+                FunnelAd
+              </span>
+              <span className="inline-block w-0.5 h-6 bg-yellow-400 ml-1 animate-blink"></span>
+            </h2>
+            <p className="text-gray-300 text-sm">Automatizando tu marketing con IA</p>
+          </div>
+
+          {/* Indicador de carga */}
+          <div className="mt-8 w-48 h-1 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 rounded-full animate-loadingBar" 
+                style={{ 
+                  width: '30%', 
+                  backgroundSize: '200% 100%',
+                  animation: 'loadingBar 2s infinite linear' 
+                }}></div>
+          </div>
+        </div>
+
+        {/* Estilos para la animación de la barra de carga */}
+        <style jsx>{`
+          @keyframes loadingBar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+          @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+          }
+        `}</style>
+      </div>
+    </>
   );
 }
