@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { AuthResponse } from '@/core/types/auth';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 class TokenService {
   private static readonly TOKEN_KEY = 'token';
