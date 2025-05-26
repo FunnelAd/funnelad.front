@@ -20,8 +20,8 @@ export const n8nService = {
   // },
 
   async sendMessageAgentAI(data: N8N): Promise<N8NResponse> {
-    const response = await api.post('api/sendMessageAgent', data);
-    console.log('Create Template:', response);
+    const response = await api.post('api/n8n/sendMessageAgent', data);
+    console.log('response N8N Message:', response);
     return  response.data as N8NResponse;
   },
 

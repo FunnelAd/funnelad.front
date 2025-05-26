@@ -6,6 +6,8 @@ import ConversationList from '@/presentation/components/chat/ConversationList';
 import MessageList from '@/presentation/components/chat/MessageList';
 import MessageInput from '@/presentation/components/chat/MessageInput';
 import { TokenService } from '@/core/api';
+import { N8N } from '@/core/types/n8n';
+import { n8nService } from '@/core/services/n8nService';
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -71,7 +73,7 @@ export default function ChatPage() {
     setSelectedConversation(conversation);
   };
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!selectedConversation) return;
 
     const newMessage: Message = {
@@ -81,7 +83,15 @@ export default function ChatPage() {
       timestamp: new Date(),
       isRead: false,
     };
+    const newMessageAgent: N8N = {
+id: "11111",
+name: "Carlos",
+messages: content,
 
+    }
+
+    const response = await n8nService.sendMessageAgentAI(newMessageAgent)
+    console.log(response)
     // Actualizar la conversación seleccionada
     setSelectedConversation(prev => {
       if (!prev) return null;
