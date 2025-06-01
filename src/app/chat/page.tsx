@@ -33,32 +33,6 @@ export default function ChatPage() {
           isRead: false,
         }
       },
-      {
-        id: '2',
-        participants: ['soporte@funnelad.com', currentUser],
-        messages: [],
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        lastMessage: {
-          id: '1',
-          content: 'Tu ticket ha sido resuelto. Por favor, confirma si todo funciona correctamente.',
-          sender: 'soporte@funnelad.com',
-          timestamp: new Date(Date.now() - 43200000),
-          isRead: true,
-        }
-      },
-      {
-        id: '3',
-        participants: ['ventas@funnelad.com', currentUser],
-        messages: [],
-        createdAt: new Date(Date.now() - 259200000).toISOString(),
-        lastMessage: {
-          id: '1',
-          content: 'Gracias por tu interés en nuestros servicios. ¿Cuándo podríamos agendar una llamada?',
-          sender: 'ventas@funnelad.com',
-          timestamp: new Date(Date.now() - 86400000),
-          isRead: true,
-        }
-      }
     ];
 
     // Simular carga de datos
@@ -83,15 +57,7 @@ export default function ChatPage() {
       timestamp: new Date(),
       isRead: false,
     };
-    const newMessageAgent: N8N = {
-id: "11111",
-name: "Carlos",
-messages: content,
 
-    }
-
-    const response = await n8nService.sendMessageAgentAI(newMessageAgent)
-    console.log(response)
     // Actualizar la conversación seleccionada
     setSelectedConversation(prev => {
       if (!prev) return null;
@@ -103,41 +69,49 @@ messages: content,
     });
 
     // Actualizar la lista de conversaciones
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === selectedConversation.id 
-          ? { ...conv, lastMessage: newMessage } 
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation.id
+          ? { ...conv, lastMessage: newMessage }
           : conv
       )
     );
+    // Respuesta Agente
 
-    // Simular respuesta automática después de un breve retraso
-    setTimeout(() => {
-      const autoResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '¡Gracias por tu mensaje! Te responderemos lo antes posible.',
-        sender: selectedConversation.participants.find(p => p !== currentUser) || '',
-        timestamp: new Date(),
-        isRead: false,
+    const newMessageAgent: N8N = {
+      id: "11111",
+      name: "Carlos",
+      messages: content,
+
+    }
+
+    const response = await n8nService.sendMessageAgentAI(newMessageAgent)
+    console.log(response)
+
+    const autoResponse: Message = {
+      id: (Date.now() + 1).toString(),
+      content: response.output,
+      sender: selectedConversation.participants.find(p => p !== currentUser) || '',
+      timestamp: new Date(),
+      isRead: false,
+    };
+
+    setSelectedConversation(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        messages: [...(prev.messages || []), autoResponse],
+        lastMessage: autoResponse
       };
+    });
 
-      setSelectedConversation(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          messages: [...(prev.messages || []), autoResponse],
-          lastMessage: autoResponse
-        };
-      });
-
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id 
-            ? { ...conv, lastMessage: autoResponse } 
-            : conv
-        )
-      );
-    }, 1500);
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation.id
+          ? { ...conv, lastMessage: autoResponse }
+          : conv
+      )
+    );
   };
 
   if (loading) {
@@ -155,11 +129,11 @@ messages: content,
           <h1 className="text-2xl font-bold text-white">Chat</h1>
           <div className={`h-3 w-3 rounded-full ${connected ? 'bg-[#C9A14A]' : 'bg-red-500'}`} title={connected ? 'Conectado' : 'Desconectado'}></div>
         </header>
-        
+
         {error && (
           <div className="bg-red-900/50 border border-red-700 text-red-100 px-4 py-3 rounded relative m-4">
             <span className="block sm:inline">{error}</span>
-            <button 
+            <button
               className="absolute top-0 bottom-0 right-0 px-4 py-3 text-red-100"
               onClick={() => setError(null)}
             >
@@ -167,14 +141,14 @@ messages: content,
             </button>
           </div>
         )}
-        
+
         <div className="flex flex-1 overflow-hidden">
-          <ConversationList 
-            conversations={conversations} 
+          <ConversationList
+            conversations={conversations}
             onSelectConversation={handleSelectConversation}
             selectedConversationId={selectedConversation?.id}
           />
-          
+
           {selectedConversation ? (
             <div className="flex-1 flex flex-col">
               <div className="p-4 border-b border-[#1D3E4E] bg-[#0B2C3D]">
@@ -182,12 +156,12 @@ messages: content,
                   {selectedConversation.participants.filter(p => p !== currentUser).join(', ')}
                 </h2>
               </div>
-              
-              <MessageList 
-                messages={selectedConversation.messages || []} 
+
+              <MessageList
+                messages={selectedConversation.messages || []}
                 currentUser={currentUser}
               />
-              
+
               <MessageInput onSendMessage={handleSendMessage} />
             </div>
           ) : (
