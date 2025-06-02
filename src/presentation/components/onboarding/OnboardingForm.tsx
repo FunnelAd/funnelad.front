@@ -226,6 +226,8 @@ const OnboardingForm: React.FC = () => {
     fullName: "",
     email: "",
     whatsapp: "",
+    identification: "",
+    webSite:"",
 
     // Tipo de agente
     agentTypes: [] as string[],
@@ -388,6 +390,8 @@ const OnboardingForm: React.FC = () => {
         newErrors.businessName = "El nombre del negocio es requerido";
       if (!formData.fullName.trim())
         newErrors.fullName = "Tu nombre es requerido";
+      if (!formData.identification.trim())
+        newErrors.identification = "Tu identifiacion es requerida";
       if (!formData.email.trim()) {
         newErrors.email = "El correo electrónico es requerido";
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -536,7 +540,7 @@ const OnboardingForm: React.FC = () => {
                 FunnelAd te ayuda a automatizar tus ventas y atención al cliente
                 con inteligencia artificial.
               </p>
-              <motion.button
+              {/* <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleNext}
@@ -544,7 +548,7 @@ const OnboardingForm: React.FC = () => {
               >
                 CONTINUAR
                 <ArrowRightIcon className="w-5 h-5 ml-2" />
-              </motion.button>
+              </motion.button> */}
             </div>
             <div className="md:w-1/2">
               <motion.div
@@ -625,6 +629,64 @@ const OnboardingForm: React.FC = () => {
                   {errors.businessName && (
                     <p className="mt-1 text-sm text-red-500">
                       {errors.businessName}
+                    </p>
+                  )}
+                </motion.div>
+
+                  <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <label
+                    htmlFor="webSite"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Pagina Web
+                  </label>
+                  <input
+                    type="text"
+                    id="webSite"
+                    name="webSite"
+                    value={formData.webSite}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.webSite
+                        ? "border-red-500"
+                        : "border-[#C9A14A]"
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
+                  />
+                  {errors.webSite && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.webSite}
+                    </p>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <label
+                    htmlFor="identification"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    CC/NIT
+                  </label>
+                  <input
+                    type="text"
+                    id="identification"
+                    name="identification"
+                    value={formData.identification}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border ${
+                      errors.identification ? "border-red-500" : "border-[#C9A14A]"
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
+                  />
+                  {errors.identification && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.identification}
                     </p>
                   )}
                 </motion.div>
