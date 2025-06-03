@@ -452,7 +452,7 @@ const OnboardingForm: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:3001/api/onboarding/submit",
+        "https://funnelad-api.onrender.com/api/onboarding/submit",
         {
           method: "POST",
           headers: {
