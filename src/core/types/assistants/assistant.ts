@@ -31,6 +31,7 @@ export interface Assistant {
 }
 
 export interface CreateAssistantData {
+  id: string;
   name: string;
   description: string;
   model: string;
@@ -59,4 +60,4 @@ export interface UpdateAssistantData {
   description?: string;
   model?: string;
   isActive?: boolean;
-} 
+}
