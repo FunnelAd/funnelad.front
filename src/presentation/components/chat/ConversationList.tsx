@@ -33,7 +33,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="font-medium text-white">
-                  {conversation.participants.join(', ')}
+                  {conversation.nameUser}
                 </h3>
                 {conversation.lastMessage && (
                   <p className="text-sm text-gray-400 truncate">

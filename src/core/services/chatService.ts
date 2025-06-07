@@ -1,16 +1,22 @@
 import { api } from '@/core/api';
 
 export interface Message {
-  id?: string;
+  sessionid: string;
   content: string;
   sender: string;
+  type: string; // e.g., 'text', 'image', etc.
   timestamp: Date;
+  businessid: string;
   isRead: boolean;
 }
 
 export interface Conversation {
   id?: string;
-  participants: string[];
+  sessionid: string;
+  nameUser: string;
+  businessid: string;
+  businessName: string;
+  // participants: string[];
   messages: Message[];
   createdAt: string;
   updatedAt?: string;
@@ -20,15 +26,15 @@ export interface Conversation {
 export const chatService = {
 
 
-  async getConversations(): Promise<Conversation[]> {
-    const response = await api.get('api/conversations');
+  async getConversation(sessionid: string): Promise<Conversation[]> {
+    const response = await api.get(`api/conversations/${sessionid}`);
     console.log('Conversations:', response);
     return response.data as Conversation[];
   },
 
-  async getConversation(id: string): Promise<Conversation> {
-    const response = await api.get(`api/conversations/${id}`);
-    return response.data;
+  async getConversations(id: string): Promise<Conversation[]> {
+    const response = await api.get(`api/conversations/business/${id}`);
+    return response.data as Conversation[];
   },
 
   async addNewConversation(converstaions: Conversation): Promise<Conversation> {
@@ -36,8 +42,15 @@ export const chatService = {
     return response.data as Conversation;
   },
 
+  async addMessage(message: Message): Promise<Conversation> {
+    console.log('Adding message:', message);
+    const response = await api.post('api/conversations/add-message',  message);
+    return response.data as Conversation;
+  },
+
+
   async sendMessage(conversationId: string, content: string): Promise<Message> {
-    const response = await api.post(`api/conversations/${conversationId}/messages`, { content });
+    const response = await api.post('api/conversations/add-message', { content });
     return response.data;
   },
 

@@ -19,36 +19,16 @@ export default function ChatPage() {
 
   // Simulación de conversaciones
   useEffect(() => {
-    const demoConversations: Conversation[] = [
-      // {
-      //   id: '1',
-      //   participants: ['asistente@funnelad.com', currentUser],
-      //   messages: [],
-      //   createdAt: new Date(Date.now() - 86400000).toISOString(),
-      //   lastMessage: {
-      //     id: '7',
-      //     content: 'Perfecto, he agendado una demostración para el próximo martes a las 10:00 AM. Te enviaré un correo con los detalles de la reunión. ¿Hay algo más en lo que pueda ayudarte?',
-      //     sender: 'asistente@funnelad.com',
-      //     timestamp: new Date(Date.now() - 3000000),
-      //     isRead: false,
-      //   }
-      // },
-    ];
 
     loadData();
-    // Simular carga de datos
-    setTimeout(async () => {
-      setConversations(demoConversations);
-      setSelectedConversation(demoConversations[0]);
-      setLoading(false);
-    }, 1000);
   }, [currentUser]);
 
   const loadData = async () => {
     try {
-      const data = await chatService.getConversations();
-      setConversations(data);
+      const data = await chatService.getConversations('F4$TEST1001');
+      console.log('Conversations loaded:', data);
       if (data.length > 0) {
+        setConversations(data);
         setSelectedConversation(data[0]);
       }
     } catch (err) {
@@ -67,13 +47,16 @@ export default function ChatPage() {
     if (!selectedConversation) return;
 
     const newMessage: Message = {
-      id: Date.now().toString(),
-      content,
+      sessionid: selectedConversation.sessionid || '',
+      content: content,
+      type: 'text', // Asumimos que es un mensaje de texto
       sender: currentUser,
+      businessid: selectedConversation.businessid || '',
       timestamp: new Date(),
       isRead: false,
     };
 
+    console.log('Sending message:', newMessage);
     // Actualizar la conversación seleccionada
     setSelectedConversation(prev => {
       if (!prev) return null;
@@ -103,32 +86,24 @@ export default function ChatPage() {
   //   }
 
     try {
-      await chatService.sendMessage(selectedConversation.id, content);
+      await chatService.addMessage(newMessage);
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Error al enviar el mensaje');
       return;
     }
 
-    
-
-    
-    const newMessageAgent: N8N = {
-      id: "11111",
-      name: "Carlos",
-      messages: content,
-
-    }
-
-    const response = await n8nService.sendMessageAgentAI(newMessageAgent)
+    const response = await n8nService.sendMessageAgentAI(newMessage)
     console.log(response)
 
     const autoResponse: Message = {
-      id: (Date.now() + 1).toString(),
-      content: response.output,
-      sender: selectedConversation.participants.find(p => p !== currentUser) || '',
-      timestamp: new Date(),
+      sessionid: selectedConversation.sessionid || '',
+      content: response.content,
+      sender: response.sender || 'Agente AI',
+      timestamp: response.timestamp || new Date(),
       isRead: false,
+      businessid: selectedConversation.businessid || '',
+      type: 'text', // Asumimos que es un mensaje de texto
     };
 
     setSelectedConversation(prev => {
@@ -155,20 +130,20 @@ export default function ChatPage() {
 
   const handleAddNewMessage = async () => {
 
-    const payload: Conversation = {
-      messages: [],
-      participants: [currentUser],
-      createdAt: new Date().toISOString(),
+    // const payload: Conversation = {
+    //   messages: [],
+    //   // participants: [currentUser],
+    //   createdAt: new Date().toISOString(),
 
-    };
+    // };
 
-    try {
-      await chatService.addNewConversation(payload);
-    } catch (err) {
-      console.error('Error sending message:', err);
-      setError('Error al enviar el mensaje');
-      return;
-    }
+    // try {
+    //   await chatService.addNewConversation(payload);
+    // } catch (err) {
+    //   console.error('Error sending message:', err);
+    //   setError('Error al enviar el mensaje');
+    //   return;
+    // }
 
     
 
@@ -252,7 +227,7 @@ export default function ChatPage() {
             <div className="flex-1 flex flex-col">
               <div className="p-4 border-b border-[#1D3E4E] bg-[#0B2C3D]">
                 <h2 className="text-xl font-semibold text-white">
-                  {selectedConversation.participants.filter(p => p !== currentUser).join(', ')}
+                  {selectedConversation.nameUser}
                 </h2>
               </div>
 

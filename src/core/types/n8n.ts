@@ -2,8 +2,8 @@ import { TemplateFormData } from "@/presentation/components/TemplateModal";
 
 export interface N8N {
     id?: string;
-    name: string;
-    messages: string;
+    sender: string;
+    content: string;
     context?: [];
     templates?: [TemplateFormData];
     isActive?: boolean;
