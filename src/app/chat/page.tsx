@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Conversation, Message } from '@/core/services/chatService';
+import { chatService, Conversation, Message } from '@/core/services/chatService';
 import ConversationList from '@/presentation/components/chat/ConversationList';
 import MessageList from '@/presentation/components/chat/MessageList';
 import MessageInput from '@/presentation/components/chat/MessageInput';
@@ -20,28 +20,44 @@ export default function ChatPage() {
   // Simulación de conversaciones
   useEffect(() => {
     const demoConversations: Conversation[] = [
-      {
-        id: '1',
-        participants: ['asistente@funnelad.com', currentUser],
-        messages: [],
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        lastMessage: {
-          id: '7',
-          content: 'Perfecto, he agendado una demostración para el próximo martes a las 10:00 AM. Te enviaré un correo con los detalles de la reunión. ¿Hay algo más en lo que pueda ayudarte?',
-          sender: 'asistente@funnelad.com',
-          timestamp: new Date(Date.now() - 3000000),
-          isRead: false,
-        }
-      },
+      // {
+      //   id: '1',
+      //   participants: ['asistente@funnelad.com', currentUser],
+      //   messages: [],
+      //   createdAt: new Date(Date.now() - 86400000).toISOString(),
+      //   lastMessage: {
+      //     id: '7',
+      //     content: 'Perfecto, he agendado una demostración para el próximo martes a las 10:00 AM. Te enviaré un correo con los detalles de la reunión. ¿Hay algo más en lo que pueda ayudarte?',
+      //     sender: 'asistente@funnelad.com',
+      //     timestamp: new Date(Date.now() - 3000000),
+      //     isRead: false,
+      //   }
+      // },
     ];
 
+    loadData();
     // Simular carga de datos
-    setTimeout(() => {
+    setTimeout(async () => {
       setConversations(demoConversations);
       setSelectedConversation(demoConversations[0]);
       setLoading(false);
     }, 1000);
   }, [currentUser]);
+
+  const loadData = async () => {
+    try {
+      const data = await chatService.getConversations();
+      setConversations(data);
+      if (data.length > 0) {
+        setSelectedConversation(data[0]);
+      }
+    } catch (err) {
+      console.error('Error loading conversations:', err);
+      setError('Error al cargar las conversaciones');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
@@ -78,6 +94,25 @@ export default function ChatPage() {
     );
     // Respuesta Agente
 
+  //  try {
+  //     await chatService.addNewConversation( content);
+  //   } catch (err) {
+  //     console.error('Error sending message:', err);
+  //     setError('Error al enviar el mensaje');
+  //     return;
+  //   }
+
+    try {
+      await chatService.sendMessage(selectedConversation.id, content);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Error al enviar el mensaje');
+      return;
+    }
+
+    
+
+    
     const newMessageAgent: N8N = {
       id: "11111",
       name: "Carlos",
@@ -113,6 +148,68 @@ export default function ChatPage() {
       )
     );
   };
+  
+
+
+
+
+  const handleAddNewMessage = async () => {
+
+    const payload: Conversation = {
+      messages: [],
+      participants: [currentUser],
+      createdAt: new Date().toISOString(),
+
+    };
+
+    try {
+      await chatService.addNewConversation(payload);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Error al enviar el mensaje');
+      return;
+    }
+
+    
+
+    
+    // const newMessageAgent: N8N = {
+    //   id: "11111",
+    //   name: "Carlos",
+    //   messages: content,
+
+    // }
+
+    // const response = await n8nService.sendMessageAgentAI(newMessageAgent)
+    // console.log(response)
+
+    // const autoResponse: Message = {
+    //   id: (Date.now() + 1).toString(),
+    //   content: response.output,
+    //   sender: selectedConversation.participants.find(p => p !== currentUser) || '',
+    //   timestamp: new Date(),
+    //   isRead: false,
+    // };
+
+    // setSelectedConversation(prev => {
+    //   if (!prev) return null;
+    //   return {
+    //     ...prev,
+    //     messages: [...(prev.messages || []), autoResponse],
+    //     lastMessage: autoResponse
+    //   };
+    // });
+
+    // setConversations(prev =>
+    //   prev.map(conv =>
+    //     conv.id === selectedConversation.id
+    //       ? { ...conv, lastMessage: autoResponse }
+    //       : conv
+    //   )
+    // );
+  };
+
+
 
   if (loading) {
     return (
@@ -147,6 +244,8 @@ export default function ChatPage() {
             conversations={conversations}
             onSelectConversation={handleSelectConversation}
             selectedConversationId={selectedConversation?.id}
+            onAddNewConversation={handleAddNewMessage}
+
           />
 
           {selectedConversation ? (

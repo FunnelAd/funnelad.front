@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Conversation } from '@/core/services/chatService';
 
 interface ConversationListProps {
   conversations: Conversation[];
   onSelectConversation: (conversation: Conversation) => void;
+  onAddNewConversation: () => void;
   selectedConversationId?: string;
 }
 
 const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
   onSelectConversation,
+  onAddNewConversation,
   selectedConversationId
 }) => {
   return (
@@ -18,6 +20,8 @@ const ConversationList: React.FC<ConversationListProps> = ({
         <h2 className="text-xl font-semibold text-white">Conversaciones</h2>
       </div>
       <div>
+
+        
         {conversations.map((conversation) => (
           <div
             key={conversation.id}
@@ -48,6 +52,13 @@ const ConversationList: React.FC<ConversationListProps> = ({
             </div>
           </div>
         ))}
+    <div>
+      <button  onClick={() => onAddNewConversation()} className="w-full p-4 text-center text-white bg-[#C9A14A] hover:bg-[#b08a3c] rounded-b-lg">
+      Añadir nueva conversación
+      </button>
+    </div>
+
+
       </div>
     </div>
   );
