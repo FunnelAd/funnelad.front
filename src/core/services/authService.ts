@@ -4,6 +4,7 @@ import type { RegisterData } from "@/core/types/auth/responses";
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
+
     // console.log('Login attempt with email:', email);
     // console.log('Login attempt with password:', password);
     const response = await api.post(

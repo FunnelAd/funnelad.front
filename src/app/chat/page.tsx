@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Conversation, Message } from '@/core/services/chatService';
+import { chatService, Conversation, Message } from '@/core/services/chatService';
 import ConversationList from '@/presentation/components/chat/ConversationList';
 import MessageList from '@/presentation/components/chat/MessageList';
 import MessageInput from '@/presentation/components/chat/MessageInput';
 import { TokenService } from '@/core/api';
+import { n8nService } from '@/core/services/n8nService';
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -17,71 +18,44 @@ export default function ChatPage() {
 
   // Simulación de conversaciones
   useEffect(() => {
-    const demoConversations: Conversation[] = [
-      {
-        id: '1',
-        participants: ['asistente@funnelad.com', currentUser],
-        messages: [],
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        lastMessage: {
-          id: '7',
-          content: 'Perfecto, he agendado una demostración para el próximo martes a las 10:00 AM. Te enviaré un correo con los detalles de la reunión. ¿Hay algo más en lo que pueda ayudarte?',
-          sender: 'asistente@funnelad.com',
-          timestamp: new Date(Date.now() - 3000000),
-          isRead: false,
-        }
-      },
-      {
-        id: '2',
-        participants: ['soporte@funnelad.com', currentUser],
-        messages: [],
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        lastMessage: {
-          id: '1',
-          content: 'Tu ticket ha sido resuelto. Por favor, confirma si todo funciona correctamente.',
-          sender: 'soporte@funnelad.com',
-          timestamp: new Date(Date.now() - 43200000),
-          isRead: true,
-        }
-      },
-      {
-        id: '3',
-        participants: ['ventas@funnelad.com', currentUser],
-        messages: [],
-        createdAt: new Date(Date.now() - 259200000).toISOString(),
-        lastMessage: {
-          id: '1',
-          content: 'Gracias por tu interés en nuestros servicios. ¿Cuándo podríamos agendar una llamada?',
-          sender: 'ventas@funnelad.com',
-          timestamp: new Date(Date.now() - 86400000),
-          isRead: true,
-        }
-      }
-    ];
 
-    // Simular carga de datos
-    setTimeout(() => {
-      setConversations(demoConversations);
-      setSelectedConversation(demoConversations[0]);
-      setLoading(false);
-    }, 1000);
+    loadData();
   }, [currentUser]);
+
+  const loadData = async () => {
+    try {
+      const data = await chatService.getConversations('F4$TEST1001');
+      console.log('Conversations loaded:', data);
+      if (data.length > 0) {
+        setConversations(data);
+        setSelectedConversation(data[0]);
+      }
+    } catch (err) {
+      console.error('Error loading conversations:', err);
+      setError('Error al cargar las conversaciones');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectConversation = (conversation: Conversation) => {
     setSelectedConversation(conversation);
   };
 
-  const handleSendMessage = (content: string) => {
+  const handleSendMessage = async (content: string) => {
     if (!selectedConversation) return;
 
     const newMessage: Message = {
-      id: Date.now().toString(),
-      content,
+      sessionid: selectedConversation.sessionid || '',
+      content: content,
+      type: 'text', // Asumimos que es un mensaje de texto
       sender: currentUser,
+      businessid: selectedConversation.businessid || '',
       timestamp: new Date(),
       isRead: false,
     };
 
+    console.log('Sending message:', newMessage);
     // Actualizar la conversación seleccionada
     setSelectedConversation(prev => {
       if (!prev) return null;
@@ -93,42 +67,123 @@ export default function ChatPage() {
     });
 
     // Actualizar la lista de conversaciones
-    setConversations(prev => 
-      prev.map(conv => 
-        conv.id === selectedConversation.id 
-          ? { ...conv, lastMessage: newMessage } 
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation.id
+          ? { ...conv, lastMessage: newMessage }
           : conv
       )
     );
+    // Respuesta Agente
 
-    // Simular respuesta automática después de un breve retraso
-    setTimeout(() => {
-      const autoResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: '¡Gracias por tu mensaje! Te responderemos lo antes posible.',
-        sender: selectedConversation.participants.find(p => p !== currentUser) || '',
-        timestamp: new Date(),
-        isRead: false,
+  //  try {
+  //     await chatService.addNewConversation( content);
+  //   } catch (err) {
+  //     console.error('Error sending message:', err);
+  //     setError('Error al enviar el mensaje');
+  //     return;
+  //   }
+
+    try {
+      await chatService.addMessage(newMessage);
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Error al enviar el mensaje');
+      return;
+    }
+
+    const response = await n8nService.sendMessageAgentAI(newMessage)
+    console.log(response)
+
+    const autoResponse: Message = {
+      sessionid: selectedConversation.sessionid || '',
+      content: response.content,
+      sender: response.sender || 'Agente AI',
+      timestamp: response.timestamp || new Date(),
+      isRead: false,
+      businessid: selectedConversation.businessid || '',
+      type: 'text', // Asumimos que es un mensaje de texto
+    };
+
+    setSelectedConversation(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        messages: [...(prev.messages || []), autoResponse],
+        lastMessage: autoResponse
       };
+    });
 
-      setSelectedConversation(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          messages: [...(prev.messages || []), autoResponse],
-          lastMessage: autoResponse
-        };
-      });
-
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === selectedConversation.id 
-            ? { ...conv, lastMessage: autoResponse } 
-            : conv
-        )
-      );
-    }, 1500);
+    setConversations(prev =>
+      prev.map(conv =>
+        conv.id === selectedConversation.id
+          ? { ...conv, lastMessage: autoResponse }
+          : conv
+      )
+    );
   };
+  
+
+
+
+
+  const handleAddNewMessage = async () => {
+
+    // const payload: Conversation = {
+    //   messages: [],
+    //   // participants: [currentUser],
+    //   createdAt: new Date().toISOString(),
+
+    // };
+
+    // try {
+    //   await chatService.addNewConversation(payload);
+    // } catch (err) {
+    //   console.error('Error sending message:', err);
+    //   setError('Error al enviar el mensaje');
+    //   return;
+    // }
+
+    
+
+    
+    // const newMessageAgent: N8N = {
+    //   id: "11111",
+    //   name: "Carlos",
+    //   messages: content,
+
+    // }
+
+    // const response = await n8nService.sendMessageAgentAI(newMessageAgent)
+    // console.log(response)
+
+    // const autoResponse: Message = {
+    //   id: (Date.now() + 1).toString(),
+    //   content: response.output,
+    //   sender: selectedConversation.participants.find(p => p !== currentUser) || '',
+    //   timestamp: new Date(),
+    //   isRead: false,
+    // };
+
+    // setSelectedConversation(prev => {
+    //   if (!prev) return null;
+    //   return {
+    //     ...prev,
+    //     messages: [...(prev.messages || []), autoResponse],
+    //     lastMessage: autoResponse
+    //   };
+    // });
+
+    // setConversations(prev =>
+    //   prev.map(conv =>
+    //     conv.id === selectedConversation.id
+    //       ? { ...conv, lastMessage: autoResponse }
+    //       : conv
+    //   )
+    // );
+  };
+
+
 
   if (loading) {
     return (
@@ -145,11 +200,11 @@ export default function ChatPage() {
           <h1 className="text-2xl font-bold text-white">Chat</h1>
           <div className={`h-3 w-3 rounded-full ${connected ? 'bg-[#C9A14A]' : 'bg-red-500'}`} title={connected ? 'Conectado' : 'Desconectado'}></div>
         </header>
-        
+
         {error && (
           <div className="bg-red-900/50 border border-red-700 text-red-100 px-4 py-3 rounded relative m-4">
             <span className="block sm:inline">{error}</span>
-            <button 
+            <button
               className="absolute top-0 bottom-0 right-0 px-4 py-3 text-red-100"
               onClick={() => setError(null)}
             >
@@ -157,27 +212,29 @@ export default function ChatPage() {
             </button>
           </div>
         )}
-        
+
         <div className="flex flex-1 overflow-hidden">
-          <ConversationList 
-            conversations={conversations} 
+          <ConversationList
+            conversations={conversations}
             onSelectConversation={handleSelectConversation}
             selectedConversationId={selectedConversation?.id}
+            onAddNewConversation={handleAddNewMessage}
+
           />
-          
+
           {selectedConversation ? (
             <div className="flex-1 flex flex-col">
               <div className="p-4 border-b border-[#1D3E4E] bg-[#0B2C3D]">
                 <h2 className="text-xl font-semibold text-white">
-                  {selectedConversation.participants.filter(p => p !== currentUser).join(', ')}
+                  {selectedConversation.nameUser}
                 </h2>
               </div>
-              
-              <MessageList 
-                messages={selectedConversation.messages || []} 
+
+              <MessageList
+                messages={selectedConversation.messages || []}
                 currentUser={currentUser}
               />
-              
+
               <MessageInput onSendMessage={handleSendMessage} />
             </div>
           ) : (
