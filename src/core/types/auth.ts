@@ -46,6 +46,7 @@ export interface AuthResponse {
   user: User | null;
   email: string;
   access_token: string;
+  expires_in: number;
   company: Company | null;
 }
 

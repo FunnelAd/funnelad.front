@@ -16,6 +16,7 @@ import {
   TEXT_CONFIG_OPTIONS,
   VOICE_CONFIG_OPTIONS,
 } from "@/app/onboarding/constants/onboardingSteps";
+import { api } from "@/core/api";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
@@ -301,8 +302,52 @@ const OnboardingForm: React.FC = () => {
     }
   };
 
-  // Enviar el formulario
   const handleSubmit = async () => {
+    // 1. Validación final (opcional pero recomendado)
+    //    Aquí podrías añadir una función que verifique una última vez
+    //    los campos más importantes antes de enviar.
+    if (!formData.email || !formData.password || !formData.businessName) {
+      alert(
+        "Faltan datos cruciales en el formulario. Por favor, revisa los pasos."
+      );
+      // Podrías llevar al usuario al primer paso si quieres
+      // setCurrentStep(1);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      // 2. La llamada a la API
+      //    Ahora apunta a un endpoint dedicado para guardar el onboarding.
+      //    Enviamos el estado completo del formulario (`formData`).
+      const response = await api.post(
+        "/api/onboarding/submit", // Asegúrate que este endpoint exista en tu backend
+        formData
+      );
+
+      // 3. Manejo de la respuesta
+      console.log("✅ Solicitud de onboarding guardada:", response.data);
+      alert("¡Hemos recibido tu solicitud! Nos pondremos en contacto pronto.");
+      router.push("/gracias"); // Redirigir a una página de agradecimiento
+    } catch (error: any) {
+      console.error("❌ Error al enviar la solicitud de onboarding:", error);
+
+      let errorMessage = "Ocurrió un error inesperado al enviar tu solicitud.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      setErrors({ submit: errorMessage });
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Enviar el formulario
+  const handleSubmits = async () => {
     setIsSubmitting(true);
     setErrors({}); // Limpiamos errores antes de enviar
 

@@ -5,7 +5,9 @@ import { Assistant } from "@/core/types/assistants/assistant";
 import { assistantService } from "@/core/services/assistantService";
 import ProtectedRoute from "@/presentation/components/ProtectedRoute";
 import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
-import type { CreateAssistantFormData } from "@/presentation/components/CreateAssistantModal";
+import { useAuth } from "@/presentation/contexts/AuthContext";
+import { CreateAssistantData } from "@/core/types/assistants/assistant";
+
 import {
   PlusIcon,
   PencilIcon,
@@ -20,6 +22,8 @@ export default function AssistantsPage() {
   const [editingAssistant, setEditingAssistant] = useState<
     Assistant | undefined
   >();
+
+  const { user } = useAuth();
 
   useEffect(() => {
     loadAssistants();
@@ -46,16 +50,72 @@ export default function AssistantsPage() {
     setIsCreateModalOpen(true);
   };
 
-  const handleSaveAssistant = async (formData: CreateAssistantFormData) => {
+  const currentStore = {
+    id: "store_abc123",
+    name: "Mi Tienda Principal",
+    nit: "900123456-7",
+  };
+
+  const handleSaveAssistant = async (formDataDelModal: any) => {
     try {
-      if (editingAssistant) {
-        await assistantService.updateAssistant(editingAssistant.id, formData);
-      } else {
-        await assistantService.createAssistant(formData);
-      }
+      const completeData: CreateAssistantData = {
+        idCompany: currentStore.id,
+        nit: currentStore.nit,
+        createBy: user.email,
+
+        name: formDataDelModal.name,
+        phone: formDataDelModal.phone,
+        active: formDataDelModal.isActive ?? true,
+        welcomeMsg: formDataDelModal.welcomeTemplateId || "",
+
+        // Convertimos los números por si vienen como texto desde el input
+        timeResponse: Number(formDataDelModal.responseTime || 30),
+        assistensResponseP: Number(formDataDelModal.responseType || 80),
+        amountAudio: Number(formDataDelModal.audioCount || 0),
+
+        // Mapeamos los nombres de los booleanos
+        emotesUse: formDataDelModal.useEmojis ?? true,
+        stylesUse: formDataDelModal.useStyles ?? false,
+        voiceResponse: formDataDelModal.replyAudioWithAudio ?? false,
+
+        // Mapeamos el resto de nombres
+        idPhoneNumber: formDataDelModal.whatsappNumber,
+        idWppBusinessAccount: formDataDelModal.whatsappBusinessId,
+        idMetaApp: formDataDelModal.metaAppId,
+        tokenMetaPermanent: formDataDelModal.metaToken,
+        webhook: formDataDelModal.webhookUrl,
+        tokenWebhook: formDataDelModal.webhookToken,
+
+        prompt: formDataDelModal.prompt,
+
+        // Transformamos los datos complejos
+        typeSendMsg: formDataDelModal.typeSendMsgObject || {
+          id: 1,
+          name: "completo",
+        },
+        voice: formDataDelModal.voiceObject || {
+          id: 1,
+          name: "aura-asteria-es-US",
+          gender: "Female",
+        },
+        templates: formDataDelModal.templates || [],
+        triggers: formDataDelModal.triggers || [],
+      };
+
+      console.log(
+        "Enviando objeto final al backend:",
+        JSON.stringify(completeData, null, 2)
+      );
+      await assistantService.createAssistant(completeData);
+
+      // Éxito
       await loadAssistants();
-    } catch (error) {
-      console.error("Error saving assistant:", error);
+      setIsCreateModalOpen(false);
+    } catch (error: any) {
+      console.error("Error al crear el asistente:", error);
+      // Manejar el error aquí
+    } finally {
+      setIsLoading(false);
     }
   };
 

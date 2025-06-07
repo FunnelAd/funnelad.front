@@ -41,50 +41,26 @@ const MOCK_ASSISTANTS: Assistant[] = [
 
 export const assistantService = {
   async getAssistants(): Promise<Assistant[]> {
-    // Simulación de llamada a API
-
-    return new Promise(() => {
-      setTimeout(() => {}, 500);
-    });
-  },
-
-  async createAssistant(data: CreateAssistantData) {
-    // Simplemente usa 'api'. Los interceptores se encargarán de la autenticación.
-    const response = await api.post("/api/assistants/create", data);
+    const response = await api.get("/api/assistants/getAll");
     return response.data;
   },
 
-  /*  async createAssistant(data: CreateAssistantData): Promise<Assistant> {
-    try {
-      const response = await fetch(
-        "https://funnelad-api.onrender.com/api/assistants/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-          body: JSON.stringify(data),
-        }
-      );
+  async createAssistant(data: CreateAssistantData) {
+    // AÑADE ESTA LÍNEA PARA DEPURAR
+    console.log(
+      "Enviando estos datos al backend:",
+      JSON.stringify(data, null, 2)
+    );
 
-      if (!response.ok) {
-        throw new Error("Error creating assistant");
-      }
-
-      const newAssistant: Assistant = await response.json();
-      console.log("New Assistant:", newAssistant);
-      return newAssistant;
-    } catch (error) {
-      throw new Error("Failed to create assistant");
-    }
-  }, */
+    // El resto de la función se queda igual
+    const response = await api.post("/api/assistants/create", data);
+    return response.data;
+  },
 
   async updateAssistant(
     id: string,
     data: UpdateAssistantData
   ): Promise<Assistant> {
-    // Simulación de llamada a API
     return new Promise((resolve) => {
       setTimeout(() => {
         const assistant = MOCK_ASSISTANTS.find((a) => a.id === id);

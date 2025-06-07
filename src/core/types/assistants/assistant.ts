@@ -1,63 +1,40 @@
+// En @/core/types/assistants/assistant.ts
+
+// --- LA RECETA PRINCIPAL: Reflejo exacto del IAssistant del backend ---
 export interface Assistant {
-  id: string;
+  _id?: string;
   name: string;
-  description: string;
-  model: string;
-  createdAt: string;
-  updatedAt: string;
-  isActive: boolean;
-  storeId: string;
-  storeName: string;
-  createdBy: string;
-  lastUsed?: string;
-  totalConversations?: number;
-  successRate?: number;
-  phone?: string;
-  welcomeTemplateId?: string;
-  responseTime?: number;
-  responseType?: number;
-  messageSendType?: string;
-  useEmojis?: boolean;
-  useStyles?: boolean;
-  audioVoice?: string;
-  audioCount?: number;
-  replyAudioWithAudio?: boolean;
-  whatsappNumber?: string;
-  whatsappBusinessId?: string;
-  metaAppId?: string;
-  metaToken?: string;
-  webhookUrl?: string;
-  webhookToken?: string;
+  phone: string;
+  idCompany: string;
+  nit: string;
+  createBy: string; // Ojo al typo que espera el backend
+  welcomeMsg?: string;
+  timeResponse: number;
+  assistensResponseP: number; // Ojo al typo que espera el backend
+  templates: Array<{ idTemplate: string; active: boolean }>;
+  triggers: Array<{ idTriggers: string; active: boolean }>;
+  typeSendMsg: { id: number; name: string };
+  emotesUse: boolean;
+  stylesUse: boolean;
+  voice: { id: number; name: string; gender: string };
+  amountAudio: number;
+  voiceResponse: boolean;
+  idPhoneNumber: string;
+  idWppBusinessAccount: string;
+  idMetaApp: string;
+  tokenMetaPermanent: string;
+  webhook: string;
+  tokenWebhook: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  prompt?: string;
 }
 
-export interface CreateAssistantData {
-  id: string;
-  name: string;
-  description: string;
-  model: string;
-  storeId: string;
-  phone?: string;
-  welcomeTemplateId?: string;
-  isActive: boolean;
-  responseTime?: number;
-  responseType?: number;
-  messageSendType?: string;
-  useEmojis?: boolean;
-  useStyles?: boolean;
-  audioVoice?: string;
-  audioCount?: number;
-  replyAudioWithAudio?: boolean;
-  whatsappNumber?: string;
-  whatsappBusinessId?: string;
-  metaAppId?: string;
-  metaToken?: string;
-  webhookUrl?: string;
-  webhookToken?: string;
-}
+export type CreateAssistantData = Omit<
+  Assistant,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;
 
-export interface UpdateAssistantData {
-  name?: string;
-  description?: string;
-  model?: string;
-  isActive?: boolean;
-}
+export type UpdateAssistantData = Partial<CreateAssistantData>;

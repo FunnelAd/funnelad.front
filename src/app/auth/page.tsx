@@ -46,30 +46,6 @@ export default function AuthPage() {
   });
   const { login } = useAuth();
 
-  const handleLogin = async (email, password) => {
-    try {
-      // 1. Llama al servicio de login
-      const authResponse = await authService.login(email, password);
-
-      // 2. Revisa si la respuesta contiene el token
-      //    IMPORTANTE: Ajusta 'authResponse.token' al nombre real de la propiedad en tu API (puede ser accessToken, access_token, etc.)
-      if (authResponse && authResponse.token) {
-        // 3. Guarda el token en localStorage
-        localStorage.setItem("access_token", authResponse.token);
-
-        console.log("Token guardado exitosamente!");
-        // Aquí puedes redirigir al usuario al dashboard o a otra página
-        // window.location.href = '/dashboard';
-      } else {
-        // Maneja el caso donde el login fue "exitoso" pero no devolvió un token
-        throw new Error("Respuesta de autenticación inválida");
-      }
-    } catch (error) {
-      console.error("Error en el login:", error);
-      // Muestra un mensaje de error al usuario
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

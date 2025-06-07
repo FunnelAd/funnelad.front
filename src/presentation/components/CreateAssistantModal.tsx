@@ -380,6 +380,35 @@ export default function CreateAssistantModal({
                 </div>
               </div>
 
+              {/* --- SECCIÓN PARA EL ENTRENAMIENTO (PROMPT) --- */}
+              <div className="mt-4">
+                {/* El label usa el estilo de tu ejemplo */}
+                <label
+                  htmlFor="prompt"
+                  className="block text-sm font-medium text-[#0B2C3D] font-semibold"
+                >
+                  Entrenamiento
+                </label>
+
+                <div className="mt-1">
+                  <textarea
+                    id="prompt"
+                    name="prompt"
+                    rows={5} // Ajusta la altura como necesites
+                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    placeholder="Ej: Eres un asistente amigable y experto en ventas. Tu objetivo es guiar al cliente hacia la compra del producto X..."
+                    // Conecta el valor al estado 'form'
+                    value={form.prompt}
+                    // Llama a handleChange para actualizar el estado
+                    onChange={(e) => handleChange("prompt", e.target.value)}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Define la personalidad y las instrucciones base de tu
+                  asistente. Esto es clave para su comportamiento.
+                </p>
+              </div>
+
               {/* {/* Audio 
               <div>
                 <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
