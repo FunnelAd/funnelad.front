@@ -1,0 +1,40 @@
+// En @/core/types/assistants/assistant.ts
+
+// --- LA RECETA PRINCIPAL: Reflejo exacto del IAssistant del backend ---
+export interface Assistant {
+  _id?: string;
+  name: string;
+  phone: string;
+  idCompany: string;
+  nit: string;
+  createBy: string; // Ojo al typo que espera el backend
+  welcomeMsg?: string;
+  timeResponse: number;
+  assistensResponseP: number; // Ojo al typo que espera el backend
+  templates: Array<{ idTemplate: string; active: boolean }>;
+  triggers: Array<{ idTriggers: string; active: boolean }>;
+  typeSendMsg: { id: number; name: string };
+  emotesUse: boolean;
+  stylesUse: boolean;
+  voice: { id: number; name: string; gender: string };
+  amountAudio: number;
+  voiceResponse: boolean;
+  idPhoneNumber: string;
+  idWppBusinessAccount: string;
+  idMetaApp: string;
+  tokenMetaPermanent: string;
+  webhook: string;
+  tokenWebhook: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  prompt?: string;
+}
+
+export type CreateAssistantData = Omit<
+  Assistant,
+  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+>;
+
+export type UpdateAssistantData = Partial<CreateAssistantData>;

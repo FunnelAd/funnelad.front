@@ -1,23 +1,29 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Assistant } from '@/core/types/assistant';
-import { assistantService } from '@/core/services/assistantService';
-import ProtectedRoute from '@/presentation/components/ProtectedRoute';
-import CreateAssistantModal from '@/presentation/components/CreateAssistantModal';
-import type { CreateAssistantFormData } from '@/presentation/components/CreateAssistantModal';
+import { useState, useEffect } from "react";
+import { Assistant } from "@/core/types/assistants/assistant";
+import { assistantService } from "@/core/services/assistantService";
+import ProtectedRoute from "@/presentation/components/ProtectedRoute";
+import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
+import { useAuth } from "@/presentation/contexts/AuthContext";
+import { CreateAssistantData } from "@/core/types/assistants/assistant";
+
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   ChartBarIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 export default function AssistantsPage() {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingAssistant, setEditingAssistant] = useState<Assistant | undefined>();
+  const [editingAssistant, setEditingAssistant] = useState<
+    Assistant | undefined
+  >();
+
+  const { user } = useAuth();
 
   useEffect(() => {
     loadAssistants();
@@ -28,7 +34,7 @@ export default function AssistantsPage() {
       const data = await assistantService.getAssistants();
       setAssistants(data);
     } catch (error) {
-      console.error('Error loading assistants:', error);
+      console.error("Error loading assistants:", error);
     } finally {
       setIsLoading(false);
     }
@@ -44,35 +50,93 @@ export default function AssistantsPage() {
     setIsCreateModalOpen(true);
   };
 
-  const handleSaveAssistant = async (formData: CreateAssistantFormData) => {
+  const currentStore = {
+    id: "store_abc123",
+    name: "Mi Tienda Principal",
+    nit: "900123456-7",
+  };
+
+  const handleSaveAssistant = async (formDataDelModal: any) => {
     try {
-      if (editingAssistant) {
-        await assistantService.updateAssistant(editingAssistant.id, formData);
-      } else {
-        await assistantService.createAssistant(formData);
-      }
+      const completeData: CreateAssistantData = {
+        idCompany: currentStore.id,
+        nit: currentStore.nit,
+        createBy: user.email,
+
+        name: formDataDelModal.name,
+        phone: formDataDelModal.phone,
+        active: formDataDelModal.isActive ?? true,
+        welcomeMsg: formDataDelModal.welcomeTemplateId || "",
+
+        // Convertimos los números por si vienen como texto desde el input
+        timeResponse: Number(formDataDelModal.responseTime || 30),
+        assistensResponseP: Number(formDataDelModal.responseType || 80),
+        amountAudio: Number(formDataDelModal.audioCount || 0),
+
+        // Mapeamos los nombres de los booleanos
+        emotesUse: formDataDelModal.useEmojis ?? true,
+        stylesUse: formDataDelModal.useStyles ?? false,
+        voiceResponse: formDataDelModal.replyAudioWithAudio ?? false,
+
+        // Mapeamos el resto de nombres
+        idPhoneNumber: formDataDelModal.whatsappNumber,
+        idWppBusinessAccount: formDataDelModal.whatsappBusinessId,
+        idMetaApp: formDataDelModal.metaAppId,
+        tokenMetaPermanent: formDataDelModal.metaToken,
+        webhook: formDataDelModal.webhookUrl,
+        tokenWebhook: formDataDelModal.webhookToken,
+
+        prompt: formDataDelModal.prompt,
+
+        // Transformamos los datos complejos
+        typeSendMsg: formDataDelModal.typeSendMsgObject || {
+          id: 1,
+          name: "completo",
+        },
+        voice: formDataDelModal.voiceObject || {
+          id: 1,
+          name: "aura-asteria-es-US",
+          gender: "Female",
+        },
+        templates: formDataDelModal.templates || [],
+        triggers: formDataDelModal.triggers || [],
+      };
+
+      console.log(
+        "Enviando objeto final al backend:",
+        JSON.stringify(completeData, null, 2)
+      );
+      await assistantService.createAssistant(completeData);
+
+      // Éxito
       await loadAssistants();
-    } catch (error) {
-      console.error('Error saving assistant:', error);
+      setIsCreateModalOpen(false);
+    } catch (error: any) {
+      console.error("Error al crear el asistente:", error);
+      // Manejar el error aquí
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteAssistant = async (id: string) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este asistente?')) {
+    if (
+      window.confirm("¿Estás seguro de que deseas eliminar este asistente?")
+    ) {
       try {
         await assistantService.deleteAssistant(id);
-        setAssistants(assistants.filter(a => a.id !== id));
+        setAssistants(assistants.filter((a) => a.id !== id));
       } catch (error) {
-        console.error('Error deleting assistant:', error);
+        console.error("Error deleting assistant:", error);
       }
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -97,9 +161,12 @@ export default function AssistantsPage() {
         ) : assistants.length === 0 ? (
           <div className="text-center py-12">
             <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay asistentes</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">
+              No hay asistentes
+            </h3>
             <p className="mt-1 text-sm text-gray-500">
-              Comienza creando tu primer asistente para mejorar la atención a tus clientes.
+              Comienza creando tu primer asistente para mejorar la atención a
+              tus clientes.
             </p>
             <div className="mt-6">
               <button
@@ -123,12 +190,14 @@ export default function AssistantsPage() {
                           {assistant.name}
                         </p>
                         <div className="ml-2 flex-shrink-0 flex">
-                          <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            assistant.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {assistant.isActive ? 'Activo' : 'Inactivo'}
+                          <p
+                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              assistant.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {assistant.isActive ? "Activo" : "Inactivo"}
                           </p>
                         </div>
                       </div>
@@ -154,9 +223,7 @@ export default function AssistantsPage() {
                         </p>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>
-                          Creado el {formatDate(assistant.createdAt)}
-                        </p>
+                        <p>Creado el {formatDate(assistant.createdAt)}</p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
@@ -167,7 +234,10 @@ export default function AssistantsPage() {
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                         <p>
-                          Último uso: {assistant.lastUsed ? formatDate(assistant.lastUsed) : 'Nunca'}
+                          Último uso:{" "}
+                          {assistant.lastUsed
+                            ? formatDate(assistant.lastUsed)
+                            : "Nunca"}
                         </p>
                       </div>
                     </div>
@@ -178,9 +248,7 @@ export default function AssistantsPage() {
                         </p>
                       </div>
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>
-                          Tasa de éxito: {assistant.successRate || 0}%
-                        </p>
+                        <p>Tasa de éxito: {assistant.successRate || 0}%</p>
                       </div>
                     </div>
                   </div>
@@ -203,4 +271,4 @@ export default function AssistantsPage() {
       </div>
     </ProtectedRoute>
   );
-} 
+}

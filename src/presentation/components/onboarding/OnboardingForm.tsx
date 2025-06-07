@@ -8,212 +8,15 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
-
-// Definición de los pasos del onboarding
-const STEPS = [
-  {
-    id: "welcome",
-    title: "Es hora de dar vida a tu negocio",
-    description:
-      "Bienvenido a FunnelAd, donde transformamos tu presencia digital",
-  },
-  {
-    id: "info",
-    title: "Información general",
-    description: "Cuéntanos sobre ti y tu negocio",
-  },
-  {
-    id: "agent",
-    title: "¿Qué tipo de agente deseas?",
-    description:
-      "Selecciona el tipo de asistente que mejor se adapte a tus necesidades",
-  },
-  {
-    id: "text-channels",
-    title: "Canales de comunicación",
-    description: "Selecciona los canales donde operará tu agente de texto",
-  },
-  {
-    id: "text-config",
-    title: "Configuración del agente de texto",
-    description: "Personaliza el comportamiento de tu asistente de texto",
-  },
-  {
-    id: "voice-config",
-    title: "Configuración del agente de voz",
-    description: "Personaliza el comportamiento de tu asistente de voz",
-  },
-  {
-    id: "confirmation",
-    title: "Confirmación",
-    description: "¡Todo listo para comenzar!",
-  },
-];
-
-// Tipos de agentes disponibles
-const AGENT_TYPES = [
-  {
-    id: "text",
-    name: "AGENTE DE TEXTO",
-    description: "Apto para responder mensajes en canales de texto.",
-    icon: "/images/onboarding/text-agent-icon.svg",
-    bgColor: "bg-[#002639]",
-  },
-  {
-    id: "voice",
-    name: "AGENTE DE VOZ",
-    description: "Apto para generar y recibir llamadas",
-    icon: "/images/onboarding/voice-agent-icon.svg",
-    bgColor: "bg-[#1D5A7A]",
-  },
-];
-
-// Canales de comunicación para el agente de texto
-const TEXT_CHANNELS = [
-  {
-    id: "whatsapp",
-    name: "WhatsApp",
-    icon: "/images/onboarding/whatsapp-icon.svg",
-    description: "Mensajería instantánea más popular",
-  },
-  {
-    id: "instagram",
-    name: "Instagram",
-    icon: "/images/onboarding/instagram-icon.svg",
-    description: "Mensajes directos en Instagram",
-  },
-  {
-    id: "webchat",
-    name: "Webchat",
-    icon: "/images/onboarding/webchat-icon.svg",
-    description: "Chat en tu sitio web",
-  },
-  {
-    id: "messenger",
-    name: "Messenger",
-    icon: "/images/onboarding/messenger-icon.svg",
-    description: "Chat de Facebook",
-  },
-  {
-    id: "email",
-    name: "Email",
-    icon: "/images/onboarding/email-icon.svg",
-    description: "Comunicación por correo electrónico",
-  },
-];
-
-// Opciones de configuración para el agente de texto
-const TEXT_CONFIG_OPTIONS = {
-  useEmojis: [
-    {
-      id: "none",
-      name: "Sin emojis",
-      description: "Comunicación formal sin emojis",
-    },
-    { id: "few", name: "Pocos emojis", description: "Uso ocasional de emojis" },
-    {
-      id: "moderate",
-      name: "Uso moderado",
-      description: "Balance entre formal y casual",
-    },
-    {
-      id: "many",
-      name: "Muchos emojis",
-      description: "Comunicación casual y expresiva",
-    },
-  ],
-  textStyle: [
-    {
-      id: "formal",
-      name: "Formal",
-      description: "Lenguaje profesional y estructurado",
-    },
-    {
-      id: "casual",
-      name: "Casual",
-      description: "Lenguaje amigable y cercano",
-    },
-    {
-      id: "technical",
-      name: "Técnico",
-      description: "Enfocado en detalles técnicos",
-    },
-    {
-      id: "sales",
-      name: "Ventas",
-      description: "Orientado a conversiones y ventas",
-    },
-  ],
-  modelTemperature: [
-    {
-      id: "0.2",
-      name: "Baja",
-      description: "Respuestas más predecibles y conservadoras",
-    },
-    {
-      id: "0.5",
-      name: "Media",
-      description: "Balance entre creatividad y precisión",
-    },
-    {
-      id: "0.8",
-      name: "Alta",
-      description: "Respuestas más creativas y variadas",
-    },
-  ],
-};
-
-// Voces disponibles para el agente de voz
-const AVAILABLE_VOICES = [
-  { name: "Carlos", voice_type: "masculine", id: "21ad5a61dwa65" },
-  { name: "María", voice_type: "feminine", id: "32be7c82fgb76" },
-  { name: "Alex", voice_type: "neutral", id: "43cf8d93hic87" },
-  { name: "Sofía", voice_type: "feminine", id: "54dg9e04jid98" },
-  { name: "Diego", voice_type: "masculine", id: "65eh0f15kie09" },
-];
-
-// Opciones de configuración para el agente de voz
-const VOICE_CONFIG_OPTIONS = {
-  voiceType: [
-    {
-      id: "male",
-      name: "Voz masculina",
-      description: "Tono grave y profesional",
-    },
-    {
-      id: "female",
-      name: "Voz femenina",
-      description: "Tono cálido y amigable",
-    },
-    {
-      id: "neutral",
-      name: "Voz neutral",
-      description: "Tono balanceado y versátil",
-    },
-  ],
-  speechRate: [
-    { id: "slow", name: "Lenta", description: "Habla pausada y clara" },
-    { id: "medium", name: "Media", description: "Velocidad de habla estándar" },
-    { id: "fast", name: "Rápida", description: "Habla ágil y dinámica" },
-  ],
-  callHandling: [
-    {
-      id: "inbound",
-      name: "Recibir llamadas",
-      description: "Solo responde llamadas entrantes",
-    },
-    {
-      id: "outbound",
-      name: "Realizar llamadas",
-      description: "Solo realiza llamadas salientes",
-    },
-    {
-      id: "both",
-      name: "Ambas direcciones",
-      description: "Recibe y realiza llamadas",
-    },
-  ],
-};
+import {
+  AGENT_TYPES,
+  AVAILABLE_VOICES,
+  STEPS,
+  TEXT_CHANNELS,
+  TEXT_CONFIG_OPTIONS,
+  VOICE_CONFIG_OPTIONS,
+} from "@/app/onboarding/constants/onboardingSteps";
+import { api } from "@/core/api";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
@@ -225,6 +28,7 @@ const OnboardingForm: React.FC = () => {
     businessName: "",
     fullName: "",
     email: "",
+    password: "",
     whatsapp: "",
     identification: "",
     webSite:"",
@@ -251,6 +55,59 @@ const OnboardingForm: React.FC = () => {
       temperature: 50, // Valor inicial del slider (50%)
     },
   });
+
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    minLength: false,
+    hasUpperCase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
+
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPasswordValue(e.target.value);
+    // El error se actualizará mediante el useEffect o podrías añadir lógica aquí
+  };
+
+  // Deberías tener una función que actualice este estado
+  // cada vez que formData.password cambia.
+  useEffect(() => {
+    if (formData.password && formData.password.length > 0) {
+      // Asegúrate que formData.password existe
+      setPasswordCriteria({
+        minLength: formData.password.length >= 8,
+        hasUpperCase: /[A-Z]/.test(formData.password),
+        hasNumber: /[0-9]/.test(formData.password),
+        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+      });
+    } else {
+      // Reset criteria if password is empty
+      setPasswordCriteria({
+        minLength: false,
+        hasUpperCase: false,
+        hasNumber: false,
+        hasSpecialChar: false, // Corregido: todos los campos a false
+      });
+    }
+  }, [formData.password]);
+
+  useEffect(() => {
+    // Solo validar si el campo confirmPassword tiene algún contenido
+    if (confirmPasswordValue.length > 0) {
+      if (formData.password !== confirmPasswordValue) {
+        setConfirmPasswordError("Las contraseñas no coinciden.");
+      } else {
+        setConfirmPasswordError(""); // Limpiar error si coinciden
+      }
+    } else {
+      // Si el campo está vacío, no debería haber error de "no coincidencia"
+      // Podrías tener otra lógica para "campo requerido" en el submit o al perder el foco (onBlur)
+      setConfirmPasswordError("");
+    }
+  }, [formData.password, confirmPasswordValue]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -449,14 +306,58 @@ const OnboardingForm: React.FC = () => {
     }
   };
 
-  // Enviar el formulario
   const handleSubmit = async () => {
+    // 1. Validación final (opcional pero recomendado)
+    //    Aquí podrías añadir una función que verifique una última vez
+    //    los campos más importantes antes de enviar.
+    if (!formData.email || !formData.password || !formData.businessName) {
+      alert(
+        "Faltan datos cruciales en el formulario. Por favor, revisa los pasos."
+      );
+      // Podrías llevar al usuario al primer paso si quieres
+      // setCurrentStep(1);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      // 2. La llamada a la API
+      //    Ahora apunta a un endpoint dedicado para guardar el onboarding.
+      //    Enviamos el estado completo del formulario (`formData`).
+      const response = await api.post(
+        "/api/onboarding/submit", // Asegúrate que este endpoint exista en tu backend
+        formData
+      );
+
+      // 3. Manejo de la respuesta
+      console.log("✅ Solicitud de onboarding guardada:", response.data);
+      alert("¡Hemos recibido tu solicitud! Nos pondremos en contacto pronto.");
+      router.push("/gracias"); // Redirigir a una página de agradecimiento
+    } catch (error: any) {
+      console.error("❌ Error al enviar la solicitud de onboarding:", error);
+
+      let errorMessage = "Ocurrió un error inesperado al enviar tu solicitud.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      setErrors({ submit: errorMessage });
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Enviar el formulario
+  const handleSubmits = async () => {
     setIsSubmitting(true);
     setErrors({}); // Limpiamos errores antes de enviar
 
     try {
       const response = await fetch(
-        "http://localhost:3001/api/onboarding/submit",
+        "https://funnelad-api.onrender.com/api/onboarding/submit",
         {
           method: "POST",
           headers: {
@@ -742,6 +643,111 @@ const OnboardingForm: React.FC = () => {
                   />
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }} // Ajusta el delay si es necesario (ej. 0.1s después del email)
+                >
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Contraseña
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={formData.password} // Asume que esto viene del estado de tu formulario
+                    onChange={handleChange} // Asume que esto viene de los props o está definido en el componente
+                    className={`w-full px-4 py-3 border ${
+                      errors.password ? "border-red-500" : "border-[#C9A14A]" // Asume que errors.password existe
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
+                    autoComplete="new-password" // Útil para campos de establecimiento de contraseña
+                  />
+                  {/* Mensaje de error general para la contraseña */}
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {errors.password}
+                    </p>
+                  )}
+
+                  {/* Indicaciones de requisitos de contraseña */}
+                  {/* Estas se muestran si el usuario ha comenzado a escribir una contraseña */}
+                  {formData.password && formData.password.length > 0 && (
+                    <div className="mt-2 space-y-0.5">
+                      <p
+                        className={`text-xs ${
+                          passwordCriteria.minLength
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        • Mínimo 8 caracteres
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          passwordCriteria.hasUpperCase
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        • Al menos una letra mayúscula (A-Z)
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          passwordCriteria.hasNumber
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        • Al menos un número (0-9)
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          passwordCriteria.hasSpecialChar
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        • Al menos un carácter especial (ej. !@#$%&*)
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <label
+                    htmlFor="confirmPasswordOnboarding" // ID único para el input
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Confirmar contraseña
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPasswordOnboarding" // ID único
+                    name="confirmPasswordOnboarding" // Nombre único, no usado por handleChange genérico si usas handler específico
+                    value={confirmPasswordValue}
+                    onChange={handleConfirmPasswordChange} // O directamente: (e) => setConfirmPasswordValue(e.target.value)
+                    className={`w-full px-4 py-3 border ${
+                      confirmPasswordError
+                        ? "border-red-500"
+                        : "border-[#C9A14A]"
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
+                    autoComplete="new-password"
+                  />
+                  {/* Error específico del campo "Confirmar contraseña" */}
+                  {confirmPasswordError && (
+                    <p className="mt-1 text-sm text-red-500">
+                      {confirmPasswordError}
+                    </p>
                   )}
                 </motion.div>
 

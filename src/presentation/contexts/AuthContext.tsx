@@ -1,11 +1,34 @@
-'use client';
+// En @/presentation/contexts/AuthContext.tsx
+"use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { User, UserRole, ClientSubRole, Permission } from '@/core/types/auth';
-import { RegisterData } from '@/core/types/auth/responses';
-import { authService } from '@/core/services/authService';
-import { TokenService } from '@/core/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { User, Permission } from "@/core/types/auth";
+import { RegisterData, AuthResponse } from "@/core/types/auth/responses";
+import { authService } from "@/core/services/authService";
+import { TokenService } from "@/core/api"; // Asegúrate que TokenService esté exportado de api.ts
+
+// Helper para mapear datos del token a tu tipo User
+const mapAuth0ProfileToUser = (decodedToken: any): User => {
+  const auth0Id = decodedToken.sub;
+  const permissions = decodedToken.permissions || [];
+  return {
+    id: auth0Id,
+    auth0Id,
+    email: decodedToken.email,
+    name: decodedToken.name,
+    picture: decodedToken.picture,
+    permissions,
+  };
+};
 
 interface AuthContextType {
   user: User | null;
@@ -24,57 +47,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Verificar autenticación al cargar la aplicación
+  const logout = useCallback(() => {
+    TokenService.clearAuthData();
+    setUser(null);
+    router.push("/auth");
+  }, [router]);
+
   useEffect(() => {
-    const verifyAuth = async () => {
+    const verifySessionFromStorage = () => {
       try {
         const token = TokenService.getToken();
         if (token && !TokenService.isTokenExpired()) {
-          const response = await authService.verifyToken();
-          TokenService.setAuthData(response);
-          setUser(response.user);
+          const decodedToken = jwtDecode(token);
+          setUser(mapAuth0ProfileToUser(decodedToken));
         }
-      } catch {
+      } catch (error) {
+        console.error("Token local inválido, limpiando sesión.", error);
         TokenService.clearAuthData();
       } finally {
         setIsLoading(false);
       }
     };
-
-    verifyAuth();
+    verifySessionFromStorage();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await authService.login(email, password);
-      // console.log(response) // Eliminar en producción
-      TokenService.setAuthData(response);
-      setUser(response.user);
-      router.push('/dashboard');
-    } catch {
-      throw new Error('Credenciales inválidas');
+      const authResponse = await authService.login(email, password);
+      TokenService.setAuthData(authResponse);
+      const decodedToken = jwtDecode(authResponse.access_token);
+      setUser(mapAuth0ProfileToUser(decodedToken));
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error durante el login:", error);
+      throw new Error("Credenciales inválidas");
     }
   };
 
   const register = async (data: RegisterData) => {
     try {
-      const response = await authService.register(data);
-      TokenService.setAuthData(response);
-      setUser(response.user);
-      router.push('/dashboard');
-    } catch {
-      throw new Error('Error en el registro');
+      await authService.register(data);
+      // Tras un registro exitoso, se hace login automáticamente
+      await login(data.email, data.password);
+    } catch (error) {
+      console.error("Error durante el registro:", error);
+      throw new Error(
+        "No se pudo completar el registro. El email puede ya estar en uso."
+      );
     }
   };
 
-  const logout = () => {
-    TokenService.clearAuthData();
-    setUser(null);
-    router.push('/auth');
+  const hasPermission = (permission: Permission): boolean => {
+    if (!user || !user.permissions) return false;
+    return user.permissions.includes(permission);
   };
-
-  // TODO: Implementar lógica de permisos real
-  const checkPermission = (_permission: Permission) => true; // Temporalmente permitimos todo
 
   return (
     <AuthContext.Provider
@@ -85,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
-        hasPermission: checkPermission
+        hasPermission,
       }}
     >
       {children}
@@ -96,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
   return context;
 }

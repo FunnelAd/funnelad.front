@@ -1,21 +1,21 @@
 export enum UserRole {
-  FUNNELAD = 'FUNNELAD',
-  CLIENT = 'CLIENT',
+  FUNNELAD = "FUNNELAD",
+  CLIENT = "CLIENT",
 }
 
 export enum ClientSubRole {
-  ADMIN = 'ADMIN',
-  AUXILIARY = 'AUXILIARY',
+  ADMIN = "ADMIN",
+  AUXILIARY = "AUXILIARY",
 }
 
-export type Permission = 
-  | 'view_conversations'
-  | 'manage_conversations'
-  | 'view_contacts'
-  | 'manage_contacts'
-  | 'view_reports'
-  | 'manage_settings'
-  | 'manage_users';
+export type Permission =
+  | "view_conversations"
+  | "manage_conversations"
+  | "view_contacts"
+  | "manage_contacts"
+  | "view_reports"
+  | "manage_settings"
+  | "manage_users";
 
 export interface User {
   id: string;
@@ -27,7 +27,6 @@ export interface User {
   storeName?: string;
   permissions: Permission[];
 }
-
 
 export interface Company {
   nit: string;
@@ -43,14 +42,13 @@ export interface AuthState {
   isLoading: boolean;
 }
 
-
 export interface AuthResponse {
   user: User | null;
   email: string;
-  acces_token: string;
-  company:  Company | null;
+  access_token: string;
+  expires_in: number;
+  company: Company | null;
 }
-
 
 export interface RolePermissions {
   [UserRole.FUNNELAD]: Permission[];
@@ -62,27 +60,27 @@ export interface RolePermissions {
 
 export const RolePermissions: RolePermissions = {
   [UserRole.FUNNELAD]: [
-    'view_conversations',
-    'manage_conversations',
-    'view_contacts',
-    'manage_contacts',
-    'view_reports',
-    'manage_settings',
-    'manage_users',
+    "view_conversations",
+    "manage_conversations",
+    "view_contacts",
+    "manage_contacts",
+    "view_reports",
+    "manage_settings",
+    "manage_users",
   ],
   [UserRole.CLIENT]: {
     [ClientSubRole.ADMIN]: [
-      'view_conversations',
-      'manage_conversations',
-      'view_contacts',
-      'manage_contacts',
-      'view_reports',
-      'manage_settings',
+      "view_conversations",
+      "manage_conversations",
+      "view_contacts",
+      "manage_contacts",
+      "view_reports",
+      "manage_settings",
     ],
     [ClientSubRole.AUXILIARY]: [
-      'view_conversations',
-      'view_contacts',
-      'view_reports',
+      "view_conversations",
+      "view_contacts",
+      "view_reports",
     ],
   },
 };
@@ -93,8 +91,10 @@ export function hasPermission(user: User, permission: Permission): boolean {
   }
 
   if (user.role === UserRole.CLIENT && user.clientSubRole) {
-    return RolePermissions[UserRole.CLIENT][user.clientSubRole].includes(permission);
+    return RolePermissions[UserRole.CLIENT][user.clientSubRole].includes(
+      permission
+    );
   }
 
   return false;
-} 
+}
