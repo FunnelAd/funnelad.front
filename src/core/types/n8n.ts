@@ -9,6 +9,7 @@ export interface N8N {
     isActive?: boolean;
     chat_style?: number;
     description?: string;
+    prompt?: string;
     createdAt?: string;
     updatedAt?: string;
     createdBy?: string;

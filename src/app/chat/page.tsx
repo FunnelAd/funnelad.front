@@ -6,7 +6,6 @@ import ConversationList from '@/presentation/components/chat/ConversationList';
 import MessageList from '@/presentation/components/chat/MessageList';
 import MessageInput from '@/presentation/components/chat/MessageInput';
 import { TokenService } from '@/core/api';
-import { N8N } from '@/core/types/n8n';
 import { n8nService } from '@/core/services/n8nService';
 
 export default function ChatPage() {
