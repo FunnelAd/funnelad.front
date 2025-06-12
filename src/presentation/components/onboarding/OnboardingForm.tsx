@@ -17,42 +17,50 @@ import {
   VOICE_CONFIG_OPTIONS,
 } from "@/app/onboarding/constants/onboardingSteps";
 import { api } from "@/core/api";
+import { OnboardingFormData } from "@/core/modules/onboarding/onboarding.interface";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Modificamos el estado para incluir todos los nuevos campos
-  const [formData, setFormData] = useState({
-    // Información general
+  const [formData, setFormData] = useState<
+    OnboardingFormData & {
+      password: string; // Estos campos no van a OnboardingSchema, pero son para el form
+      identification: string;
+      webSite: string;
+    }
+  >({
+    // Información general (todos estos son requeridos en el schema)
     businessName: "",
     fullName: "",
     email: "",
-    password: "",
     whatsapp: "",
+
+    // Campos adicionales del formulario que NO van al schema de Onboarding
+    password: "",
     identification: "",
-    webSite:"",
+    webSite: "",
 
     // Tipo de agente
-    agentTypes: [] as string[],
+    agentTypes: [],
 
     // Canales de texto
-    textChannels: [] as string[],
+    textChannels: [],
 
-    // Configuración del agente de texto
+    // Configuración del agente de texto (ajustados a tipos del schema: boolean, number)
     textConfig: {
-      useEmojis: "moderate",
+      useEmojis: false, // Ahora boolean
       textStyle: "casual",
-      modelTemperature: "0.5",
+      modelTemperature: 0.5, // Ahora number
     },
 
     // Configuración del agente de voz
     voiceConfig: {
       voiceType: "female",
-      voiceId: "",
+      voiceId: "1",
       speechRate: "medium",
       callHandling: "both",
-      temperature: 50, // Valor inicial del slider (50%)
+      temperature: 50, // Ya es number
     },
   });
 
@@ -216,23 +224,46 @@ const OnboardingForm: React.FC = () => {
   };
 
   // Manejar cambios en la configuración del agente de texto
-  const handleTextConfigChange = (option: string, value: string) => {
+  const handleTextConfigChange = (
+    option: keyof typeof formData.textConfig, // Tipado más estricto para 'option'
+    value: any // Permitimos cualquier tipo de valor entrante
+  ) => {
+    let processedValue = value;
+
+    // Hacemos la conversión de tipo explícitamente
+    if (option === "useEmojis") {
+      processedValue = value === "true" || value === true; // Acepta string 'true' o booleano true
+    }
+    if (option === "modelTemperature") {
+      processedValue = parseFloat(value); // Convierte string "0.5" a número 0.5
+    }
+
     setFormData((prev) => ({
       ...prev,
       textConfig: {
         ...prev.textConfig,
-        [option]: value,
+        [option]: processedValue,
       },
     }));
   };
 
   // Manejar cambios en la configuración del agente de voz
-  const handleVoiceConfigChange = (option: string, value: string) => {
+  const handleVoiceConfigChange = (
+    option: keyof typeof formData.voiceConfig, // Tipado más estricto
+    value: any
+  ) => {
+    let processedValue = value;
+
+    // Hacemos la conversión para el campo de temperatura
+    if (option === "temperature") {
+      processedValue = parseFloat(value);
+    }
+
     setFormData((prev) => ({
       ...prev,
       voiceConfig: {
         ...prev.voiceConfig,
-        [option]: value,
+        [option]: processedValue,
       },
     }));
   };
@@ -306,35 +337,56 @@ const OnboardingForm: React.FC = () => {
     }
   };
 
+  // Enviar el formulario de Onboarding al backend
   const handleSubmit = async () => {
-    // 1. Validación final (opcional pero recomendado)
-    //    Aquí podrías añadir una función que verifique una última vez
-    //    los campos más importantes antes de enviar.
-    if (!formData.email || !formData.password || !formData.businessName) {
+    // Validación final para los campos más cruciales si se llega aquí.
+    // Esto es un fallback por si un usuario salta validaciones o flujos.
+    if (
+      !formData.email ||
+      !formData.businessName ||
+      !formData.fullName ||
+      !formData.whatsapp
+    ) {
       alert(
-        "Faltan datos cruciales en el formulario. Por favor, revisa los pasos."
+        "Faltan datos cruciales para el onboarding. Por favor, revisa los pasos."
       );
-      // Podrías llevar al usuario al primer paso si quieres
-      // setCurrentStep(1);
+      setCurrentStep(1); // O el paso donde están los campos faltantes
       return;
     }
 
+    const payloadToSend = {
+      businessName: formData.businessName,
+      fullName: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      whatsapp: formData.whatsapp,
+      agentTypes: formData.agentTypes,
+      textChannels: formData.textChannels,
+      textConfig: formData.textConfig,
+      voiceConfig: formData.voiceConfig,
+    };
+
+    const selectedVoice = AVAILABLE_VOICES.find(
+      (v) => v.id === formData.voiceConfig.voiceId
+    );
+    if (selectedVoice) {
+      payloadToSend.voiceConfig.voiceType = selectedVoice.voice_type; // Usar el tipo de voz del constante
+    } else {
+      payloadToSend.voiceConfig.voiceType = "unknown"; // O un valor por defecto si es requerido por el esquema
+    }
+
     setIsSubmitting(true);
-    setErrors({});
+    setErrors({}); // Limpiar errores antes de enviar
 
     try {
-      // 2. La llamada a la API
-      //    Ahora apunta a un endpoint dedicado para guardar el onboarding.
-      //    Enviamos el estado completo del formulario (`formData`).
       const response = await api.post(
-        "/api/onboarding/submit", // Asegúrate que este endpoint exista en tu backend
-        formData
+        "/api/onboarding/submit",
+        payloadToSend // Enviamos los datos ya mapeados
       );
 
-      // 3. Manejo de la respuesta
       console.log("✅ Solicitud de onboarding guardada:", response.data);
       alert("¡Hemos recibido tu solicitud! Nos pondremos en contacto pronto.");
-      router.push("/gracias"); // Redirigir a una página de agradecimiento
+      router.push("/gracias");
     } catch (error: any) {
       console.error("❌ Error al enviar la solicitud de onboarding:", error);
 
@@ -345,41 +397,6 @@ const OnboardingForm: React.FC = () => {
 
       setErrors({ submit: errorMessage });
       alert(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Enviar el formulario
-  const handleSubmits = async () => {
-    setIsSubmitting(true);
-    setErrors({}); // Limpiamos errores antes de enviar
-
-    try {
-      const response = await fetch(
-        "https://funnelad-api.onrender.com/api/onboarding/submit",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Error en el envío del formulario");
-      }
-
-      const result = await response.json();
-      console.log("✅ Respuesta del servidor:", result);
-
-      alert("¡Formulario enviado exitosamente!");
-      router.push("/gracias"); // o a donde quieras redirigir
-    } catch (error: any) {
-      console.error("❌ Error al enviar el formulario:", error);
-      alert(error.message || "Error en el envío del formulario");
     } finally {
       setIsSubmitting(false);
     }
@@ -534,7 +551,7 @@ const OnboardingForm: React.FC = () => {
                   )}
                 </motion.div>
 
-                  <motion.div
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
@@ -552,9 +569,7 @@ const OnboardingForm: React.FC = () => {
                     value={formData.webSite}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border ${
-                      errors.webSite
-                        ? "border-red-500"
-                        : "border-[#C9A14A]"
+                      errors.webSite ? "border-red-500" : "border-[#C9A14A]"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
                   />
                   {errors.webSite && (
@@ -582,7 +597,9 @@ const OnboardingForm: React.FC = () => {
                     value={formData.identification}
                     onChange={handleChange}
                     className={`w-full px-4 py-3 border ${
-                      errors.identification ? "border-red-500" : "border-[#C9A14A]"
+                      errors.identification
+                        ? "border-red-500"
+                        : "border-[#C9A14A]"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
                   />
                   {errors.identification && (

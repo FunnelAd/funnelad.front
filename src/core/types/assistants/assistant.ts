@@ -1,6 +1,3 @@
-// En @/core/types/assistants/assistant.ts
-
-// --- LA RECETA PRINCIPAL: Reflejo exacto del IAssistant del backend ---
 export interface Assistant {
   _id?: string;
   name: string;
@@ -10,7 +7,7 @@ export interface Assistant {
   createBy: string; // Ojo al typo que espera el backend
   welcomeMsg?: string;
   timeResponse: number;
-  assistensResponseP: number; // Ojo al typo que espera el backend
+  assistensResponseP: number;
   templates: Array<{ idTemplate: string; active: boolean }>;
   triggers: Array<{ idTriggers: string; active: boolean }>;
   typeSendMsg: { id: number; name: string };
@@ -25,7 +22,10 @@ export interface Assistant {
   tokenMetaPermanent: string;
   webhook: string;
   tokenWebhook: string;
+  totalConversations: string;
+  successRate: string;
   active: boolean;
+  lastUsed?: string;
   createdAt?: string;
   updatedAt?: string;
   updatedBy?: string;
