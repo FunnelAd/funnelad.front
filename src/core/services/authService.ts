@@ -7,10 +7,12 @@ export const authService = {
 
     // console.log('Login attempt with email:', email);
     // console.log('Login attempt with password:', password);
-    const response = await api.post(
-      "https://funnelad-api.onrender.com/api/users/login",
-      { email, password }
-    );
+    // const response = await api.post(
+    //   "https://funnelad-api.onrender.com/api/users/login",
+    //   { email, password }
+    // );
+
+    const response = await api.post("/api/users/login", { email, password });
     console.log("Login response:", response);
 
     return response.data;
