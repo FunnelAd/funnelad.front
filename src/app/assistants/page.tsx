@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Assistant } from "@/core/types/assistants/assistant";
+import {
+  Assistant,
+  CreateAssistantData,
+  UpdateAssistantData,
+} from "@/core/types/assistants/assistant";
 import { assistantService } from "@/core/services/assistantService";
 import ProtectedRoute from "@/presentation/components/ProtectedRoute";
 import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
 import { useAuth } from "@/presentation/contexts/AuthContext";
-import { CreateAssistantData } from "@/core/types/assistants/assistant";
 
 import {
   PlusIcon,
@@ -30,11 +33,13 @@ export default function AssistantsPage() {
   }, []);
 
   const loadAssistants = async () => {
+    setIsLoading(true);
     try {
       const data = await assistantService.getAssistants();
       setAssistants(data);
     } catch (error) {
       console.error("Error loading assistants:", error);
+      // Handle the error appropriately, e.g., show an error message to the user
     } finally {
       setIsLoading(false);
     }
@@ -56,64 +61,132 @@ export default function AssistantsPage() {
     nit: "900123456-7",
   };
 
-  const handleSaveAssistant = async (formDataDelModal: any) => {
+  const handleSaveAssistant = async (formData: any) => {
+    setIsLoading(true);
     try {
+      // Mapeo cuidadoso de formData del modal a CreateAssistantData
       const completeData: CreateAssistantData = {
-        idCompany: currentStore.id,
-        nit: currentStore.nit,
-        createBy: user.email,
+        // Campos fijos desde el contexto del usuario/tienda
+        idCompany: currentStore.id, // Requerido
+        nit: currentStore.nit, // Requerido
+        createBy: user?.email || "unknown_creator", // Requerido: Asegúrate de que user.email exista
 
-        name: formDataDelModal.name,
-        phone: formDataDelModal.phone,
-        active: formDataDelModal.isActive ?? true,
-        welcomeMsg: formDataDelModal.welcomeTemplateId || "",
+        // Campos generales y de respuesta
+        name: formData.name, // Requerido
+        phone: formData.phone, // Requerido
+        active: formData.active ?? true, // Requerido, pero puede tener un default
+        welcomeMsg: formData.welcomeMsg || "", // Puede ser opcional, pero aquí aseguramos un string vacío si es null/undefined
 
-        // Convertimos los números por si vienen como texto desde el input
-        timeResponse: Number(formDataDelModal.responseTime || 30),
-        assistensResponseP: Number(formDataDelModal.responseType || 80),
-        amountAudio: Number(formDataDelModal.audioCount || 0),
+        timeResponse: Number(formData.timeResponse), // Requerido (Number)
+        assistensResponseP: Number(formData.assistensResponseP), // Requerido (Number)
 
-        // Mapeamos los nombres de los booleanos
-        emotesUse: formDataDelModal.useEmojis ?? true,
-        stylesUse: formDataDelModal.useStyles ?? false,
-        voiceResponse: formDataDelModal.replyAudioWithAudio ?? false,
+        // Campos de texto
+        typeSendMsg: formData.typeSendMsg || { id: 1, name: "por_partes" }, // Requerido (Object)
+        emotesUse: formData.emotesUse ?? false, // Requerido (Boolean)
+        stylesUse: formData.stylesUse ?? false, // Requerido (Boolean)
 
-        // Mapeamos el resto de nombres
-        idPhoneNumber: formDataDelModal.whatsappNumber,
-        idWppBusinessAccount: formDataDelModal.whatsappBusinessId,
-        idMetaApp: formDataDelModal.metaAppId,
-        tokenMetaPermanent: formDataDelModal.metaToken,
-        webhook: formDataDelModal.webhookUrl,
-        tokenWebhook: formDataDelModal.webhookToken,
+        prompt: formData.prompt || "", // Opcional en el esquema, aquí aseguramos string vacío
 
-        prompt: formDataDelModal.prompt,
+        // Campos de audio
+        voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // Requerido (Object): ***Asegúrate de que gender siempre tenga un valor***
+        amountAudio: Number(formData.amountAudio), // Requerido (Number)
+        voiceResponse: formData.voiceResponse ?? false, // Requerido (Boolean)
 
-        // Transformamos los datos complejos
-        typeSendMsg: formDataDelModal.typeSendMsgObject || {
-          id: 1,
-          name: "completo",
-        },
-        voice: formDataDelModal.voiceObject || {
-          id: 1,
-          name: "aura-asteria-es-US",
-          gender: "Female",
-        },
-        templates: formDataDelModal.templates || [],
-        triggers: formDataDelModal.triggers || [],
+        // Campos de integración (todos estos eran requeridos en el error de Mongoose)
+        idPhoneNumber: formData.idPhoneNumber || "", // Requerido
+        idWppBusinessAccount: formData.idWppBusinessAccount || "", // Requerido
+        idMetaApp: formData.idMetaApp || "", // Opcional
+        tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
+        webhook: formData.webhook || "", // Opcional
+        tokenWebhook: formData.tokenWebhook || "", // Opcional
+
+        // Campos estadísticos (aseguramos valores por defecto si tu esquema los requiere)
+        totalConversations: formData.totalConversations || "0", // Requerido si tu esquema así lo dice
+        successRate: formData.successRate || "0", // Requerido si tu esquema así lo dice
+
+        templates: formData.templates || [],
+        triggers: formData.triggers || [],
       };
 
       console.log(
-        "Enviando objeto final al backend:",
+        "Enviando objeto final al backend para crear:",
         JSON.stringify(completeData, null, 2)
       );
-      await assistantService.createAssistant(completeData);
 
-      // Éxito
-      await loadAssistants();
-      setIsCreateModalOpen(false);
+      await assistantService.createAssistant(completeData);
+      await loadAssistants(); // Recargar la lista
+      setIsCreateModalOpen(false); // Cerrar el modal
     } catch (error: any) {
       console.error("Error al crear el asistente:", error);
-      // Manejar el error aquí
+      // Aquí es donde puedes mostrar el error de Mongoose al usuario
+      // Por ejemplo, si tu AppError tiene un mensaje de error legible:
+      alert(
+        `Error al crear asistente: ${error.message || "Error desconocido"}`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateAssistant = async (id: string, formData: any) => {
+    setIsLoading(true);
+    try {
+      const updateData: UpdateAssistantData = {
+        // Mapeo similar al de create, pero para update.
+        // Para update, los campos que no son requeridos en el esquema (y que no se modifican)
+        // NO necesitan ser enviados si no los modificaste en el modal.
+        // Sin embargo, para los que Mongoose marcó como `required` en tu error,
+        // debes asegurarte de que siempre tengan un valor (incluso cadena vacía).
+
+        name: formData.name,
+        phone: formData.phone,
+        active: formData.active ?? true,
+        welcomeMsg: formData.welcomeMsg || "",
+
+        timeResponse: Number(formData.timeResponse),
+        assistensResponseP: Number(formData.assistensResponseP),
+
+        emotesUse: formData.emotesUse ?? false,
+        stylesUse: formData.stylesUse ?? false,
+
+        prompt: formData.prompt || "",
+
+        voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // ***Asegura gender aquí también***
+        amountAudio: Number(formData.amountAudio),
+        voiceResponse: formData.voiceResponse ?? false,
+
+        idPhoneNumber: formData.idPhoneNumber || "", // ***Requerido por Mongoose, asegúrate de enviar***
+        idWppBusinessAccount: formData.idWppBusinessAccount || "", // ***Requerido por Mongoose, asegúrate de enviar***
+        idMetaApp: formData.idMetaApp || "", // Opcional
+        tokenMetaPermanent: formData.tokenMetaPermanent || "", // ***Requerido por Mongoose, asegúrate de enviar***
+        webhook: formData.webhook || "", // Opcional
+        tokenWebhook: formData.tokenWebhook || "", // Opcional
+
+        // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
+        totalConversations: formData.totalConversations || "0",
+        successRate: formData.successRate || "0",
+
+        templates: formData.templates || [],
+        triggers: formData.triggers || [],
+
+        // idCompany, nit, createBy NO se envían en la actualización si son campos fijos.
+        // Si el backend los requiere, tu AssistantSchema debería tenerlos como no requeridos
+        // para updates o tu lógica de update en el backend debería ignorarlos si no se proporcionan.
+      };
+
+      console.log(
+        "Enviando objeto final al backend para actualizar:",
+        JSON.stringify(updateData, null, 2)
+      );
+      await assistantService.updateAssistant(id, updateData);
+      await loadAssistants();
+      setIsCreateModalOpen(false);
+      setEditingAssistant(undefined);
+    } catch (error: any) {
+      console.error("Error al actualizar el asistente:", error);
+      alert(
+        `Error al actualizar asistente: ${error.message || "Error desconocido"}`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -123,11 +196,16 @@ export default function AssistantsPage() {
     if (
       window.confirm("¿Estás seguro de que deseas eliminar este asistente?")
     ) {
+      setIsLoading(true);
       try {
         await assistantService.deleteAssistant(id);
-        setAssistants(assistants.filter((a) => a.id !== id));
+        // If delete is successful, update the local state
+        setAssistants(assistants.filter((a) => a._id !== id));
       } catch (error) {
         console.error("Error deleting assistant:", error);
+        // Handle the error here, e.g., show an error message to the user
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -182,7 +260,7 @@ export default function AssistantsPage() {
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
               {assistants.map((assistant) => (
-                <li key={assistant.id}>
+                <li key={assistant._id}>
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -192,12 +270,12 @@ export default function AssistantsPage() {
                         <div className="ml-2 flex-shrink-0 flex">
                           <p
                             className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              assistant.isActive
+                              assistant.active
                                 ? "bg-green-100 text-green-800"
                                 : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {assistant.isActive ? "Activo" : "Inactivo"}
+                            {assistant.active ? "Activo" : "Inactivo"}
                           </p>
                         </div>
                       </div>
@@ -209,7 +287,7 @@ export default function AssistantsPage() {
                           <PencilIcon className="h-5 w-5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteAssistant(assistant.id)}
+                          onClick={() => handleDeleteAssistant(assistant._id!)}
                           className="text-gray-400 hover:text-red-500"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -217,13 +295,13 @@ export default function AssistantsPage() {
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
-                      <div className="sm:flex">
+                      {/* <div className="sm:flex">
                         <p className="flex items-center text-sm text-gray-500">
                           {assistant.description}
                         </p>
-                      </div>
+                      </div> */}
                       <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>Creado el {formatDate(assistant.createdAt)}</p>
+                        <p>Creado el {formatDate(assistant.createdAt!)}</p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">

@@ -6,9 +6,9 @@ export interface OnBoardingData {
   agentTypes: string[];
   textChannels: string[];
   textConfig: {
-    useEmojis: string;
+    useEmojis: boolean;
     textStyle: string;
-    modelTemperature: string;
+    modelTemperature: number;
   };
   voiceConfig: {
     voiceType: string;

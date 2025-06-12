@@ -30,7 +30,7 @@ class TokenService {
     localStorage.setItem(this.TOKEN_KEY, response.access_token);
     localStorage.setItem(this.EXPIRES_AT_KEY, expirationTime.toString());
     if (decodedToken.email) {
-      localStorage.setItem(this.EMAIL_KEY, decodedToken.email); // <--- Guardamos el email
+      localStorage.setItem(this.EMAIL_KEY, decodedToken.email);
     }
   }
 
@@ -62,10 +62,12 @@ api.interceptors.request.use(
     const token = TokenService.getToken();
     const email = TokenService.getEmail();
     if (token && !TokenService.isTokenExpired()) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     if (email) {
+      config.headers = config.headers || {};
       config.headers["email"] = email;
     }
     return config;

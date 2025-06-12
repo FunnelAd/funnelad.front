@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "@/i18n";
 import { Assistant } from "@/core/types/assistants/assistant";
-import { CreateAssistantData } from "@/core/types/assistants/assistant";
 
 // Simulación de plantillas de bienvenida
 const WELCOME_TEMPLATES = [
@@ -26,7 +25,7 @@ const TABS = [
 interface CreateAssistantModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (formData: CreateAssistantData) => void;
+  onSave: (formData: any) => void;
   assistant?: Assistant;
   isEditing?: boolean;
 }
@@ -40,86 +39,81 @@ export default function CreateAssistantModal({
 }: CreateAssistantModalProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("general");
-  const [form, setForm] = useState<CreateAssistantData>({
-    id: "",
+  const [form, setForm] = useState<any>({
     name: "",
     phone: "",
-    description: "",
-    storeId: "",
-    model: "",
-    welcomeTemplateId: "",
-    isActive: true,
-    responseTime: 30,
-    responseType: 80,
-    messageSendType: "por_partes",
-    useEmojis: false,
-    useStyles: false,
-    audioVoice: "",
-    audioCount: 0,
-    replyAudioWithAudio: false,
-    whatsappNumber: "",
-    whatsappBusinessId: "",
-    metaAppId: "",
-    metaToken: "",
-    webhookUrl: "",
-    webhookToken: "",
+    welcomeMsg: "",
+    timeResponse: 30,
+    assistensResponseP: 80,
+    typeSendMsg: { id: 1, name: "por_partes" },
+    emotesUse: false,
+    stylesUse: false,
+    voice: { id: 0, name: "", gender: "" },
+    amountAudio: 0,
+    voiceResponse: false,
+    idPhoneNumber: "",
+    idWppBusinessAccount: "",
+    idMetaApp: "",
+    tokenMetaPermanent: "",
+    webhook: "",
+    tokenWebhook: "",
+    prompt: "",
+    active: true,
   });
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (assistant && isEditing) {
-      setForm({
-        id: assistant.id,
-        name: assistant.name,
-        phone: assistant.phone || "",
-        description: assistant.description || "",
-        storeId: assistant.storeId || "",
-        model: assistant.model || "",
-        welcomeTemplateId: assistant.welcomeTemplateId || "",
-        isActive: assistant.isActive,
-        responseTime: assistant.responseTime || 30,
-        responseType: assistant.responseType || 80,
-        messageSendType: assistant.messageSendType || "por_partes",
-        useEmojis: assistant.useEmojis || false,
-        useStyles: assistant.useStyles || false,
-        audioVoice: assistant.audioVoice || "",
-        audioCount: assistant.audioCount || 0,
-        replyAudioWithAudio: assistant.replyAudioWithAudio || false,
-        whatsappNumber: assistant.whatsappNumber || "",
-        whatsappBusinessId: assistant.whatsappBusinessId || "",
-        metaAppId: assistant.metaAppId || "",
-        metaToken: assistant.metaToken || "",
-        webhookUrl: assistant.webhookUrl || "",
-        webhookToken: assistant.webhookToken || "",
-      });
-    } else {
-      // Reset form when opening for creation
-      setForm({
-        id: "",
-        name: "",
-        phone: "",
-        description: "",
-        storeId: "",
-        model: "",
-        welcomeTemplateId: "",
-        isActive: true,
-        responseTime: 30,
-        responseType: 80,
-        messageSendType: "por_partes",
-        useEmojis: false,
-        useStyles: false,
-        audioVoice: "",
-        audioCount: 0,
-        replyAudioWithAudio: false,
-        whatsappNumber: "",
-        whatsappBusinessId: "",
-        metaAppId: "",
-        metaToken: "",
-        webhookUrl: "",
-        webhookToken: "",
-      });
+    if (isOpen) {
+      if (assistant && isEditing) {
+        // Mapear el asistente existente al formulario del modal
+        setForm({
+          name: assistant.name || "",
+          phone: assistant.phone || "",
+          welcomeMsg: assistant.welcomeMsg || "",
+          timeResponse: assistant.timeResponse || 30,
+          assistensResponseP: assistant.assistensResponseP || 80,
+          typeSendMsg: assistant.typeSendMsg || { id: 1, name: "por_partes" },
+          emotesUse: assistant.emotesUse ?? false,
+          stylesUse: assistant.stylesUse ?? false,
+          voice: assistant.voice || { id: 0, name: "", gender: "" }, // Asegúrate de que gender tenga un valor por defecto si falta
+          amountAudio: assistant.amountAudio || 0,
+          voiceResponse: assistant.voiceResponse ?? false,
+          idPhoneNumber: assistant.idPhoneNumber || "",
+          idWppBusinessAccount: assistant.idWppBusinessAccount || "",
+          idMetaApp: assistant.idMetaApp || "",
+          tokenMetaPermanent: assistant.tokenMetaPermanent || "",
+          webhook: assistant.webhook || "",
+          tokenWebhook: assistant.tokenWebhook || "",
+          prompt: assistant.prompt || "",
+          active: assistant.active ?? true,
+        });
+      } else {
+        // Resetear el formulario para la creación
+        setForm({
+          name: "",
+          phone: "",
+          welcomeMsg: "",
+          timeResponse: 30,
+          assistensResponseP: 80,
+          typeSendMsg: { id: 1, name: "por_partes" },
+          emotesUse: false,
+          stylesUse: false,
+          voice: { id: 0, name: "", gender: "unknown" }, // *** IMPORTANTE: Valor por defecto para gender ***
+          amountAudio: 0,
+          voiceResponse: false,
+          idPhoneNumber: "", // *** IMPORTANTE: Valor por defecto para required fields ***
+          idWppBusinessAccount: "", // *** IMPORTANTE ***
+          idMetaApp: "",
+          tokenMetaPermanent: "", // *** IMPORTANTE ***
+          webhook: "",
+          tokenWebhook: "",
+          prompt: "",
+          active: true,
+        });
+      }
     }
-  }, [assistant, isEditing]);
+  }, [assistant, isEditing, isOpen]);
+
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -147,8 +141,20 @@ export default function CreateAssistantModal({
     };
   }, [isOpen, onClose]);
 
-  const handleChange = (field: string, value: string | number | boolean) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: string, value: any) => {
+    // Changed type to any to accommodate nested objects
+    if (field === "typeSendMsg") {
+      setForm((prev) => ({
+        ...prev,
+        typeSendMsg: { id: value === "por_partes" ? 1 : 2, name: value },
+      }));
+    } else if (field === "voice") {
+      // Assuming 'value' for voice will be just the 'name' for simplicity,
+      // you might need to adjust this based on how you handle voice selection (e.g., id, gender).
+      setForm((prev) => ({ ...prev, voice: { ...prev.voice, name: value } }));
+    } else {
+      setForm((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleSubmit = () => {
@@ -219,9 +225,9 @@ export default function CreateAssistantModal({
               </label>
               <select
                 className="w-full rounded-lg p-1 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.isActive ? "active" : "inactive"}
+                value={form.active ? "active" : "inactive"}
                 onChange={(e) =>
-                  handleChange("isActive", e.target.value === "active")
+                  handleChange("active", e.target.value === "active")
                 }
               >
                 <option value="active">{t("active")}</option>
@@ -265,19 +271,64 @@ export default function CreateAssistantModal({
                     </label>
                     <select
                       className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.welcomeTemplateId}
+                      value={form.welcomeMsg}
                       onChange={(e) =>
-                        handleChange("welcomeTemplateId", e.target.value)
+                        handleChange("welcomeMsg", e.target.value)
                       }
                     >
                       <option value="">{t("welcome_message")}</option>
                       {WELCOME_TEMPLATES.map((tpl) => (
-                        <option key={tpl.id} value={tpl.id}>
+                        <option key={tpl.id} value={tpl.content}>
+                          {" "}
+                          {/* Changed to tpl.content */}
                           {tpl.name}
                         </option>
                       ))}
                     </select>
                   </div>
+                  {/* New fields: idCompany, nit, createBy, model */}
+                  <div>
+                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                      {t("ID Company")}
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      value={form.idCompany}
+                      onChange={(e) =>
+                        handleChange("idCompany", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                      {t("NIT")}
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      value={form.nit}
+                      onChange={(e) => handleChange("nit", e.target.value)}
+                    />
+                  </div>
+                  {/* <div>
+                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                      {t("created By")}
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      value={form.createBy}
+                      onChange={(e) => handleChange("createBy", e.target.value)}
+                    />
+                  </div> */}
+                  {/* <div>
+                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                      {t("model")}
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      value={form.model}
+                      onChange={(e) => handleChange("model", e.target.value)}
+                    />
+                  </div> */}
                 </div>
               </div>
 
@@ -296,9 +347,9 @@ export default function CreateAssistantModal({
                       min={1}
                       max={300}
                       className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.responseTime}
+                      value={form.timeResponse}
                       onChange={(e) =>
-                        handleChange("responseTime", Number(e.target.value))
+                        handleChange("timeResponse", Number(e.target.value))
                       }
                     />
                   </div>
@@ -312,16 +363,19 @@ export default function CreateAssistantModal({
                         type="range"
                         min={0}
                         max={100}
-                        value={form.responseType}
+                        value={form.assistensResponseP}
                         onChange={(e) =>
-                          handleChange("responseType", Number(e.target.value))
+                          handleChange(
+                            "assistensResponseP",
+                            Number(e.target.value)
+                          )
                         }
                         className="accent-[#C9A14A]"
                       />
                       <span className="text-[#0B2C3D]">{t("audio")}</span>
-                      <span className="ml-2 text-[#C9A14A] font-bold">
-                        {form.responseType}% {t("text")} /{" "}
-                        {100 - form.responseType}% {t("audio")}
+                      <span className="ml-2 text-[#C9A14D] font-bold">
+                        {form.assistensResponseP}% {t("text")} /{" "}
+                        {100 - form.assistensResponseP}% {t("audio")}
                       </span>
                     </div>
                   </div>
@@ -340,9 +394,9 @@ export default function CreateAssistantModal({
                     </label>
                     <select
                       className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.messageSendType}
+                      value={form.typeSendMsg.name} // Accessing the name property
                       onChange={(e) =>
-                        handleChange("messageSendType", e.target.value)
+                        handleChange("typeSendMsg", e.target.value)
                       }
                     >
                       <option value="por_partes">{t("by_parts")}</option>
@@ -356,9 +410,9 @@ export default function CreateAssistantModal({
                       </label>
                       <input
                         type="checkbox"
-                        checked={form.useEmojis}
+                        checked={form.emotesUse}
                         onChange={(e) =>
-                          handleChange("useEmojis", e.target.checked)
+                          handleChange("emotesUse", e.target.checked)
                         }
                         className="accent-[#C9A14A] w-5 h-5"
                       />
@@ -369,9 +423,9 @@ export default function CreateAssistantModal({
                       </label>
                       <input
                         type="checkbox"
-                        checked={form.useStyles}
+                        checked={form.stylesUse}
                         onChange={(e) =>
-                          handleChange("useStyles", e.target.checked)
+                          handleChange("stylesUse", e.target.checked)
                         }
                         className="accent-[#C9A14A] w-5 h-5"
                       />
@@ -382,7 +436,6 @@ export default function CreateAssistantModal({
 
               {/* --- SECCIÓN PARA EL ENTRENAMIENTO (PROMPT) --- */}
               <div className="mt-4">
-                {/* El label usa el estilo de tu ejemplo */}
                 <label
                   htmlFor="prompt"
                   className="block text-sm font-medium text-[#0B2C3D] font-semibold"
@@ -397,9 +450,7 @@ export default function CreateAssistantModal({
                     rows={5} // Ajusta la altura como necesites
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
                     placeholder="Ej: Eres un asistente amigable y experto en ventas. Tu objetivo es guiar al cliente hacia la compra del producto X..."
-                    // Conecta el valor al estado 'form'
                     value={form.prompt}
-                    // Llama a handleChange para actualizar el estado
                     onChange={(e) => handleChange("prompt", e.target.value)}
                   />
                 </div>
@@ -409,7 +460,7 @@ export default function CreateAssistantModal({
                 </p>
               </div>
 
-              {/* {/* Audio 
+              {/* Audio */}
               <div>
                 <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
                   {t("audio")}
@@ -421,10 +472,8 @@ export default function CreateAssistantModal({
                     </label>
                     <select
                       className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.audioVoice}
-                      onChange={(e) =>
-                        handleChange("audioVoice", e.target.value)
-                      }
+                      value={form.voice.name} // Accessing the name property
+                      onChange={(e) => handleChange("voice", e.target.value)}
                     >
                       <option value="">{t("audio_voice")}</option>
                       <option value="voz1">Voz 1</option>
@@ -440,9 +489,9 @@ export default function CreateAssistantModal({
                       min={0}
                       max={10}
                       className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.audioCount}
+                      value={form.amountAudio}
                       onChange={(e) =>
-                        handleChange("audioCount", Number(e.target.value))
+                        handleChange("amountAudio", Number(e.target.value))
                       }
                     />
                   </div>
@@ -452,15 +501,15 @@ export default function CreateAssistantModal({
                     </label>
                     <input
                       type="checkbox"
-                      checked={form.replyAudioWithAudio}
+                      checked={form.voiceResponse}
                       onChange={(e) =>
-                        handleChange("replyAudioWithAudio", e.target.checked)
+                        handleChange("voiceResponse", e.target.checked)
                       }
                       className="accent-[#C9A14A] w-5 h-5"
                     />
                   </div>
                 </div>
-              </div> */}
+              </div>
             </form>
           )}
 
@@ -473,9 +522,9 @@ export default function CreateAssistantModal({
                   </label>
                   <input
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.whatsappNumber}
+                    value={form.idPhoneNumber}
                     onChange={(e) =>
-                      handleChange("whatsappNumber", e.target.value)
+                      handleChange("idPhoneNumber", e.target.value)
                     }
                   />
                 </div>
@@ -485,9 +534,9 @@ export default function CreateAssistantModal({
                   </label>
                   <input
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.whatsappBusinessId}
+                    value={form.idWppBusinessAccount}
                     onChange={(e) =>
-                      handleChange("whatsappBusinessId", e.target.value)
+                      handleChange("idWppBusinessAccount", e.target.value)
                     }
                   />
                 </div>
@@ -497,8 +546,8 @@ export default function CreateAssistantModal({
                   </label>
                   <input
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.metaAppId}
-                    onChange={(e) => handleChange("metaAppId", e.target.value)}
+                    value={form.idMetaApp}
+                    onChange={(e) => handleChange("idMetaApp", e.target.value)}
                   />
                 </div>
                 <div>
@@ -507,8 +556,10 @@ export default function CreateAssistantModal({
                   </label>
                   <input
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.metaToken}
-                    onChange={(e) => handleChange("metaToken", e.target.value)}
+                    value={form.tokenMetaPermanent}
+                    onChange={(e) =>
+                      handleChange("tokenMetaPermanent", e.target.value)
+                    }
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -517,15 +568,15 @@ export default function CreateAssistantModal({
                   </label>
                   <input
                     className="w-full rounded-lg p-2 mb-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.webhookUrl}
-                    onChange={(e) => handleChange("webhookUrl", e.target.value)}
+                    value={form.webhook}
+                    onChange={(e) => handleChange("webhook", e.target.value)}
                     placeholder={t("webhook_url")}
                   />
                   <input
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.webhookToken}
+                    value={form.tokenWebhook}
                     onChange={(e) =>
-                      handleChange("webhookToken", e.target.value)
+                      handleChange("tokenWebhook", e.target.value)
                     }
                     placeholder={t("webhook_token")}
                   />
