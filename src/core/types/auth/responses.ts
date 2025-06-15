@@ -1,4 +1,4 @@
-import { User, UserRole, ClientSubRole } from "./user";
+import { User, UserRole, ClientSubRole } from './user';
 
 export interface AuthResponse {
   access_token: string;
@@ -7,10 +7,11 @@ export interface AuthResponse {
 }
 
 export interface RegisterData {
-  name: string;
   email: string;
   password: string;
   storeName: string;
   phoneNumber: string;
   countryCode: string;
+  role: UserRole;
+  clientSubRole?: ClientSubRole;
 }

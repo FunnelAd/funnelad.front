@@ -5,9 +5,7 @@ import { useTranslation } from "react-i18next";
 import "@/i18n";
 import ProtectedRoute from "@/presentation/components/ProtectedRoute";
 import TemplateModal from "@/presentation/components/TemplateModal";
-import CreateWhatsAppTemplateModal from "@/presentation/components/CreateWhatsAppTemplateModal";
 import type { TemplateFormData } from "@/presentation/components/TemplateModal";
-import type {WhatsAppTemplate, Parameter} from "@/presentation/components/CreateWhatsAppTemplateModal"
 import {
   templateService,
   type Template,
@@ -19,79 +17,33 @@ import {
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 
-type TabType = 'simple' | 'whatsapp';
-
-
-
 export default function TemplatesPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabType>('simple');
-  const [simpleTemplates, setSimpleTemplates] = useState<Template[]>([]);
-  const [whatsappTemplates, setWhatsappTemplates] = useState<Template[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isCreateModalWppOpen, setIsCreateModalWppOpen] = useState(false);
-
-  
   const [editingTemplate, setEditingTemplate] = useState<
     Template | undefined
   >();
 
   useEffect(() => {
-    if (activeTab === 'simple') {
-      loadSimpleTemplates();
-    } else {
-      loadWhatsappTemplates();
-    }
-  }, [activeTab]);
+    loadTemplates();
+  }, []);
 
-  const loadSimpleTemplates = async () => {
+  const loadTemplates = async () => {
     try {
-      setIsLoading(true);
-      const data = await templateService.getTemplates(); // Consulta actual
-      setSimpleTemplates(data);
+      const data = await templateService.getTemplates();
+      setTemplates(data);
     } catch (error) {
-      console.error("Error loading simple templates:", error);
+      console.error("Error loading templates:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadWhatsappTemplates = async () => {
-    try {
-      setIsLoading(true);
-      // Aquí debes implementar el método específico para plantillas WhatsApp
-      const data = await templateService.getWhatsappTemplates(); // Nueva consulta
-      setWhatsappTemplates(data);
-    } catch (error) {
-      console.error("Error loading whatsapp templates:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getCurrentTemplates = () => {
-    return activeTab === 'simple' ? simpleTemplates : whatsappTemplates;
-  };
-
-  const setCurrentTemplates = (templates: Template[]) => {
-    if (activeTab === 'simple') {
-      setSimpleTemplates(templates);
-    } else {
-      setWhatsappTemplates(templates);
     }
   };
 
   const handleCreateTemplate = () => {
-    console.log(activeTab)
-    if (activeTab === 'simple') {
-      setEditingTemplate(undefined);
-      setIsCreateModalOpen(true);
-    }
-    else {
-      setEditingTemplate(undefined);
-      setIsCreateModalWppOpen(true);
-    }
+    setEditingTemplate(undefined);
+    setIsCreateModalOpen(true);
   };
 
   const handleEditTemplate = (template: Template) => {
@@ -102,71 +54,22 @@ export default function TemplatesPage() {
   const handleSaveTemplate = async (formData: TemplateFormData) => {
     try {
       if (editingTemplate) {
-        console.log(editingTemplate);
-        if (activeTab === 'simple') {
-          await templateService.updateTemplate(editingTemplate._id, formData);
-        } else {
-          await templateService.updateWhatsappTemplate(editingTemplate._id, formData);
-        }
+        console.log(editingTemplate)
+        await templateService.updateTemplate(editingTemplate._id, formData);
       } else {
-        if (activeTab === 'simple') {
-          await templateService.createTemplate(formData);
-        } else {
-          await templateService.createWhatsappTemplate(formData);
-        }
+        await templateService.createTemplate(formData);
       }
-
-      // Recargar la lista correspondiente
-      if (activeTab === 'simple') {
-        await loadSimpleTemplates();
-      } else {
-        await loadWhatsappTemplates();
-      }
+      await loadTemplates();
     } catch (error) {
       console.error("Error saving template:", error);
     }
   };
 
-  const handleSaveTemplateWhatsapp = async (formData: WhatsAppTemplate) => {
-    try {
-      if (editingTemplate) {
-        console.log(editingTemplate);
-        if (activeTab === 'simple') {
-          await templateService.updateTemplate(editingTemplate._id, formData);
-        } else {
-          await templateService.updateWhatsappTemplate(editingTemplate._id, formData);
-        }
-      } else {
-        if (activeTab === 'simple') {
-          await templateService.createTemplate(formData);
-        } else {
-          await templateService.createWhatsappTemplate(formData);
-        }
-      }
-
-      // Recargar la lista correspondiente
-      if (activeTab === 'simple') {
-        await loadSimpleTemplates();
-      } else {
-        await loadWhatsappTemplates();
-      }
-    } catch (error) {
-      console.error("Error saving template:", error);
-    }
-  };
-
-  
   const handleDeleteTemplate = async (id: string) => {
     if (window.confirm(t("confirm_delete_template"))) {
       try {
-        if (activeTab === 'simple') {
-          await templateService.deleteTemplate(id);
-        } else {
-          await templateService.deleteWhatsappTemplate(id);
-        }
-
-        const currentTemplates = getCurrentTemplates();
-        setCurrentTemplates(currentTemplates.filter((t) => t._id !== id));
+        await templateService.deleteTemplate(id); // Asumimos que deleteTemplate espera el _id
+        setTemplates(templates.filter((t) => t._id !== id)); // Cambiado de t.id a t._id para consistencia con la key
       } catch (error) {
         console.error("Error deleting template:", error);
       }
@@ -194,12 +97,6 @@ export default function TemplatesPage() {
     }
   };
 
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
-  };
-
-  const currentTemplates = getCurrentTemplates();
-
   return (
     <ProtectedRoute>
       <div className="p-6">
@@ -216,48 +113,18 @@ export default function TemplatesPage() {
           </button>
         </div>
 
-        {/* Tabs */}
-        <div className="mb-6">
-          <nav className="flex space-x-8" aria-label="Tabs">
-            <button
-              onClick={() => handleTabChange('simple')}
-              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'simple'
-                  ? 'border-[#C9A14A] text-[#C9A14A]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-            >
-              {t("simple_templates") || "Plantillas Sencillas"}
-            </button>
-            <button
-              onClick={() => handleTabChange('whatsapp')}
-              className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'whatsapp'
-                  ? 'border-[#C9A14A] text-[#C9A14A]'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-            >
-              {t("whatsapp_templates") || "Plantillas WhatsApp"}
-            </button>
-          </nav>
-        </div>
-
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#C9A14A]"></div>
           </div>
-        ) : currentTemplates.length === 0 ? (
+        ) : templates.length === 0 ? (
           <div className="text-center py-12">
             <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">
-              {activeTab === 'simple'
-                ? (t("no_simple_templates") || t("no_templates"))
-                : (t("no_whatsapp_templates") || t("no_templates"))
-              }
+              {t("no_templates")}
             </h3>
             <p className="mt-1 text-sm text-gray-500">
-              {activeTab === 'simple'
-                ? (t("create_first_simple_template") || t("create_first_template"))
-                : (t("create_first_whatsapp_template") || t("create_first_template"))
-              }
+              {t("create_first_template")}
             </p>
             <div className="mt-6">
               <button
@@ -310,7 +177,7 @@ export default function TemplatesPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentTemplates.map((template) => (
+                {templates.map((template) => (
                   <tr key={template._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -324,10 +191,11 @@ export default function TemplatesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${template.isActive
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          template.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
-                          }`}
+                        }`}
                       >
                         {template.isActive ? t("active") : t("inactive")}
                       </span>
@@ -369,19 +237,6 @@ export default function TemplatesPage() {
           template={editingTemplate}
           isEditing={!!editingTemplate}
         />
-
-       <CreateWhatsAppTemplateModal
-          isOpen={isCreateModalWppOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setEditingTemplate(undefined);
-          }}
-          onSave={handleSaveTemplateWhatsapp}
-          // template={editingTemplate}
-          // isEditing={!!editingTemplate}
-        />
-
-
       </div>
     </ProtectedRoute>
   );
