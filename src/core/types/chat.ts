@@ -36,3 +36,13 @@ export interface UpdateChatSessionData {
   name?: string;
   isActive?: boolean;
 }
+
+export interface Message {
+  sessionid: string;
+  content: string;
+  sender: string;
+  type: string; // e.g., 'text', 'image', etc.
+  timestamp: Date;
+  businessid: string;
+  isRead: boolean;
+}

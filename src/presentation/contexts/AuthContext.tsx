@@ -1,11 +1,47 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { User, UserRole, ClientSubRole, Permission } from '@/core/types/auth';
-import { RegisterData } from '@/core/types/auth/responses';
-import { authService } from '@/core/services/authService';
-import { TokenService } from '@/core/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+  useCallback,
+} from "react";
+import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { User, Permission, UserRole } from "@/core/types/auth";
+import { AuthResponse } from "@/core/types/auth";
+import { authService } from "@/core/services/authService";
+import { TokenService } from "@/core/api";
+import { RegisterData } from "@/core/types/auth/responses";
+
+interface DecodedJwtPayload {
+  sub: string;
+  email: string;
+  name?: string;
+  nickname?: string;
+  picture?: string;
+  permissions?: Permission[];
+}
+
+const mapAuth0ProfileToUser = (decodedToken: DecodedJwtPayload): User => {
+  const auth0Id = decodedToken.sub; // El 'sub' es el ID único del usuario de Auth0
+  const permissions = decodedToken.permissions || []; // Asegura que sea un array vacío si no hay permisos
+
+  return {
+    id: auth0Id,
+    auth0Id: auth0Id,
+    email: decodedToken.email,
+    name:
+      decodedToken.name ||
+      decodedToken.nickname ||
+      decodedToken.email ||
+      "Usuario",
+    role: UserRole.FUNNELAD,
+    permissions: permissions,
+  };
+};
 
 interface AuthContextType {
   user: User | null;
@@ -13,7 +49,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasPermission: (permission: Permission) => boolean;
 }
 
@@ -24,57 +60,93 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Verificar autenticación al cargar la aplicación
+  const logout = useCallback(async () => {
+    TokenService.clearAuthData();
+    localStorage.removeItem("user_data");
+    setUser(null);
+    router.push("/auth");
+  }, [router]);
+
   useEffect(() => {
-    const verifyAuth = async () => {
+    const verifySessionFromStorage = () => {
       try {
-        const token = TokenService.getToken();
-        if (token && !TokenService.isTokenExpired()) {
-          const response = await authService.verifyToken();
-          TokenService.setAuthData(response);
-          setUser(response.user);
+        const token = TokenService.getToken(); // Obtiene el token de localStorage/cookies
+        const userDataString = localStorage.getItem("user_data"); // Intenta obtener user_data
+
+        if (token && userDataString && !TokenService.isTokenExpired()) {
+          const decodedToken: DecodedJwtPayload = jwtDecode(token);
+
+          setUser(mapAuth0ProfileToUser(decodedToken));
+        } else {
+          TokenService.clearAuthData();
+          localStorage.removeItem("user_data");
+          setUser(null);
         }
-      } catch {
+      } catch (error) {
+        console.error(
+          "Error al verificar la sesión desde el almacenamiento, limpiando sesión.",
+          error
+        );
         TokenService.clearAuthData();
+        localStorage.removeItem("user_data");
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
     };
-
-    verifyAuth();
-  }, []);
+    verifySessionFromStorage();
+  }, [logout]);
 
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      // console.log(response) // Eliminar en producción
-      TokenService.setAuthData(response);
-      setUser(response.user);
-      router.push('/dashboard');
-    } catch {
-      throw new Error('Credenciales inválidas');
+      console.log(response);
+      const authData: AuthResponse = response;
+
+      TokenService.setAuthData(authData);
+
+      const decodedToken = jwtDecode<DecodedJwtPayload>(authData.access_token);
+      const userFromToken = mapAuth0ProfileToUser(decodedToken);
+
+      setUser(userFromToken);
+      localStorage.setItem("user_data", JSON.stringify(userFromToken));
+
+      router.push("/dashboard");
+    } catch (error: unknown) {
+      console.error("Error durante el login:", error);
+
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response: any };
+        console.error("Respuesta del backend:", axiosError.response.data);
+      }
+
+      throw error;
     }
   };
 
   const register = async (data: RegisterData) => {
     try {
       const response = await authService.register(data);
-      TokenService.setAuthData(response);
-      setUser(response.user);
-      router.push('/dashboard');
-    } catch {
-      throw new Error('Error en el registro');
+      const authData: AuthResponse = response.data;
+
+      // Si el registro te da un token, haz el login "automático" como arriba
+      TokenService.setAuthData(authData.access_token);
+      const decodedToken: DecodedJwtPayload = jwtDecode(authData.access_token);
+
+      const userFromToken = mapAuth0ProfileToUser(decodedToken);
+      setUser(userFromToken);
+      localStorage.setItem("user_data", JSON.stringify(userFromToken));
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Error durante el registro:", error);
+      throw error; // Propaga el error
     }
   };
 
-  const logout = () => {
-    TokenService.clearAuthData();
-    setUser(null);
-    router.push('/auth');
+  const hasPermission = (permission: Permission): boolean => {
+    if (!user || !user.permissions) return false;
+    return user.permissions.includes(permission);
   };
-
-  // TODO: Implementar lógica de permisos real
-  const checkPermission = (_permission: Permission) => true; // Temporalmente permitimos todo
 
   return (
     <AuthContext.Provider
@@ -82,10 +154,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
-        login,
         register,
+        login,
         logout,
-        hasPermission: checkPermission
+        hasPermission,
       }}
     >
       {children}
@@ -96,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
   }
   return context;
 }

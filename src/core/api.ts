@@ -1,97 +1,78 @@
-import axios from 'axios';
-import { AuthResponse } from '@/core/types/auth';
+// En @/core/api.ts
+import axios from "axios";
+import { AuthResponse } from "@/core/types/auth";
+import { jwtDecode } from "jwt-decode";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const baseURL =
+  process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api.onrender.com";
 
 class TokenService {
-  private static readonly TOKEN_KEY = 'token';
-  private static readonly EMAIL_KEY = 'email';
-  private static readonly EXPIRES_KEY = 'expires_in';
+  private static readonly TOKEN_KEY = "access_token";
+  private static readonly EXPIRES_AT_KEY = "token_expires_at";
+  private static readonly EMAIL_KEY = "Email";
 
   static getToken(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
   static getEmail(): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === "undefined") return null;
     return localStorage.getItem(this.EMAIL_KEY);
   }
 
   static setAuthData(response: AuthResponse): void {
+    if (typeof window === "undefined") return;
+    const expiresInSeconds = response.expires_in;
+    const expirationTime = new Date().getTime() + expiresInSeconds * 1000;
+    const decodedToken: { email?: string } = jwtDecode(response.access_token);
     localStorage.setItem(this.TOKEN_KEY, response.access_token);
-    localStorage.setItem(this.EXPIRES_KEY, response.expires_in.toString());
-    if (response.email) {
-      localStorage.setItem(this.EMAIL_KEY, response.email);
-    }
-    if (response.company) {
-      localStorage.setItem('company', JSON.stringify(response.company));
+    localStorage.setItem(this.EXPIRES_AT_KEY, expirationTime.toString());
+    if (decodedToken.email) {
+      localStorage.setItem(this.EMAIL_KEY, decodedToken.email);
     }
   }
 
   static clearAuthData(): void {
+    if (typeof window === "undefined") return;
     localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.EXPIRES_AT_KEY);
     localStorage.removeItem(this.EMAIL_KEY);
-    localStorage.removeItem(this.EXPIRES_KEY);
   }
 
   static isTokenExpired(): boolean {
-    // const expiresIn = localStorage.getItem(this.EXPIRES_KEY);
-    // if (!expiresIn) return true;
-    
-    // const expirationDate = new Date(parseInt(expiresIn) * 1000); // Convertir a milisegundos
-    // return new Date() > expirationDate;
-    return false;
+    if (typeof window === "undefined") return true;
+    const expirationTime = localStorage.getItem(this.EXPIRES_AT_KEY);
+    if (!expirationTime) return true;
+    return new Date().getTime() > Number(expirationTime);
   }
 }
 
 export const api = axios.create({
   baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
-// Interceptor para agregar headers de autenticación
-api.interceptors.request.use((config) => {
-  if (typeof window === 'undefined') return config;
+api.interceptors.request.use(
+  (config) => {
+    if (typeof window === "undefined") return config;
+    const token = TokenService.getToken();
+    const email = TokenService.getEmail();
+    console.log("EMAIL HEADER INYECTADO:", email);
 
-  const token = TokenService.getToken();
-  const email = TokenService.getEmail();
-
-  if (config.headers) {
-    // Verificar y añadir token si existe
-    if (token) {
-      if (TokenService.isTokenExpired()) {
-        TokenService.clearAuthData();
-        window.location.href = '/auth';
-        return Promise.reject('Token expirado');
-      }
+    if (token && !TokenService.isTokenExpired()) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
-    // Añadir email si existe, independientemente del token
-    if (email) {
-      config.headers['email'] = email;
-    }
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
 
-// Interceptor para manejar errores
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      TokenService.clearAuthData();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/auth';
-      }
+    if (email) {
+      config.headers = config.headers || {};
+      config.headers["email"] = email;
+      config.headers["Email"] = email;
     }
-    return Promise.reject(error);
-  }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
 export { TokenService };

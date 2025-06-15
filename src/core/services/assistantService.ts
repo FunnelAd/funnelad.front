@@ -1,93 +1,87 @@
-import { Assistant, CreateAssistantData, UpdateAssistantData } from '../types/assistant';
-
-// Simulación de datos para desarrollo
-const MOCK_ASSISTANTS: Assistant[] = [
-  {
-    id: '1',
-    name: 'Asistente de Ventas',
-    description: 'Asistente especializado en ventas y atención al cliente',
-    model: 'gpt-4',
-    createdAt: '2024-03-15T10:00:00Z',
-    updatedAt: '2024-03-15T10:00:00Z',
-    isActive: true,
-    storeId: 'store1',
-    storeName: 'Mi Tienda',
-    createdBy: 'admin@funnelad.com',
-    lastUsed: '2024-03-20T15:30:00Z',
-    totalConversations: 150,
-    successRate: 85,
-  },
-  {
-    id: '2',
-    name: 'Asistente de Soporte',
-    description: 'Asistente para resolver dudas y problemas técnicos',
-    model: 'gpt-3.5-turbo',
-    createdAt: '2024-03-16T14:00:00Z',
-    updatedAt: '2024-03-16T14:00:00Z',
-    isActive: true,
-    storeId: 'store1',
-    storeName: 'Mi Tienda',
-    createdBy: 'admin@funnelad.com',
-    lastUsed: '2024-03-19T09:15:00Z',
-    totalConversations: 75,
-    successRate: 92,
-  },
-];
+import {
+  Assistant,
+  CreateAssistantData,
+  UpdateAssistantData,
+} from "../types/assistants/assistant";
+import { api } from "../api"; // Asumo que 'api' es tu instancia de Axios o un wrapper similar
 
 export const assistantService = {
+  /**
+   * Obtiene todos los asistentes del backend.
+   * @returns Una promesa que resuelve a un array de asistentes.
+   */
   async getAssistants(): Promise<Assistant[]> {
-    // Simulación de llamada a API
-  
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(MOCK_ASSISTANTS);
-      }, 500);
-    });
+    try {
+      const response = await api.get("/api/assistants/getAll");
+      return response.data;
+    } catch (error) {
+      console.error("Error al obtener asistentes:", error);
+      // Re-lanzar el error para que los componentes puedan manejarlo
+      throw error;
+    }
   },
 
+  /**
+   * Crea un nuevo asistente en el backend.
+   * @param data Los datos del nuevo asistente.
+   * @returns Una promesa que resuelve al asistente creado.
+   */
   async createAssistant(data: CreateAssistantData): Promise<Assistant> {
-    // Simulación de llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newAssistant: Assistant = {
-          id: Date.now().toString(),
-          ...data,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isActive: true,
-          storeName: 'Mi Tienda', // Esto vendría del backend
-          createdBy: 'admin@funnelad.com', // Esto vendría del backend
-        };
-        resolve(newAssistant);
-      }, 500);
-    });
+    console.log(
+      "Enviando estos datos al backend para crear:",
+      JSON.stringify(data, null, 2)
+    );
+
+    try {
+      const response = await api.post("/api/assistants/create", data);
+      return response.data;
+    } catch (error) {
+      console.error("Error al crear asistente:", error);
+      // Re-lanzar el error
+      throw error;
+    }
   },
 
-  async updateAssistant(id: string, data: UpdateAssistantData): Promise<Assistant> {
-    // Simulación de llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const assistant = MOCK_ASSISTANTS.find(a => a.id === id);
-        if (!assistant) {
-          throw new Error('Assistant not found');
-        }
-        const updatedAssistant = {
-          ...assistant,
-          ...data,
-          updatedAt: new Date().toISOString(),
-        };
-        resolve(updatedAssistant);
-      }, 500);
-    });
+  /**
+   * Actualiza un asistente existente en el backend.
+   * @param id El ID del asistente a actualizar.
+   * @param data Los datos a actualizar del asistente.
+   * @returns Una promesa que resuelve al asistente actualizado.
+   */
+  async updateAssistant(
+    id: string,
+    data: UpdateAssistantData
+  ): Promise<Assistant> {
+    console.log(
+      `Enviando estos datos al backend para actualizar el asistente ${id}:`,
+      JSON.stringify(data, null, 2)
+    );
+    try {
+      const response = await api.put(`/api/assistants/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al actualizar asistente con ID ${id}:`, error);
+      // Re-lanzar el error
+      throw error;
+    }
   },
 
+  /**
+   * Elimina un asistente del backend.
+   * @param id El ID del asistente a eliminar.
+   * @returns Una promesa que resuelve cuando la eliminación es exitosa.
+   */
   async deleteAssistant(id: string): Promise<void> {
-    // Simulación de llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 500);
-    });
+    console.log(`Solicitando eliminación del asistente con ID: ${id}`);
+    try {
+      // Endpoint DELETE /api/assistants/delete/:id (basado en tu última confirmación de ruta)
+      await api.delete(`/api/assistants/delete/${id}`);
+      // No devuelve data, solo esperamos que la operación sea exitosa
+      console.log(`Asistente con ID ${id} eliminado exitosamente.`);
+    } catch (error) {
+      console.error(`Error al eliminar asistente con ID ${id}:`, error);
+      // Re-lanzar el error
+      throw error;
+    }
   },
-}; 
+};
