@@ -10,7 +10,7 @@ const baseURL =
 class TokenService {
   private static readonly TOKEN_KEY = "access_token";
   private static readonly EXPIRES_AT_KEY = "token_expires_at";
-  private static readonly EMAIL_KEY = "user_email";
+  private static readonly EMAIL_KEY = "Email";
 
   static getToken(): string | null {
     if (typeof window === "undefined") return null;
@@ -61,6 +61,8 @@ api.interceptors.request.use(
     if (typeof window === "undefined") return config;
     const token = TokenService.getToken();
     const email = TokenService.getEmail();
+    console.log("EMAIL HEADER INYECTADO:", email);
+
     if (token && !TokenService.isTokenExpired()) {
       config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
@@ -69,6 +71,7 @@ api.interceptors.request.use(
     if (email) {
       config.headers = config.headers || {};
       config.headers["email"] = email;
+      config.headers["Email"] = email;
     }
     return config;
   },

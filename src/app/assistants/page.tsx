@@ -88,21 +88,20 @@ export default function AssistantsPage() {
         prompt: formData.prompt || "", // Opcional en el esquema, aquí aseguramos string vacío
 
         // Campos de audio
-        voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // Requerido (Object): ***Asegúrate de que gender siempre tenga un valor***
+        voice: formData.voice || { id: 0, name: "Default", gender: "unknown" }, // Requerido (Object): ***Asegúrate de que gender siempre tenga un valor***
         amountAudio: Number(formData.amountAudio), // Requerido (Number)
         voiceResponse: formData.voiceResponse ?? false, // Requerido (Boolean)
 
-        // Campos de integración (todos estos eran requeridos en el error de Mongoose)
-        idPhoneNumber: formData.idPhoneNumber || "", // Requerido
-        idWppBusinessAccount: formData.idWppBusinessAccount || "", // Requerido
+        idPhoneNumber: formData.idPhoneNumber || "",
+        idWppBusinessAccount: formData.idWppBusinessAccount || "",
         idMetaApp: formData.idMetaApp || "", // Opcional
         tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
         webhook: formData.webhook || "", // Opcional
         tokenWebhook: formData.tokenWebhook || "", // Opcional
 
         // Campos estadísticos (aseguramos valores por defecto si tu esquema los requiere)
-        totalConversations: formData.totalConversations || "0", // Requerido si tu esquema así lo dice
-        successRate: formData.successRate || "0", // Requerido si tu esquema así lo dice
+        totalConversations: formData.totalConversations || 0, // Requerido si tu esquema así lo dice
+        successRate: formData.successRate || 0, // Requerido si tu esquema así lo dice
 
         templates: formData.templates || [],
         triggers: formData.triggers || [],
@@ -163,8 +162,8 @@ export default function AssistantsPage() {
         tokenWebhook: formData.tokenWebhook || "", // Opcional
 
         // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
-        totalConversations: formData.totalConversations || "0",
-        successRate: formData.successRate || "0",
+        totalConversations: formData.totalConversations || 0,
+        successRate: formData.successRate || 0,
 
         templates: formData.templates || [],
         triggers: formData.triggers || [],
