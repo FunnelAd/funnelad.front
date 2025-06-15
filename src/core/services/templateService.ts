@@ -1,5 +1,4 @@
 import { api } from '@/core/api';
-import { WhatsAppTemplate } from '@/presentation/components/CreateWhatsAppTemplateModal';
 import type { TemplateFormData } from '@/presentation/components/TemplateModal';
 
 export interface Template {
@@ -28,27 +27,11 @@ export const templateService = {
     return response.data;
   },
 
-    async getWhatsappTemplates(): Promise<Template[]> {
-    const response = await api.get('api/templates-wpp');
-    console.log('Templates:', response);
-    return response.data;
-  },
-
-
-  
-
   async createTemplate(data: TemplateFormData): Promise<Template> {
     const response = await api.post('api/templates', data);
     console.log('Create Template:', response);
     return response.data;
   },
-
-    async createTemplateWhatsapp(data: WhatsAppTemplate): Promise<WhatsAppTemplate> {
-    const response = await api.post('api/templates', data);
-    console.log('Create Template:', response);
-    return response.data;
-  },
-
 
   async updateTemplate(id: string, data: TemplateFormData): Promise<Template> {
     const response = await api.put(`api/templates/${id}`, data);
