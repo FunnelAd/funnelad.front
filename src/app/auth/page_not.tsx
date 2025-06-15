@@ -98,13 +98,11 @@ export default function AuthPage() {
           email: formData.email,
           password: formData.password,
           storeName: formData.storeName,
+          name: formData.storeName,
           phoneNumber: formData.phoneNumber,
           countryCode: formData.countryCode,
           role: formData.role,
-          clientSubRole:
-            formData.role === UserRole.CLIENT
-              ? formData.clientSubRole
-              : undefined,
+          clientSubRole: formData.clientSubRole
         });
       }
     } catch (error) {

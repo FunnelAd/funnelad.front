@@ -1,30 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "@/i18n";
-import { Trigger } from "@/core/types/trigger";
+import type { Trigger, CreateTriggerData } from "@/core/types/trigger";
 
-// Simulación de plantillas de bienvenida
-const trigger_types = [
-  { id: "1", name: "Logica", content: "¡" },
-  { id: "2", name: "Webhook", content: "" },
-];
+// // Simulación de plantillas de bienvenida
+// const trigger_types = [
+//   { id: "1", name: "Logica", content: "¡" },
+//   { id: "2", name: "Webhook", content: "" },
+// ];
 
 interface CreateTriggerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (formData: CreateTriggerFormData) => void;
+  onSave: (formData: CreateTriggerData) => void;
   trigger?: Trigger;
   isEditing?: boolean;
-}
-
-export interface CreateTriggerFormData {
-  id?: string;
-  name: string;
-  triggerTemplateId: string;
-  isActive: boolean;
-  logicField?: string;
-  webhookCheckbox?: boolean;
-  webhookOption?: string;
 }
 
 export default function CreateTriggerModal({
@@ -35,9 +25,11 @@ export default function CreateTriggerModal({
   isEditing = false,
 }: CreateTriggerModalProps) {
   const { t } = useTranslation();
-  const [form, setForm] = useState<CreateTriggerFormData>({
+  const [form, setForm] = useState<CreateTriggerData>({
     name: "",
-    triggerTemplateId: "",
+    description: "",
+    model:"",
+    storeId: "",
     isActive: true,
   });
   const modalRef = useRef<HTMLDivElement>(null);
@@ -45,16 +37,19 @@ export default function CreateTriggerModal({
   useEffect(() => {
     if (trigger && isEditing) {
       setForm({
-        id: trigger.id,
         name: trigger.name,
-        triggerTemplateId: trigger.triggerTemplateId || "",
+        description: "",
+        model: "",
+        storeId: "",
         isActive: trigger.isActive,
       });
     } else {
       // Reset form when opening for creation
       setForm({
         name: "",
-        triggerTemplateId: "",
+        description: "",
+        model: "",
+        storeId: "",
         isActive: true,
       });
     }
@@ -159,7 +154,7 @@ export default function CreateTriggerModal({
                   <label className="block text-[#0B2C3D] font-semibold mb-1">
                     {t("Type of trigger")}
                   </label>
-                  <select
+                  {/* <select
                     className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
                     value={form.triggerTemplateId}
                     onChange={(e) =>
@@ -172,12 +167,12 @@ export default function CreateTriggerModal({
                         {tpl.name}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
                 </div>
               </div>
             </div>
 
-            {form.triggerTemplateId === "1" && (
+            {/* {form.triggerTemplateId === "1" && (
               <div className="md:col-span-2">
                 <label className="block text-[#0B2C3D] font-semibold mb-1">
                   {t("Logic Field")}
@@ -238,7 +233,7 @@ export default function CreateTriggerModal({
                   </label>
                 </div>
               </div>
-            )}
+            )} */}
           </form>
 
           {/* Footer */}

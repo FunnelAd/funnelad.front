@@ -17,14 +17,14 @@ import {
   VOICE_CONFIG_OPTIONS,
 } from "@/app/onboarding/constants/onboardingSteps";
 import { api } from "@/core/api";
-import { OnboardingFormData } from "@/core/modules/onboarding/onboarding.interface";
+import type { OnBoardingData } from "../../../core/types/onboarding";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
 
   const [formData, setFormData] = useState<
-    OnboardingFormData & {
+    OnBoardingData & {
       password: string;
       identification: string;
       webSite: string;

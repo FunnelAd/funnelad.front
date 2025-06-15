@@ -13,7 +13,7 @@ export default function ChatPage() {
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connected, setConnected] = useState(true); // Simulamos que estamos conectados
+  const [connected] = useState(true); // Simulamos que estamos conectados
   const currentUser = TokenService.getEmail() || 'usuario@ejemplo.com';
 
   // Simulación de conversaciones

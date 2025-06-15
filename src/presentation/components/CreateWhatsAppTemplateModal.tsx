@@ -60,7 +60,7 @@ export default function CreateWhatsAppTemplateModal({
   template,
   isEditing = false,
 }: CreateWhatsAppTemplateModalProps) {
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const [form, setForm] = useState<WhatsAppTemplate>({
     name: "",
     category: "UTILITY",
@@ -360,7 +360,7 @@ export default function CreateWhatsAppTemplateModal({
                     <div className="col-span-1"></div>
                   </div>
                   
-                  {form.parameters.map((param, index) => (
+                  {form.parameters.map((param) => (
                     <div key={param.id} className="grid grid-cols-12 gap-2 items-center">
                       <div className="col-span-1 flex items-center gap-2">
                         <button

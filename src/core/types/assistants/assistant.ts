@@ -25,6 +25,7 @@ export interface Assistant {
   totalConversations: string;
   successRate: string;
   active: boolean;
+  model?: string;
   lastUsed?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -34,7 +35,7 @@ export interface Assistant {
 
 export type CreateAssistantData = Omit<
   Assistant,
-  "_id" | "createdAt" | "updatedAt" | "updatedBy"
+  "_id" | "createdAt" | "updatedAt" | "updatedBy" | "totalConversations" | "successRate"
 >;
 
 export type UpdateAssistantData = Partial<CreateAssistantData>;

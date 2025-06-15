@@ -13,11 +13,11 @@ export const authService = {
     const response = await api.post("/api/users/login", { email, password });
     console.log("Login response:", response);
 
-    return response.data;
+    return response.data as AuthResponse; 
   },
 
   async verifyToken(): Promise<AuthResponse> {
     const response = await api.get("/auth/verify");
-    return response.data;
+    return response.data as AuthResponse;
   },
 };

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+
 import { Permission } from '@/core/types/auth';
 
 interface ProtectedRouteProps {

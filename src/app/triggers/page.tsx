@@ -5,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import '@/i18n';
 import ProtectedRoute from '@/presentation/components/ProtectedRoute';
 import TriggerModal from '@/presentation/components/TriggerModal';
-import type {   CreateTriggerFormData } from '@/presentation/components/TriggerModal';
-import { triggerService, type Trigger } from '@/core/services/triggerService';
+import type {  Trigger , CreateTriggerData} from '../../core/types/trigger';
+import { triggerService } from '@/core/services/triggerService';
 import {
   PlusIcon,
   PencilIcon,
@@ -25,8 +25,9 @@ export default function TriggersPage() {
   useEffect(() => {
     loadTriggers();
   }, []);
+  
 
-  const loadTriggers = async () => {
+  const loadTriggers  = async ()  =>  {
     try {
       const data = await triggerService.getTriggers();
       setTriggers(data);
@@ -36,6 +37,10 @@ export default function TriggersPage() {
       setIsLoading(false);
     }
   };
+
+
+
+  
 
   const handleCreateTrigger = () => {
     setEditingTrigger(undefined);
@@ -47,7 +52,7 @@ export default function TriggersPage() {
     setIsCreateModalOpen(true);
   };
 
-  const handleSaveTrigger = async (formData: CreateTriggerFormData) => {
+  const handleSaveTrigger = async (formData: CreateTriggerData) => {
     try {
       if (editingTrigger) {
         await triggerService.updateTrigger(editingTrigger.id, formData);
