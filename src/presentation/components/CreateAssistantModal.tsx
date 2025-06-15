@@ -482,6 +482,20 @@ export default function CreateAssistantModal({
                   </div>
                   <div>
                     <label className="block text-[#0B2C3D] font-semibold mb-1">
+                      {t("voice_name")}
+                    </label>
+                    <input
+                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      value={form.voiceName || ""}
+                      onChange={(e) =>
+                        handleChange("voiceName", e.target.value)
+                      }
+                      placeholder={t("Alice (default)")}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[#0B2C3D] font-semibold mb-1">
                       {t("audio_count")}
                     </label>
                     <input

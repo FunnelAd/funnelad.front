@@ -44,6 +44,7 @@ export interface AuthState {
 }
 
 export interface AuthResponse {
+  data: AuthResponse;
   user: User | null;
   email: string;
   access_token: string;

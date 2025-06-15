@@ -10,10 +10,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
-import { User, Permission } from "@/core/types/auth";
-import { RegisterData, AuthResponse } from "@/core/types/auth/responses";
+import { User, Permission, UserRole } from "@/core/types/auth";
+import { AuthResponse } from "@/core/types/auth";
 import { authService } from "@/core/services/authService";
 import { TokenService } from "@/core/api";
+import { RegisterData } from "@/core/types/auth/responses";
 
 interface DecodedJwtPayload {
   sub: string;
@@ -35,10 +36,10 @@ const mapAuth0ProfileToUser = (decodedToken: DecodedJwtPayload): User => {
     name:
       decodedToken.name ||
       decodedToken.nickname ||
-      decodedToken.email.split("@")[0] ||
+      decodedToken.email ||
       "Usuario",
-    picture: decodedToken.picture || "",
-    permissions,
+    role: UserRole.FUNNELAD,
+    permissions: permissions,
   };
 };
 
@@ -48,7 +49,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
-  logout: () => Promise<void>; // Convertido a Promise<void> para que el await en Sidebar no de warning
+  logout: () => Promise<void>;
   hasPermission: (permission: Permission) => boolean;
 }
 
@@ -72,11 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = TokenService.getToken(); // Obtiene el token de localStorage/cookies
         const userDataString = localStorage.getItem("user_data"); // Intenta obtener user_data
 
-        // Verifica si el token existe, no está expirado y tenemos user_data.
-        // Asume que TokenService.isTokenExpired() ya maneja tokens inválidos/no existentes.
         if (token && userDataString && !TokenService.isTokenExpired()) {
           const decodedToken: DecodedJwtPayload = jwtDecode(token);
-          const storedUser: User = JSON.parse(userDataString);
 
           setUser(mapAuth0ProfileToUser(decodedToken));
         } else {
@@ -102,25 +100,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-
-      const authData: AuthResponse = response.data;
+      console.log(response);
+      const authData: AuthResponse = response;
 
       TokenService.setAuthData(authData);
 
-      // 4. El resto del código también usa 'authData'
-      const decodedToken: DecodedJwtPayload = jwtDecode(authData.access_token);
+      const decodedToken = jwtDecode<DecodedJwtPayload>(authData.access_token);
       const userFromToken = mapAuth0ProfileToUser(decodedToken);
 
       setUser(userFromToken);
       localStorage.setItem("user_data", JSON.stringify(userFromToken));
 
       router.push("/dashboard");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error durante el login:", error);
-      // Es bueno también loguear el error específico que viene del backend
-      if (error.response) {
-        console.error("Respuesta del backend:", error.response.data);
+
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response: any };
+        console.error("Respuesta del backend:", axiosError.response.data);
       }
+
       throw error;
     }
   };
@@ -143,8 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error; // Propaga el error
     }
   };
+
   const hasPermission = (permission: Permission): boolean => {
-    // Si los permisos también vienen del token (decodedToken.permissions)
     if (!user || !user.permissions) return false;
     return user.permissions.includes(permission);
   };
@@ -155,8 +154,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isAuthenticated: !!user,
         isLoading,
-        login,
         register,
+        login,
         logout,
         hasPermission,
       }}

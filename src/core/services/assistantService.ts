@@ -2,7 +2,7 @@ import {
   Assistant,
   CreateAssistantData,
   UpdateAssistantData,
-} from "../types/assistants/assistant"; // Asumiendo que estas interfaces están actualizadas y coinciden con el esquema de Mongoose
+} from "../types/assistants/assistant";
 import { api } from "../api"; // Asumo que 'api' es tu instancia de Axios o un wrapper similar
 
 export const assistantService = {
@@ -31,8 +31,8 @@ export const assistantService = {
       "Enviando estos datos al backend para crear:",
       JSON.stringify(data, null, 2)
     );
+
     try {
-      // Endpoint POST /api/assistants/create
       const response = await api.post("/api/assistants/create", data);
       return response.data;
     } catch (error) {
@@ -57,7 +57,6 @@ export const assistantService = {
       JSON.stringify(data, null, 2)
     );
     try {
-      // Endpoint PUT /api/assistants/:id (asumiendo que tu backend espera el ID en el path)
       const response = await api.put(`/api/assistants/${id}`, data);
       return response.data;
     } catch (error) {

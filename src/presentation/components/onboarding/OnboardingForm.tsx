@@ -25,7 +25,7 @@ const OnboardingForm: React.FC = () => {
 
   const [formData, setFormData] = useState<
     OnboardingFormData & {
-      password: string; // Estos campos no van a OnboardingSchema, pero son para el form
+      password: string;
       identification: string;
       webSite: string;
     }
@@ -225,8 +225,8 @@ const OnboardingForm: React.FC = () => {
 
   // Manejar cambios en la configuración del agente de texto
   const handleTextConfigChange = (
-    option: keyof typeof formData.textConfig, // Tipado más estricto para 'option'
-    value: any // Permitimos cualquier tipo de valor entrante
+    option: keyof typeof formData.textConfig,
+    value: any
   ) => {
     let processedValue = value;
 
