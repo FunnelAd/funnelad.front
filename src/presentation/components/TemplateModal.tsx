@@ -20,15 +20,15 @@ export interface TemplateMessage {
 }
 
 interface Template {
-  id: string;
+  id?: string;
   name: string;
   messages: TemplateMessage[];
   template_type: string;
   isActive: boolean;
-  chatStyle: ChatStyle;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
+  chatStyle?: ChatStyle;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
 }
 
 interface TemplateModalProps {

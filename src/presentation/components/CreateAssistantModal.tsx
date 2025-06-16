@@ -144,16 +144,16 @@ export default function CreateAssistantModal({
   const handleChange = (field: string, value: any) => {
     // Changed type to any to accommodate nested objects
     if (field === "typeSendMsg") {
-      setForm((prev) => ({
+      setForm((prev: any) => ({
         ...prev,
         typeSendMsg: { id: value === "por_partes" ? 1 : 2, name: value },
       }));
     } else if (field === "voice") {
       // Assuming 'value' for voice will be just the 'name' for simplicity,
       // you might need to adjust this based on how you handle voice selection (e.g., id, gender).
-      setForm((prev) => ({ ...prev, voice: { ...prev.voice, name: value } }));
+      setForm((prev: any) => ({ ...prev, voice: { ...prev.voice, name: value } }));
     } else {
-      setForm((prev) => ({ ...prev, [field]: value }));
+      setForm((prev: any) => ({ ...prev, [field]: value }));
     }
   };
 

@@ -75,7 +75,7 @@ const OnboardingForm: React.FC = () => {
 
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  const handleConfirmPasswordChange = (e) => {
+  const handleConfirmPasswordChange = (e: any) => {
     setConfirmPasswordValue(e.target.value);
     // El error se actualizará mediante el useEffect o podrías añadir lógica aquí
   };
@@ -956,7 +956,7 @@ const OnboardingForm: React.FC = () => {
                         handleTextConfigChange("useEmojis", option.id)
                       }
                       className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                        formData.textConfig.useEmojis === option.id
+                        formData.textConfig.useEmojis === (option.id === "true")
                           ? "bg-[#C9A14A] text-white"
                           : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
@@ -965,7 +965,7 @@ const OnboardingForm: React.FC = () => {
                       <p className="text-xs mt-1 opacity-80 hidden md:block">
                         {option.description}
                       </p>
-                      {formData.textConfig.useEmojis === option.id && (
+                      {formData.textConfig.useEmojis === (option.id === "true") && (
                         <CheckCircleIcon className="w-4 h-4 mt-1 text-white" />
                       )}
                     </motion.div>
@@ -1020,7 +1020,7 @@ const OnboardingForm: React.FC = () => {
                         handleTextConfigChange("modelTemperature", option.id)
                       }
                       className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                        formData.textConfig.modelTemperature === option.id
+                        formData.textConfig.modelTemperature === Number(option.id)
                           ? "bg-[#C9A14A] text-white"
                           : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
@@ -1029,7 +1029,7 @@ const OnboardingForm: React.FC = () => {
                       <p className="text-xs mt-1 opacity-80 hidden md:block">
                         {option.description}
                       </p>
-                      {formData.textConfig.modelTemperature === option.id && (
+                      {formData.textConfig.modelTemperature === Number(option.id) && (
                         <CheckCircleIcon className="w-4 h-4 mt-1 text-white" />
                       )}
                     </motion.div>

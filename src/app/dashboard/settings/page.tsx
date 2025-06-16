@@ -1,3 +1,6 @@
+'use client';
+
+
 import ProtectedRoute from '@/presentation/components/ProtectedRoute';
 import UserRoleInfo from '@/presentation/components/UserRoleInfo';
 
