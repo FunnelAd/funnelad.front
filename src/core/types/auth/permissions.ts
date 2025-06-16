@@ -22,5 +22,6 @@ export enum Permission {
 export function hasPermission(permission: Permission, userRole: string, clientSubRole?: string): boolean {
   // Por ahora, retornamos true para permitir todo
   // TODO: Implementar lógica real de permisos basada en roles
+  console.log(permission, userRole, clientSubRole )
   return true;
 }

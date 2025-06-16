@@ -4,11 +4,12 @@ import type { TemplateFormData } from '@/presentation/components/TemplateModal';
 
 export interface Template {
   id?: string;
+  _id: string;
   name: string;
   messages: [];
   template_type: string;
   isActive: boolean;
-  chat_style: number;
+  chat_style?: number;
   description: string;
   createdAt: string;
   updatedAt?: string;

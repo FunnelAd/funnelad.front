@@ -98,11 +98,6 @@ export default function AssistantsPage() {
         tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
         webhook: formData.webhook || "", // Opcional
         tokenWebhook: formData.tokenWebhook || "", // Opcional
-
-        // Campos estadísticos (aseguramos valores por defecto si tu esquema los requiere)
-        totalConversations:  0, // Requerido si tu esquema así lo dice
-        successRate:  0, // Requerido si tu esquema así lo dice
-
         templates: formData.templates || [],
         triggers: formData.triggers || [],
       };

@@ -2,7 +2,7 @@ import { Message } from './chatService';
 
 export interface SocketMessage {
   type: 'message' | 'typing' | 'read';
-  payload: any;
+  // payload: "";
 }
 
 export class SocketService {
@@ -34,7 +34,7 @@ export class SocketService {
         const data: SocketMessage = JSON.parse(event.data);
         
         if (data.type === 'message') {
-          this.notifyMessageListeners(data.payload);
+          // this.notifyMessageListeners(data.payload);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);

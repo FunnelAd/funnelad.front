@@ -19,5 +19,5 @@ export interface N8N {
 export interface N8NResponse {
     id: string;
     name: string;
-    output: any;
+    output: string;
 }
