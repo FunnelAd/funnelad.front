@@ -18,6 +18,7 @@ import {
 } from "@/app/onboarding/constants/onboardingSteps";
 import { api } from "@/core/api";
 import type { OnBoardingData } from "../../../core/types/onboarding";
+import type { Variants } from 'framer-motion'
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
@@ -436,7 +437,7 @@ const OnboardingForm: React.FC = () => {
         duration: 0.3,
       },
     },
-  };
+  } as Variants;
 
   // Renderizar el paso actual
   const renderStep = () => {
