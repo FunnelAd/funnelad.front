@@ -3,8 +3,6 @@ import type { AuthResponse } from "@/core/types/auth";
 
 export const authService = {
   async login(email: string, password: string): Promise<AuthResponse> {
-    // console.log('Login attempt with email:', email);
-    // console.log('Login attempt with password:', password);
     const response = await api.post(
       "https://funnelad-api.onrender.com/api/users/login",
       { email, password }
