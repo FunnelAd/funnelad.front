@@ -2,21 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import "@/i18n";
 import { Assistant } from "@/core/types/assistants/assistant";
-
-// Simulación de plantillas de bienvenida
-const WELCOME_TEMPLATES = [
-  {
-    id: "1",
-    name: "Bienvenida estándar",
-    content: "¡Hola! ¿En qué puedo ayudarte hoy?",
-  },
-  {
-    id: "2",
-    name: "Bienvenida formal",
-    content: "Bienvenido a nuestro servicio, ¿cómo puedo asistirle?",
-  },
-];
-
+import { telegramServices } from "@/core/services/telegramServices";
 const TABS = [
   { key: "general", label: "general" },
   { key: "integrations", label: "integrations" },
@@ -57,6 +43,8 @@ export default function CreateAssistantModal({
     tokenMetaPermanent: "",
     webhook: "",
     tokenWebhook: "",
+    tokenTelegram: "",
+    chatidTelegram: "",
     prompt: "",
     active: true,
   });
@@ -84,6 +72,8 @@ export default function CreateAssistantModal({
           tokenMetaPermanent: assistant.tokenMetaPermanent || "",
           webhook: assistant.webhook || "",
           tokenWebhook: assistant.tokenWebhook || "",
+          tokenTelegram: assistant.tokenTelegram || "",
+          chatidTelegram: assistant.chatidTelegram || "",
           prompt: assistant.prompt || "",
           active: assistant.active ?? true,
         });
@@ -107,6 +97,8 @@ export default function CreateAssistantModal({
           tokenMetaPermanent: "", // *** IMPORTANTE ***
           webhook: "",
           tokenWebhook: "",
+          chatidTelegram: "",
+          tokenTelegram: "",
           prompt: "",
           active: true,
         });
@@ -140,6 +132,14 @@ export default function CreateAssistantModal({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, onClose]);
+  const onConnectTelegram = () => {
+   
+    if (form.tokenTelegram){
+      console.log(form.tokenTelegram)
+      telegramServices.connectTelegramWebhook(form.tokenTelegram)
+    }
+  };
+
 
   const handleChange = (field: string, value: any) => {
     // Changed type to any to accommodate nested objects
@@ -151,7 +151,10 @@ export default function CreateAssistantModal({
     } else if (field === "voice") {
       // Assuming 'value' for voice will be just the 'name' for simplicity,
       // you might need to adjust this based on how you handle voice selection (e.g., id, gender).
-      setForm((prev: any) => ({ ...prev, voice: { ...prev.voice, name: value } }));
+      setForm((prev: any) => ({
+        ...prev,
+        voice: { ...prev.voice, name: value },
+      }));
     } else {
       setForm((prev: any) => ({ ...prev, [field]: value }));
     }
@@ -165,16 +168,16 @@ export default function CreateAssistantModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div
         ref={modalRef}
-        className="bg-white/95 backdrop-blur-sm rounded-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200"
       >
-        <div className="p-6">
+        <div className="p-8">
           {/* Header */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-3xl font-bold text-[#0B2C3D] tracking-tight flex items-center gap-3">
-              <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-[#C9A14A] to-[#A8842C] flex items-center justify-center">
+          <div className="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
+            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+              <span className="inline-block w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
                   <path
                     d="M3 12c0-2.21 1.79-4 4-4h2V6a3 3 0 1 1 6 0v2h2a4 4 0 1 1 0 8h-2v2a3 3 0 1 1-6 0v-2H7a4 4 0 0 1-4-4Z"
@@ -186,7 +189,7 @@ export default function CreateAssistantModal({
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-400 hover:text-gray-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
             >
               <svg
                 className="w-6 h-6"
@@ -204,27 +207,30 @@ export default function CreateAssistantModal({
             </button>
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b border-[#C9A14A]/30 mb-8">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-6 py-2 -mb-px border-b-2 transition-colors duration-200 font-semibold text-lg focus:outline-none ${
-                  activeTab === tab.key
-                    ? "border-[#C9A14A] text-[#C9A14A]"
-                    : "border-transparent text-gray-500 hover:text-[#C9A14A]"
-                }`}
-              >
-                {t(tab.label)}
-              </button>
-            ))}
-            <div className="flex items-center gap-2 ml-auto">
-              <label className="block text-[#0B2C3D] font-semibold mb-1">
+          {/* Tabs and Status */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex border-b border-gray-200">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-6 py-3 -mb-px border-b-2 transition-all duration-200 font-medium text-sm uppercase tracking-wide focus:outline-none ${
+                    activeTab === tab.key
+                      ? "border-blue-500 text-blue-600 bg-blue-50/50"
+                      : "border-transparent text-gray-500 hover:text-blue-500 hover:border-blue-300"
+                  }`}
+                >
+                  {t(tab.label)}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-700">
                 {t("status")}
               </label>
               <select
-                className="w-full rounded-lg p-1 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-700"
                 value={form.active ? "active" : "inactive"}
                 onChange={(e) =>
                   handleChange("active", e.target.value === "active")
@@ -238,115 +244,82 @@ export default function CreateAssistantModal({
 
           {/* Content */}
           {activeTab === "general" && (
-            <form className="space-y-8">
-              {/* General */}
-              <div>
-                <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
+            <div className="space-y-8">
+              {/* General Information */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-blue-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
                   {t("general")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("assistant_name")}
                     </label>
                     <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                       value={form.name}
                       onChange={(e) => handleChange("name", e.target.value)}
+                      placeholder="Nombre del asistente"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("phone")}
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("Mensaje De Bienvenida")}
                     </label>
                     <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.phone}
-                      onChange={(e) => handleChange("phone", e.target.value)}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("welcome_message")}
-                    </label>
-                    <select
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                       value={form.welcomeMsg}
                       onChange={(e) =>
                         handleChange("welcomeMsg", e.target.value)
                       }
-                    >
-                      <option value="">{t("welcome_message")}</option>
-                      {WELCOME_TEMPLATES.map((tpl) => (
-                        <option key={tpl.id} value={tpl.content}>
-                          {" "}
-                          {/* Changed to tpl.content */}
-                          {tpl.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {/* New fields: idCompany, nit, createBy, model */}
-                  <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("ID Company")}
-                    </label>
-                    <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.idCompany}
-                      onChange={(e) =>
-                        handleChange("idCompany", e.target.value)
-                      }
+                      placeholder="Mensaje de bienvenida para los usuarios"
                     />
                   </div>
-                  <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("NIT")}
-                    </label>
-                    <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.nit}
-                      onChange={(e) => handleChange("nit", e.target.value)}
-                    />
-                  </div>
-                  {/* <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("created By")}
-                    </label>
-                    <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.createBy}
-                      onChange={(e) => handleChange("createBy", e.target.value)}
-                    />
-                  </div> */}
-                  {/* <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("model")}
-                    </label>
-                    <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.model}
-                      onChange={(e) => handleChange("model", e.target.value)}
-                    />
-                  </div> */}
                 </div>
               </div>
 
-              {/* IA */}
-              <div>
-                <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
+              {/* AI Response Configuration */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-green-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                  </svg>
                   {t("assistant_response")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("response_time")}
                     </label>
                     <input
                       type="number"
                       min={1}
                       max={300}
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                       value={form.timeResponse}
                       onChange={(e) =>
                         handleChange("timeResponse", Number(e.target.value))
@@ -354,11 +327,10 @@ export default function CreateAssistantModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
-                      {t("assistant_response")}
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Proporción de respuesta
                     </label>
-                    <div className="flex items-center gap-4">
-                      <span className="text-[#0B2C3D]">{t("text")}</span>
+                    <div className="space-y-2">
                       <input
                         type="range"
                         min={0}
@@ -370,31 +342,47 @@ export default function CreateAssistantModal({
                             Number(e.target.value)
                           )
                         }
-                        className="accent-[#C9A14A]"
+                        className="w-full accent-blue-500"
                       />
-                      <span className="text-[#0B2C3D]">{t("audio")}</span>
-                      <span className="ml-2 text-[#C9A14D] font-bold">
-                        {form.assistensResponseP}% {t("text")} /{" "}
-                        {100 - form.assistensResponseP}% {t("audio")}
-                      </span>
+                      <div className="flex justify-between text-xs text-gray-600">
+                        <span>{t("text")}</span>
+                        <span className="font-semibold text-blue-600">
+                          {form.assistensResponseP}% {t("text")} /{" "}
+                          {100 - form.assistensResponseP}% {t("audio")}
+                        </span>
+                        <span>{t("audio")}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Texto */}
-              <div>
-                <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
+              {/* Text Configuration */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-purple-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h7"
+                    />
+                  </svg>
                   {t("text")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("message_send_type")}
                     </label>
                     <select
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.typeSendMsg.name} // Accessing the name property
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                      value={form.typeSendMsg.name}
                       onChange={(e) =>
                         handleChange("typeSendMsg", e.target.value)
                       }
@@ -403,76 +391,109 @@ export default function CreateAssistantModal({
                       <option value="completo">{t("complete")}</option>
                     </select>
                   </div>
-                  <div className="flex gap-8 items-center mt-8 md:mt-0 md:flex-col">
-                    <div className="flex gap-4 items-center">
-                      <label className="text-[#0B2C3D] font-semibold">
-                        {t("use_emojis")}
-                      </label>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
+                        id="emotesUse"
                         checked={form.emotesUse}
                         onChange={(e) =>
                           handleChange("emotesUse", e.target.checked)
                         }
-                        className="accent-[#C9A14A] w-5 h-5"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                    </div>
-                    <div className="flex gap-4 items-center">
-                      <label className="text-[#0B2C3D] font-semibold">
-                        {t("use_styles")}
+                      <label
+                        htmlFor="emotesUse"
+                        className="text-sm text-gray-700 font-medium"
+                      >
+                        {t("use_emojis")}
                       </label>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
+                        id="stylesUse"
                         checked={form.stylesUse}
                         onChange={(e) =>
                           handleChange("stylesUse", e.target.checked)
                         }
-                        className="accent-[#C9A14A] w-5 h-5"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
+                      <label
+                        htmlFor="stylesUse"
+                        className="text-sm text-gray-700 font-medium"
+                      >
+                        {t("use_styles")}
+                      </label>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* --- SECCIÓN PARA EL ENTRENAMIENTO (PROMPT) --- */}
-              <div className="mt-4">
-                <label
-                  htmlFor="prompt"
-                  className="block text-sm font-medium text-[#0B2C3D] font-semibold"
-                >
+              {/* Training (Prompt) Section */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-orange-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
                   Entrenamiento
-                </label>
-
-                <div className="mt-1">
+                </h3>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Instrucciones y personalidad del asistente
+                  </label>
                   <textarea
                     id="prompt"
                     name="prompt"
-                    rows={5} // Ajusta la altura como necesites
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2"
+                    rows={6}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400 resize-y"
                     placeholder="Ej: Eres un asistente amigable y experto en ventas. Tu objetivo es guiar al cliente hacia la compra del producto X..."
                     value={form.prompt}
                     onChange={(e) => handleChange("prompt", e.target.value)}
                   />
+                  <p className="mt-2 text-xs text-gray-500">
+                    Define la personalidad y las instrucciones base de tu
+                    asistente. Esto es clave para su comportamiento.
+                  </p>
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  Define la personalidad y las instrucciones base de tu
-                  asistente. Esto es clave para su comportamiento.
-                </p>
               </div>
 
-              {/* Audio */}
-              <div>
-                <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
+              {/* Audio Configuration */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                  <svg
+                    className="w-5 h-5 text-red-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
                   {t("audio")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("audio_voice")}
                     </label>
                     <select
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                      value={form.voice.name} // Accessing the name property
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                      value={form.voice.name}
                       onChange={(e) => handleChange("voice", e.target.value)}
                     >
                       <option value="">{t("audio_voice")}</option>
@@ -480,123 +501,224 @@ export default function CreateAssistantModal({
                       <option value="voz2">Voz 2</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                  {/* <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("voice_name")}
                     </label>
                     <input
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                       value={form.voiceName || ""}
                       onChange={(e) =>
                         handleChange("voiceName", e.target.value)
                       }
                       placeholder={t("Alice (default)")}
                     />
-                  </div>
-
+                  </div> */}
                   <div>
-                    <label className="block text-[#0B2C3D] font-semibold mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       {t("audio_count")}
                     </label>
                     <input
                       type="number"
                       min={0}
                       max={10}
-                      className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                       value={form.amountAudio}
                       onChange={(e) =>
                         handleChange("amountAudio", Number(e.target.value))
                       }
                     />
                   </div>
-                  <div className="flex items-center gap-4 mt-8 md:mt-0">
-                    <label className="text-[#0B2C3D] font-semibold">
-                      {t("reply_audio_with_audio")}
-                    </label>
+                  {/* <div className="flex items-center gap-3">
                     <input
                       type="checkbox"
+                      id="voiceResponse"
                       checked={form.voiceResponse}
                       onChange={(e) =>
                         handleChange("voiceResponse", e.target.checked)
                       }
-                      className="accent-[#C9A14A] w-5 h-5"
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                     />
-                  </div>
+                    <label htmlFor="voiceResponse" className="text-sm text-gray-700 font-medium">
+                      {t("reply_audio_with_audio")}
+                    </label>
+                  </div> */}
                 </div>
               </div>
-            </form>
+            </div>
           )}
 
           {activeTab === "integrations" && (
-            <form className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-gray-50 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-indigo-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                Integraciones
+              </h3>
+
+              <h5 className="text-md font-semibold text-gray-600 mb-6 flex items-center gap-3">
+                <svg
+                  className="w-5 h-5 text-indigo-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                  />
+                </svg>
+                Meta
+              </h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-[#0B2C3D] font-semibold mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t("whatsapp_number")}
                   </label>
                   <input
-                    className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                     value={form.idPhoneNumber}
                     onChange={(e) =>
                       handleChange("idPhoneNumber", e.target.value)
                     }
+                    placeholder="ID del número de WhatsApp"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#0B2C3D] font-semibold mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t("whatsapp_business_id")}
                   </label>
                   <input
-                    className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                     value={form.idWppBusinessAccount}
                     onChange={(e) =>
                       handleChange("idWppBusinessAccount", e.target.value)
                     }
+                    placeholder="ID de la cuenta de negocio"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#0B2C3D] font-semibold mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t("meta_app_id")}
                   </label>
                   <input
-                    className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                     value={form.idMetaApp}
                     onChange={(e) => handleChange("idMetaApp", e.target.value)}
+                    placeholder="ID de la aplicación Meta"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-[#0B2C3D] font-semibold mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t("meta_token")}
                   </label>
                   <input
-                    className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
                     value={form.tokenMetaPermanent}
                     onChange={(e) =>
                       handleChange("tokenMetaPermanent", e.target.value)
                     }
+                    placeholder="Token permanente de Meta"
                   />
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-[#0B2C3D] font-semibold mb-1">
-                    {t("webhook_config")}
+
+                <h5 className="text-md font-semibold text-gray-600 mb-6 flex items-center gap-3">
+                  <svg
+                    className="w-5 h-5 text-indigo-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                  Telegram
+                </h5>
+                <br />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t("token_telegram")}
                   </label>
                   <input
-                    className="w-full rounded-lg p-2 mb-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.webhook}
-                    onChange={(e) => handleChange("webhook", e.target.value)}
-                    placeholder={t("webhook_url")}
-                  />
-                  <input
-                    className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                    value={form.tokenWebhook}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                    value={form.tokenTelegram}
                     onChange={(e) =>
-                      handleChange("tokenWebhook", e.target.value)
+                      handleChange("tokenTelegram", e.target.value)
                     }
-                    placeholder={t("webhook_token")}
+                    placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
                   />
                 </div>
+            <button
+              onClick={onConnectTelegram}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
+              {t("connnect")}
+            </button>
+                {/* <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t("chatid_telegram")} (Opcional)
+                  </label>
+                  <input
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                    value={form.chatidTelegram}
+                    onChange={(e) =>
+                      handleChange("chatidTelegram", e.target.value)
+                    }
+                    placeholder="ID"
+                  />
+                </div> */}
+<br />
+          
+                <div className="md:col-span-2 space-y-4">
+                  <h4 className="font-medium text-gray-800">
+                    Configuración de Webhook
+                  </h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      URL del Webhook
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                      value={form.webhook}
+                      onChange={(e) => handleChange("webhook", e.target.value)}
+                      placeholder={t("webhook_url")}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Token del Webhook
+                    </label>
+                    <input
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                      value={form.tokenWebhook}
+                      onChange={(e) =>
+                        handleChange("tokenWebhook", e.target.value)
+                      }
+                      placeholder={t("webhook_token")}
+                    />
+                  </div>
+                </div>
               </div>
-            </form>
+            </div>
           )}
 
           {/* Footer */}

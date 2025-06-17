@@ -2,7 +2,7 @@ export interface Assistant {
   _id?: string;
   name: string;
   phone: string;
-  idCompany: string;
+  businessid: string;
   nit: string;
   createBy: string; // Ojo al typo que espera el backend
   welcomeMsg?: string;
@@ -22,6 +22,8 @@ export interface Assistant {
   tokenMetaPermanent: string;
   webhook: string;
   tokenWebhook: string;
+  tokenTelegram: string;
+  chatidTelegram: string;
   totalConversations: string;
   successRate: string;
   active: boolean;

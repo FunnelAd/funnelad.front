@@ -67,7 +67,7 @@ export default function AssistantsPage() {
       // Mapeo cuidadoso de formData del modal a CreateAssistantData
       const completeData: CreateAssistantData = {
         // Campos fijos desde el contexto del usuario/tienda
-        idCompany: currentStore.id, // Requerido
+        businessid: currentStore.id, // Requerido
         nit: currentStore.nit, // Requerido
         createBy: user?.email || "unknown_creator", // Requerido: Asegúrate de que user.email exista
 
@@ -96,6 +96,8 @@ export default function AssistantsPage() {
         idWppBusinessAccount: formData.idWppBusinessAccount || "",
         idMetaApp: formData.idMetaApp || "", // Opcional
         tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
+        tokenTelegram: formData.tokenTelegram || "",
+        
         webhook: formData.webhook || "", // Opcional
         tokenWebhook: formData.tokenWebhook || "", // Opcional
         templates: formData.templates || [],
