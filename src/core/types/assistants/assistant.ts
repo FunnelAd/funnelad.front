@@ -23,7 +23,7 @@ export interface Assistant {
   webhook: string;
   tokenWebhook: string;
   tokenTelegram: string;
-  chatidTelegram: string;
+  chatidTelegram?: string;
   totalConversations: string;
   successRate: string;
   active: boolean;
