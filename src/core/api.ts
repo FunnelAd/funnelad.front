@@ -4,7 +4,7 @@ import { AuthResponse } from "@/core/types/auth";
 import { jwtDecode } from "jwt-decode";
 
 const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api-il5i.onrender.com"; 
+  process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api-r47j.onrender.com"; 
   // process.env.NEXT_PUBLIC_API_URL || " http://localhost:3001";
 
 class TokenService {
