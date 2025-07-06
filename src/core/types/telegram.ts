@@ -16,8 +16,9 @@ export interface N8N {
 
 }
 
-export interface N8NResponse {
-    id: string;
-    name: string;
-    output: string;
+export interface connectTelegramWebhookResponse {
+    ok: boolean,
+    result?: boolean
+    description: string
+    error_code?: number
 }

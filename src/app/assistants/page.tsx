@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Assistant,
   CreateAssistantData,
-  UpdateAssistantData,
+  // UpdateAssistantData,
 } from "@/core/types/assistants/assistant";
 import { assistantService } from "@/core/services/assistantService";
 import ProtectedRoute from "@/presentation/components/ProtectedRoute";
@@ -61,13 +61,13 @@ export default function AssistantsPage() {
     nit: "900123456-7",
   };
 
-  const handleSaveAssistant = async (formData: any) => {
+  const handleSaveAssistant = async (formData: CreateAssistantData) => {
     setIsLoading(true);
     try {
       // Mapeo cuidadoso de formData del modal a CreateAssistantData
       const completeData: CreateAssistantData = {
         // Campos fijos desde el contexto del usuario/tienda
-        idCompany: currentStore.id, // Requerido
+        businessid: currentStore.id, // Requerido
         nit: currentStore.nit, // Requerido
         createBy: user?.email || "unknown_creator", // Requerido: Asegúrate de que user.email exista
 
@@ -96,13 +96,10 @@ export default function AssistantsPage() {
         idWppBusinessAccount: formData.idWppBusinessAccount || "",
         idMetaApp: formData.idMetaApp || "", // Opcional
         tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
+        tokenTelegram: formData.tokenTelegram || "",
+        
         webhook: formData.webhook || "", // Opcional
         tokenWebhook: formData.tokenWebhook || "", // Opcional
-
-        // Campos estadísticos (aseguramos valores por defecto si tu esquema los requiere)
-        totalConversations: formData.totalConversations || 0, // Requerido si tu esquema así lo dice
-        successRate: formData.successRate || 0, // Requerido si tu esquema así lo dice
-
         templates: formData.templates || [],
         triggers: formData.triggers || [],
       };
@@ -115,81 +112,81 @@ export default function AssistantsPage() {
       await assistantService.createAssistant(completeData);
       await loadAssistants(); // Recargar la lista
       setIsCreateModalOpen(false); // Cerrar el modal
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al crear el asistente:", error);
       // Aquí es donde puedes mostrar el error de Mongoose al usuario
       // Por ejemplo, si tu AppError tiene un mensaje de error legible:
       alert(
-        `Error al crear asistente: ${error.message || "Error desconocido"}`
+        `Error al crear asistente: ${error || "Error desconocido"}`
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleUpdateAssistant = async (id: string, formData: any) => {
-    setIsLoading(true);
-    try {
-      const updateData: UpdateAssistantData = {
-        // Mapeo similar al de create, pero para update.
-        // Para update, los campos que no son requeridos en el esquema (y que no se modifican)
-        // NO necesitan ser enviados si no los modificaste en el modal.
-        // Sin embargo, para los que Mongoose marcó como `required` en tu error,
-        // debes asegurarte de que siempre tengan un valor (incluso cadena vacía).
+  // const handleUpdateAssistant = async (id: string, formData: any) => {
+  //   setIsLoading(true);
+  //   try {
+  //     const updateData: UpdateAssistantData = {
+  //       // Mapeo similar al de create, pero para update.
+  //       // Para update, los campos que no son requeridos en el esquema (y que no se modifican)
+  //       // NO necesitan ser enviados si no los modificaste en el modal.
+  //       // Sin embargo, para los que Mongoose marcó como `required` en tu error,
+  //       // debes asegurarte de que siempre tengan un valor (incluso cadena vacía).
 
-        name: formData.name,
-        phone: formData.phone,
-        active: formData.active ?? true,
-        welcomeMsg: formData.welcomeMsg || "",
+  //       name: formData.name,
+  //       phone: formData.phone,
+  //       active: formData.active ?? true,
+  //       welcomeMsg: formData.welcomeMsg || "",
 
-        timeResponse: Number(formData.timeResponse),
-        assistensResponseP: Number(formData.assistensResponseP),
+  //       timeResponse: Number(formData.timeResponse),
+  //       assistensResponseP: Number(formData.assistensResponseP),
 
-        emotesUse: formData.emotesUse ?? false,
-        stylesUse: formData.stylesUse ?? false,
+  //       emotesUse: formData.emotesUse ?? false,
+  //       stylesUse: formData.stylesUse ?? false,
 
-        prompt: formData.prompt || "",
+  //       prompt: formData.prompt || "",
 
-        voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // ***Asegura gender aquí también***
-        amountAudio: Number(formData.amountAudio),
-        voiceResponse: formData.voiceResponse ?? false,
+  //       voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // ***Asegura gender aquí también***
+  //       amountAudio: Number(formData.amountAudio),
+  //       voiceResponse: formData.voiceResponse ?? false,
 
-        idPhoneNumber: formData.idPhoneNumber || "", // ***Requerido por Mongoose, asegúrate de enviar***
-        idWppBusinessAccount: formData.idWppBusinessAccount || "", // ***Requerido por Mongoose, asegúrate de enviar***
-        idMetaApp: formData.idMetaApp || "", // Opcional
-        tokenMetaPermanent: formData.tokenMetaPermanent || "", // ***Requerido por Mongoose, asegúrate de enviar***
-        webhook: formData.webhook || "", // Opcional
-        tokenWebhook: formData.tokenWebhook || "", // Opcional
+  //       idPhoneNumber: formData.idPhoneNumber || "", // ***Requerido por Mongoose, asegúrate de enviar***
+  //       idWppBusinessAccount: formData.idWppBusinessAccount || "", // ***Requerido por Mongoose, asegúrate de enviar***
+  //       idMetaApp: formData.idMetaApp || "", // Opcional
+  //       tokenMetaPermanent: formData.tokenMetaPermanent || "", // ***Requerido por Mongoose, asegúrate de enviar***
+  //       webhook: formData.webhook || "", // Opcional
+  //       tokenWebhook: formData.tokenWebhook || "", // Opcional
 
-        // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
-        totalConversations: formData.totalConversations || 0,
-        successRate: formData.successRate || 0,
+  //       // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
+  //       totalConversations: formData.totalConversations || 0,
+  //       successRate: formData.successRate || 0,
 
-        templates: formData.templates || [],
-        triggers: formData.triggers || [],
+  //       templates: formData.templates || [],
+  //       triggers: formData.triggers || [],
 
-        // idCompany, nit, createBy NO se envían en la actualización si son campos fijos.
-        // Si el backend los requiere, tu AssistantSchema debería tenerlos como no requeridos
-        // para updates o tu lógica de update en el backend debería ignorarlos si no se proporcionan.
-      };
+  //       // idCompany, nit, createBy NO se envían en la actualización si son campos fijos.
+  //       // Si el backend los requiere, tu AssistantSchema debería tenerlos como no requeridos
+  //       // para updates o tu lógica de update en el backend debería ignorarlos si no se proporcionan.
+  //     };
 
-      console.log(
-        "Enviando objeto final al backend para actualizar:",
-        JSON.stringify(updateData, null, 2)
-      );
-      await assistantService.updateAssistant(id, updateData);
-      await loadAssistants();
-      setIsCreateModalOpen(false);
-      setEditingAssistant(undefined);
-    } catch (error: any) {
-      console.error("Error al actualizar el asistente:", error);
-      alert(
-        `Error al actualizar asistente: ${error.message || "Error desconocido"}`
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     console.log(
+  //       "Enviando objeto final al backend para actualizar:",
+  //       JSON.stringify(updateData, null, 2)
+  //     );
+  //     await assistantService.updateAssistant(id, updateData);
+  //     await loadAssistants();
+  //     setIsCreateModalOpen(false);
+  //     setEditingAssistant(undefined);
+  //   } catch (error: any) {
+  //     console.error("Error al actualizar el asistente:", error);
+  //     alert(
+  //       `Error al actualizar asistente: ${error.message || "Error desconocido"}`
+  //     );
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleDeleteAssistant = async (id: string) => {
     if (

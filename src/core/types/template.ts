@@ -15,6 +15,7 @@ export interface TemplateMessage {
 
 export interface Template {
     id: string;
+    _id?: string;
     name: string;
     messages: TemplateMessage[];
     template_type: string;

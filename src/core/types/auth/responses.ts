@@ -13,4 +13,6 @@ export interface RegisterData {
   storeName: string;
   phoneNumber: string;
   countryCode: string;
+  role: UserRole;
+  clientSubRole?: ClientSubRole;
 }

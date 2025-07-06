@@ -7,7 +7,7 @@ import { DndContext, closestCenter, DragEndEvent, PointerSensor, useSensor, useS
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import JSZip from 'jszip';
+// import JSZip from 'jszip';
 export type TemplateMessageType = 'text' | 'image' | 'audio' | 'video' | 'file';
 export type ChatStyle = 'whatsapp' | 'messenger' | 'instagram';
 
@@ -20,15 +20,15 @@ export interface TemplateMessage {
 }
 
 interface Template {
-  id: string;
+  id?: string;
   name: string;
   messages: TemplateMessage[];
   template_type: string;
   isActive: boolean;
-  chatStyle: ChatStyle;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
+  chatStyle?: ChatStyle;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
 }
 
 interface TemplateModalProps {
@@ -379,9 +379,11 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
 
   // Limitar el drag & drop solo al eje vertical
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      lockAxis: 'y',
-    })
+    // useSensor(PointerSensor, {
+    //   lockAxis: 'y',
+    // })
+ useSensor(PointerSensor)
+
   );
 
   // Handler para guardar el ancho de la imagen al cargar

@@ -13,7 +13,7 @@ export const assistantService = {
   async getAssistants(): Promise<Assistant[]> {
     try {
       const response = await api.get("/api/assistants/getAll");
-      return response.data;
+      return response.data as Assistant[];
     } catch (error) {
       console.error("Error al obtener asistentes:", error);
       // Re-lanzar el error para que los componentes puedan manejarlo
@@ -34,7 +34,7 @@ export const assistantService = {
 
     try {
       const response = await api.post("/api/assistants/create", data);
-      return response.data;
+      return response.data as Assistant;
     } catch (error) {
       console.error("Error al crear asistente:", error);
       // Re-lanzar el error
@@ -58,7 +58,7 @@ export const assistantService = {
     );
     try {
       const response = await api.put(`/api/assistants/${id}`, data);
-      return response.data;
+      return response.data as Assistant;
     } catch (error) {
       console.error(`Error al actualizar asistente con ID ${id}:`, error);
       // Re-lanzar el error
@@ -84,4 +84,8 @@ export const assistantService = {
       throw error;
     }
   },
+
+
+
+
 };

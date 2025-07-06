@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/presentation/contexts/AuthContext";
 import { UserRole, ClientSubRole } from "@/core/types/auth";
 import { useRouter } from "next/navigation";
-import { authService } from "@/core/services/authService";
 
 type AuthMode = "login" | "register";
 
@@ -35,7 +33,7 @@ export default function AuthPage() {
     clientSubRole: ClientSubRole.ADMIN,
   });
   const [error, setError] = useState<string | null>(null);
-  const [validation, setValidation] = useState<ValidationState>({
+  const [validation] = useState<ValidationState>({
     email: false,
     password: false,
     confirmPassword: false,
@@ -93,7 +91,7 @@ export default function AuthPage() {
         <div className="flex flex-col items-center">
           <Image
             className="mx-auto h-16 w-auto drop-shadow-lg"
-            src="/logo.svg"
+            src="/images/FunnelAdLogo_Recurso_1.png"
             alt="FunnelAd"
             width={64}
             height={64}

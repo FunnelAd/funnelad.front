@@ -98,13 +98,11 @@ export default function AuthPage() {
           email: formData.email,
           password: formData.password,
           storeName: formData.storeName,
+          name: formData.storeName,
           phoneNumber: formData.phoneNumber,
           countryCode: formData.countryCode,
           role: formData.role,
-          clientSubRole:
-            formData.role === UserRole.CLIENT
-              ? formData.clientSubRole
-              : undefined,
+          clientSubRole: formData.clientSubRole
         });
       }
     } catch (error) {
@@ -155,7 +153,7 @@ export default function AuthPage() {
         <div className="flex flex-col items-center">
           <Image
             className="mx-auto h-16 w-auto drop-shadow-lg"
-            src="/logo.svg"
+            src="/images/FunnelAdLogo_Recurso_1"
             alt="FunnelAd"
             width={64}
             height={64}

@@ -49,7 +49,7 @@ export const chatService = {
     const response = await api.post("api/conversations/add-message", {
       content,
     });
-    return response.data;
+    return response.data as Message;
   },
 
   async markAsRead(conversationId: string, messageId: string): Promise<void> {

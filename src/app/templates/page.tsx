@@ -7,7 +7,7 @@ import ProtectedRoute from "@/presentation/components/ProtectedRoute";
 import TemplateModal from "@/presentation/components/TemplateModal";
 import CreateWhatsAppTemplateModal from "@/presentation/components/CreateWhatsAppTemplateModal";
 import type { TemplateFormData } from "@/presentation/components/TemplateModal";
-import type {WhatsAppTemplate, Parameter} from "@/presentation/components/CreateWhatsAppTemplateModal"
+import type {WhatsAppTemplate} from "@/presentation/components/CreateWhatsAppTemplateModal"
 import {
   templateService,
   type Template,
@@ -106,13 +106,13 @@ export default function TemplatesPage() {
         if (activeTab === 'simple') {
           await templateService.updateTemplate(editingTemplate._id, formData);
         } else {
-          await templateService.updateWhatsappTemplate(editingTemplate._id, formData);
+          // await templateService.updateWhatsappTemplate(editingTemplate._id, formData);
         }
       } else {
         if (activeTab === 'simple') {
           await templateService.createTemplate(formData);
         } else {
-          await templateService.createWhatsappTemplate(formData);
+         // await templateService.createWhatsappTemplate(formData);
         }
       }
 
@@ -132,15 +132,15 @@ export default function TemplatesPage() {
       if (editingTemplate) {
         console.log(editingTemplate);
         if (activeTab === 'simple') {
-          await templateService.updateTemplate(editingTemplate._id, formData);
+          //await templateService.updateTemplate(editingTemplate._id, formData);
         } else {
-          await templateService.updateWhatsappTemplate(editingTemplate._id, formData);
+          //await templateService.updateWhatsappTemplate(editingTemplate._id, formData);
         }
       } else {
         if (activeTab === 'simple') {
-          await templateService.createTemplate(formData);
+        //  await templateService.createTemplate(formData);
         } else {
-          await templateService.createWhatsappTemplate(formData);
+        //  await templateService.createWhatsappTemplate(formData);
         }
       }
 
@@ -162,7 +162,7 @@ export default function TemplatesPage() {
         if (activeTab === 'simple') {
           await templateService.deleteTemplate(id);
         } else {
-          await templateService.deleteWhatsappTemplate(id);
+         // await templateService.deleteWhatsappTemplate(id);
         }
 
         const currentTemplates = getCurrentTemplates();
@@ -317,11 +317,7 @@ export default function TemplatesPage() {
                         {template.name}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {getTypeLabel(template.type)}
-                      </div>
-                    </td>
+             
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${template.isActive
@@ -335,9 +331,7 @@ export default function TemplatesPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(template.createdAt)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDate(template.updatedAt)}
-                    </td>
+              
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <button
                         onClick={() => handleEditTemplate(template)}

@@ -6,7 +6,7 @@ import Sidebar from "@/presentation/components/layout/Sidebar";
 import { AuthProvider } from "@/presentation/contexts/AuthContext";
 import { AppConfigProvider } from "@/core/contexts/AppConfigContext";
 import { ThemeProvider } from "@/core/contexts/ThemeContext";
-import { useState, Suspense } from "react"; // Import Suspense
+import { Suspense } from "react"; // Import Suspense
 import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
