@@ -61,21 +61,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const logout = useCallback(async () => {
-    TokenService.clearAuthData();
-    localStorage.removeItem("user_data");
-    setUser(null);
-    router.push("/auth");
+    const refreshToken = TokenService.getRefreshToken();
+
+    try {
+      if (refreshToken) {
+        await authService.logout(refreshToken);
+        console.log("Sesión cerrada en el backend.");
+      }
+    } catch (error) {
+      console.error("Fallo al cerrar la sesión en el backend:", error);
+    } finally {
+      TokenService.clearAuthData();
+      localStorage.removeItem("user_data");
+      setUser(null);
+      router.push("/auth");
+    }
   }, [router]);
 
   useEffect(() => {
     const verifySessionFromStorage = () => {
       try {
-        const token = TokenService.getToken(); // Obtiene el token de localStorage/cookies
-        const userDataString = localStorage.getItem("user_data"); // Intenta obtener user_data
+        const token = TokenService.getToken();
+        const userDataString = localStorage.getItem("user_data");
 
         if (token && userDataString && !TokenService.isTokenExpired()) {
           const decodedToken: DecodedJwtPayload = jwtDecode(token);
-
           setUser(mapAuth0ProfileToUser(decodedToken));
         } else {
           TokenService.clearAuthData();
@@ -116,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Error durante el login:", error);
 
       if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as { response: {data: string} };
+        const axiosError = error as { response: { data: string } };
         console.error("Respuesta del backend:", axiosError.response.data);
       }
 
@@ -126,18 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (data: RegisterData) => {
     try {
-      console.log(data)
-      // const response = await authService.register(data);
-      // const authData: AuthResponse = response.data;
-
-      // // Si el registro te da un token, haz el login "automático" como arriba
-      // TokenService.setAuthData(authData.access_token);
-      // const decodedToken: DecodedJwtPayload = jwtDecode(authData.access_token);
-
-      // const userFromToken = mapAuth0ProfileToUser(decodedToken);
-      // setUser(userFromToken);
-      // localStorage.setItem("user_data", JSON.stringify(userFromToken));
-      // router.push("/dashboard");
+      console.log(data);
     } catch (error) {
       console.error("Error durante el registro:", error);
       throw error; // Propaga el error

@@ -55,14 +55,9 @@ export default function AssistantsPage() {
     setIsCreateModalOpen(true);
   };
 
-  const currentStore = {
-    id: "store_abc123",
-    name: "Mi Tienda Principal",
-    nit: "900123456-7",
-  };
-
   const handleSaveAssistant = async (formData: CreateAssistantData) => {
     setIsLoading(true);
+
     try {
       // Mapeo cuidadoso de formData del modal a CreateAssistantData
       const completeData: CreateAssistantData = {
@@ -97,7 +92,7 @@ export default function AssistantsPage() {
         idMetaApp: formData.idMetaApp || "", // Opcional
         tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
         tokenTelegram: formData.tokenTelegram || "",
-        
+
         webhook: formData.webhook || "", // Opcional
         tokenWebhook: formData.tokenWebhook || "", // Opcional
         templates: formData.templates || [],
@@ -116,9 +111,7 @@ export default function AssistantsPage() {
       console.error("Error al crear el asistente:", error);
       // Aquí es donde puedes mostrar el error de Mongoose al usuario
       // Por ejemplo, si tu AppError tiene un mensaje de error legible:
-      alert(
-        `Error al crear asistente: ${error || "Error desconocido"}`
-      );
+      alert(`Error al crear asistente: ${error || "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }
