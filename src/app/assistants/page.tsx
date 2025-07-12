@@ -97,7 +97,7 @@ export default function AssistantsPage() {
         idMetaApp: formData.idMetaApp || "", // Opcional
         tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
         tokenTelegram: formData.tokenTelegram || "",
-        
+
         webhook: formData.webhook || "", // Opcional
         tokenWebhook: formData.tokenWebhook || "", // Opcional
         templates: formData.templates || [],
@@ -116,9 +116,7 @@ export default function AssistantsPage() {
       console.error("Error al crear el asistente:", error);
       // Aquí es donde puedes mostrar el error de Mongoose al usuario
       // Por ejemplo, si tu AppError tiene un mensaje de error legible:
-      alert(
-        `Error al crear asistente: ${error || "Error desconocido"}`
-      );
+      alert(`Error al crear asistente: ${error || "Error desconocido"}`);
     } finally {
       setIsLoading(false);
     }

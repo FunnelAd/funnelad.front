@@ -2,9 +2,9 @@ export interface Assistant {
   _id?: string;
   name: string;
   phone: string;
-  businessid: string;
+  businessid?: string;
   nit: string;
-  createBy: string; // Ojo al typo que espera el backend
+  createBy?: string; // Ojo al typo que espera el backend
   welcomeMsg?: string;
   timeResponse: number;
   assistensResponseP: number;
@@ -37,7 +37,12 @@ export interface Assistant {
 
 export type CreateAssistantData = Omit<
   Assistant,
-  "_id" | "createdAt" | "updatedAt" | "updatedBy" | "totalConversations" | "successRate"
+  | "_id"
+  | "createdAt"
+  | "updatedAt"
+  | "updatedBy"
+  | "totalConversations"
+  | "successRate"
 >;
 
 export type UpdateAssistantData = Partial<CreateAssistantData>;
