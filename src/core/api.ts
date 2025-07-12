@@ -2,60 +2,64 @@
 import axios from "axios";
 import { AuthResponse } from "@/core/types/auth";
 import { jwtDecode } from "jwt-decode";
+import Cookies from "js-cookie";
 
 const baseURL =
   process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api.onrender.com";
 
 class TokenService {
-  private static readonly TOKEN_KEY = "access_token";
-  private static readonly EXPIRES_AT_KEY = "token_expires_at";
+  private static readonly TOKEN_KEY = "auth_token";
   private static readonly REFRESH_TOKEN_KEY = "refresh_token";
-  private static readonly EMAIL_KEY = "email";
+  private static readonly EMAIL_KEY = "user_email";
 
-  static getToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(this.TOKEN_KEY);
+  static getToken(): string | undefined {
+    // CAMBIO: Puede devolver undefined
+    if (typeof window === "undefined") return undefined;
+    return Cookies.get(this.TOKEN_KEY); // CAMBIO: Leer de Cookies
   }
 
-  static getEmail(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(this.EMAIL_KEY);
+  static getEmail(): string | undefined {
+    if (typeof window === "undefined") return undefined;
+    return Cookies.get(this.EMAIL_KEY); // CAMBIO: Leer de Cookies
   }
 
-  static getRefreshToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  static getRefreshToken(): string | undefined {
+    if (typeof window === "undefined") return undefined;
+    return Cookies.get(this.REFRESH_TOKEN_KEY); // CAMBIO: Leer de Cookies
   }
 
   static setAuthData(response: AuthResponse): void {
     if (typeof window === "undefined") return;
-    const expiresInSeconds = response.expires_in;
-    const expirationTime = new Date().getTime() + expiresInSeconds * 1000;
+
     const decodedToken: { email?: string } = jwtDecode(response.id_token);
-    localStorage.setItem(this.TOKEN_KEY, response.id_token);
-    localStorage.setItem(this.EXPIRES_AT_KEY, expirationTime.toString());
+
+    // CAMBIO: Guardar todo en Cookies en lugar de localStorage
+    const cookieOptions = {
+      expires: 7, // Días para que expire la cookie
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    };
+
+    Cookies.set(this.TOKEN_KEY, response.id_token, cookieOptions);
+
     if (response.refresh_token) {
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refresh_token);
+      Cookies.set(
+        this.REFRESH_TOKEN_KEY,
+        response.refresh_token,
+        cookieOptions
+      );
     }
-    console.log("Token imel", decodedToken.email);
+
     if (decodedToken.email) {
-      localStorage.setItem(this.EMAIL_KEY, decodedToken.email);
+      Cookies.set(this.EMAIL_KEY, decodedToken.email, cookieOptions);
     }
   }
 
   static clearAuthData(): void {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.EXPIRES_AT_KEY);
-    localStorage.removeItem(this.EMAIL_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-  }
-
-  static isTokenExpired(): boolean {
-    if (typeof window === "undefined") return true;
-    const expirationTime = localStorage.getItem(this.EXPIRES_AT_KEY);
-    if (!expirationTime) return true;
-    return new Date().getTime() > Number(expirationTime);
+    Cookies.remove(this.TOKEN_KEY);
+    Cookies.remove(this.REFRESH_TOKEN_KEY);
+    Cookies.remove(this.EMAIL_KEY);
   }
 }
 
@@ -67,19 +71,20 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (typeof window === "undefined") return config;
+
     const token = TokenService.getToken();
     const email = TokenService.getEmail();
-    console.log("EMAIL HEADER INYECTADO:", email);
 
-    if (token && !TokenService.isTokenExpired()) {
-      config.headers = config.headers || {};
+    config.headers = config.headers || {};
+
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
     if (email) {
-      config.headers = config.headers || {};
       config.headers["email"] = email;
     }
+
     return config;
   },
   (error) => Promise.reject(error)

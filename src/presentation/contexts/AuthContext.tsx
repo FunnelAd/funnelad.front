@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = TokenService.getToken();
         const userDataString = localStorage.getItem("user_data");
 
-        if (token && userDataString && !TokenService.isTokenExpired()) {
+        if (token && userDataString) {
           const decodedToken: DecodedJwtPayload = jwtDecode(token);
           setUser(mapAuth0ProfileToUser(decodedToken));
         } else {

@@ -55,9 +55,14 @@ export default function AssistantsPage() {
     setIsCreateModalOpen(true);
   };
 
+  const currentStore = {
+    id: "store_abc123",
+    name: "Mi Tienda Principal",
+    nit: "900123456-7",
+  };
+
   const handleSaveAssistant = async (formData: CreateAssistantData) => {
     setIsLoading(true);
-
     try {
       // Mapeo cuidadoso de formData del modal a CreateAssistantData
       const completeData: CreateAssistantData = {

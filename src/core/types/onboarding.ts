@@ -1,5 +1,6 @@
 export interface OnBoardingData {
   businessName: string;
+  identification: string;
   fullName: string;
   email: string;
   whatsapp: string;

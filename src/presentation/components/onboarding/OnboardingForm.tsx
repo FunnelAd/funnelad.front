@@ -18,7 +18,7 @@ import {
 } from "@/app/onboarding/constants/onboardingSteps";
 import { api } from "@/core/api";
 import type { OnBoardingData } from "../../../core/types/onboarding";
-import type { Variants } from 'framer-motion'
+import type { Variants } from "framer-motion";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
@@ -27,7 +27,6 @@ const OnboardingForm: React.FC = () => {
   const [formData, setFormData] = useState<
     OnBoardingData & {
       password: string;
-      identification: string;
       webSite: string;
     }
   >({
@@ -357,10 +356,12 @@ const OnboardingForm: React.FC = () => {
 
     const payloadToSend = {
       businessName: formData.businessName,
+      identification: formData.identification,
       fullName: formData.fullName,
       email: formData.email,
       password: formData.password,
       whatsapp: formData.whatsapp,
+
       agentTypes: formData.agentTypes,
       textChannels: formData.textChannels,
       textConfig: formData.textConfig,
@@ -459,15 +460,6 @@ const OnboardingForm: React.FC = () => {
                 FunnelAd te ayuda a automatizar tus ventas y atención al cliente
                 con inteligencia artificial.
               </p>
-              {/* <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleNext}
-                className="px-8 py-4 bg-[#C9A14A] text-white font-medium rounded-md hover:bg-[#B8912A] transition-colors duration-300 flex items-center text-lg"
-              >
-                CONTINUAR
-                <ArrowRightIcon className="w-5 h-5 ml-2" />
-              </motion.button> */}
             </div>
             <div className="md:w-1/2">
               <motion.div
@@ -966,7 +958,8 @@ const OnboardingForm: React.FC = () => {
                       <p className="text-xs mt-1 opacity-80 hidden md:block">
                         {option.description}
                       </p>
-                      {formData.textConfig.useEmojis === (option.id === "true") && (
+                      {formData.textConfig.useEmojis ===
+                        (option.id === "true") && (
                         <CheckCircleIcon className="w-4 h-4 mt-1 text-white" />
                       )}
                     </motion.div>
@@ -1021,7 +1014,8 @@ const OnboardingForm: React.FC = () => {
                         handleTextConfigChange("modelTemperature", option.id)
                       }
                       className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                        formData.textConfig.modelTemperature === Number(option.id)
+                        formData.textConfig.modelTemperature ===
+                        Number(option.id)
                           ? "bg-[#C9A14A] text-white"
                           : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
@@ -1030,7 +1024,8 @@ const OnboardingForm: React.FC = () => {
                       <p className="text-xs mt-1 opacity-80 hidden md:block">
                         {option.description}
                       </p>
-                      {formData.textConfig.modelTemperature === Number(option.id) && (
+                      {formData.textConfig.modelTemperature ===
+                        Number(option.id) && (
                         <CheckCircleIcon className="w-4 h-4 mt-1 text-white" />
                       )}
                     </motion.div>
