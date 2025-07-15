@@ -7,7 +7,6 @@ import {
   // UpdateAssistantData,
 } from "@/core/types/assistants/assistant";
 import { assistantService } from "@/core/services/assistantService";
-import ProtectedRoute from "@/presentation/components/ProtectedRoute";
 import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
 import { useAuth } from "@/presentation/contexts/AuthContext";
 
@@ -213,7 +212,6 @@ export default function AssistantsPage() {
   };
 
   return (
-    <ProtectedRoute>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Asistentes</h1>
@@ -341,6 +339,5 @@ export default function AssistantsPage() {
           isEditing={!!editingAssistant}
         />
       </div>
-    </ProtectedRoute>
   );
 }

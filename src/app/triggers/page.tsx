@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import '@/i18n';
-import ProtectedRoute from '@/presentation/components/ProtectedRoute';
 import TriggerModal from '@/presentation/components/TriggerModal';
 import type {  Trigger , CreateTriggerData} from '../../core/types/trigger';
 import { triggerService } from '@/core/services/triggerService';
@@ -98,7 +97,6 @@ export default function TriggersPage() {
   };
 
   return (
-    <ProtectedRoute>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">{t('Triggers')}</h1>
@@ -214,6 +212,5 @@ export default function TriggersPage() {
           isEditing={!!editingTrigger}
         />
       </div>
-    </ProtectedRoute>
   );
 } 

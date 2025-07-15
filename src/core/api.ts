@@ -1,11 +1,10 @@
-// En @/core/api.ts
+"use client";
 import axios from "axios";
 import { AuthResponse } from "@/core/types/auth";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api.onrender.com";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 class TokenService {
   private static readonly TOKEN_KEY = "auth_token";
@@ -13,81 +12,70 @@ class TokenService {
   private static readonly EMAIL_KEY = "user_email";
 
   static getToken(): string | undefined {
-    // CAMBIO: Puede devolver undefined
     if (typeof window === "undefined") return undefined;
-    return Cookies.get(this.TOKEN_KEY); // CAMBIO: Leer de Cookies
+    return Cookies.get(this.TOKEN_KEY);
   }
 
   static getEmail(): string | undefined {
     if (typeof window === "undefined") return undefined;
-    return Cookies.get(this.EMAIL_KEY); // CAMBIO: Leer de Cookies
-  }
-
-  static getRefreshToken(): string | undefined {
-    if (typeof window === "undefined") return undefined;
-    return Cookies.get(this.REFRESH_TOKEN_KEY); // CAMBIO: Leer de Cookies
+    return Cookies.get(this.EMAIL_KEY);
   }
 
   static setAuthData(response: AuthResponse): void {
     if (typeof window === "undefined") return;
 
-    const decodedToken: { email?: string } = jwtDecode(response.id_token);
-
-    // CAMBIO: Guardar todo en Cookies en lugar de localStorage
+    const decoded: { email?: string } = jwtDecode(response.access_token);
+    const isProd = process.env.NODE_ENV === "production";
     const cookieOptions = {
-      expires: 7, // Días para que expire la cookie
-      secure: process.env.NODE_ENV === "production",
+      expires: 7,
+      secure: isProd,         // Solo secure en producción
       path: "/",
+      sameSite: 'lax' as const,
+      domain: window.location.hostname, // Asegura dominio local y en prod_hostname
     };
 
-    Cookies.set(this.TOKEN_KEY, response.id_token, cookieOptions);
-
+    // Guarda el access_token
+    Cookies.set(this.TOKEN_KEY, response.access_token, cookieOptions);
+    // Guarda refresh token
     if (response.refresh_token) {
-      Cookies.set(
-        this.REFRESH_TOKEN_KEY,
-        response.refresh_token,
-        cookieOptions
-      );
+      Cookies.set(this.REFRESH_TOKEN_KEY, response.refresh_token, cookieOptions);
     }
-
-    if (decodedToken.email) {
-      Cookies.set(this.EMAIL_KEY, decodedToken.email, cookieOptions);
+    // Guarda email extraído
+    if (decoded.email) {
+      Cookies.set(this.EMAIL_KEY, decoded.email, cookieOptions);
     }
   }
 
   static clearAuthData(): void {
     if (typeof window === "undefined") return;
-    Cookies.remove(this.TOKEN_KEY);
-    Cookies.remove(this.REFRESH_TOKEN_KEY);
-    Cookies.remove(this.EMAIL_KEY);
+    const domain = window.location.hostname;
+    Cookies.remove(this.TOKEN_KEY, { domain, path: "/" });
+    Cookies.remove(this.REFRESH_TOKEN_KEY, { domain, path: "/" });
+    Cookies.remove(this.EMAIL_KEY, { domain, path: "/" });
   }
 }
 
-export const api = axios.create({
+// Instancia de Axios sin headers por defecto
+const api = axios.create({
   baseURL,
-  headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window === "undefined") return config;
+// Interceptor opcional para auto-inyección de headers
+// api.interceptors.request.use(
+//   (config: any) => {
+//     if (typeof window === "undefined" || !config.headers) return config;
 
-    const token = TokenService.getToken();
-    const email = TokenService.getEmail();
+//     const token = TokenService.getToken();
+//     const email = TokenService.getEmail();
 
-    config.headers = config.headers || {};
+//     if (token) config.headers.Authorization = `Bearer ${token}`;
+//     if (email) config.headers.email = email;
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+//     return config;
+//   },
+//   (error: any) => Promise.reject(error)
+// );
 
-    if (email) {
-      config.headers["email"] = email;
-    }
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-export { TokenService };
+export { api, TokenService };

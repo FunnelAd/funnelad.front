@@ -116,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       TokenService.setAuthData(authData);
 
       const decodedToken = jwtDecode<DecodedJwtPayload>(authData.access_token);
+      console.log("Decoded Token:", decodedToken);
       const userFromToken = mapAuth0ProfileToUser(decodedToken);
 
       setUser(userFromToken);

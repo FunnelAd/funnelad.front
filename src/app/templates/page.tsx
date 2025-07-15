@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "@/i18n";
-import ProtectedRoute from "@/presentation/components/ProtectedRoute";
 import TemplateModal from "@/presentation/components/TemplateModal";
 import CreateWhatsAppTemplateModal from "@/presentation/components/CreateWhatsAppTemplateModal";
 import type { TemplateFormData } from "@/presentation/components/TemplateModal";
@@ -201,7 +200,6 @@ export default function TemplatesPage() {
   const currentTemplates = getCurrentTemplates();
 
   return (
-    <ProtectedRoute>
       <div className="p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">
@@ -377,6 +375,5 @@ export default function TemplatesPage() {
 
 
       </div>
-    </ProtectedRoute>
   );
 }
