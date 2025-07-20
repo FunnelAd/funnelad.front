@@ -23,7 +23,7 @@ class TokenService {
 
   static setAuthData(response: AuthResponse): void {
     if (typeof window === "undefined") return;
-
+    console.log(response)
     const decoded: { email?: string } = jwtDecode(response.access_token);
     const isProd = process.env.NODE_ENV === "production";
     const cookieOptions = {
@@ -35,6 +35,7 @@ class TokenService {
     };
 
     // Guarda el access_token
+    Cookies.set(this.TOKEN_KEY, response.access_token, cookieOptions);
     Cookies.set(this.TOKEN_KEY, response.access_token, cookieOptions);
     // Guarda refresh token
     if (response.refresh_token) {
@@ -62,20 +63,20 @@ const api = axios.create({
 });
 
 // Interceptor opcional para auto-inyección de headers
-// api.interceptors.request.use(
-//   (config: any) => {
-//     if (typeof window === "undefined" || !config.headers) return config;
+api.interceptors.request.use(
+  (config: any) => {
+    if (typeof window === "undefined" || !config.headers) return config;
 
-//     const token = TokenService.getToken();
-//     const email = TokenService.getEmail();
+    const token = TokenService.getToken();
+    const email = TokenService.getEmail();
 
-//     if (token) config.headers.Authorization = `Bearer ${token}`;
-//     if (email) config.headers.email = email;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (email) config.headers.email = email;
 
-//     return config;
-//   },
-//   (error: any) => Promise.reject(error)
-// );
+    return config;
+  },
+  (error: any) => Promise.reject(error)
+);
 
 
 export { api, TokenService };

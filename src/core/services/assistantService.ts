@@ -3,7 +3,7 @@ import {
   CreateAssistantData,
   UpdateAssistantData,
 } from "../types/assistants/assistant";
-import { api } from "../api"; // Asumo que 'api' es tu instancia de Axios o un wrapper similar
+import { api,TokenService } from "../api"; // Asumo que 'api' es tu instancia de Axios o un wrapper similar
 
 export const assistantService = {
   /**
@@ -12,7 +12,16 @@ export const assistantService = {
    */
   async getAssistants(): Promise<Assistant[]> {
     try {
-      const response = await api.get("/api/assistants/getAll");
+            
+      const token = TokenService.getToken();
+      const email = TokenService.getEmail();
+      const response = await api.get("/api/assistants/getAll",  {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(email ? { email } : {}),
+            "Content-Type": "application/json",
+          },
+        });
       return response.data as Assistant[];
     } catch (error) {
       console.error("Error al obtener asistentes:", error);
@@ -57,7 +66,37 @@ export const assistantService = {
       JSON.stringify(data, null, 2)
     );
     try {
-      const response = await api.put(`/api/assistants/${id}`, data);
+
+
+      
+      const token = TokenService.getToken();
+      const email = TokenService.getEmail();
+      // console.log(token)
+      // const response = await api.post(
+      //   "/api/crm/customer",
+      //   {idBusiness:idBusiness},
+      //   {
+      //     headers: {
+      //       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //       ...(email ? { email } : {}),
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // )
+
+      
+
+      const response = await api.put(`/api/assistants/${id}`, data,
+      {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(email ? { email } : {}),
+            "Content-Type": "application/json",
+          },
+        }
+
+
+      );
       return response.data as Assistant;
     } catch (error) {
       console.error(`Error al actualizar asistente con ID ${id}:`, error);

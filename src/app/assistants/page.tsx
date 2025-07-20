@@ -79,8 +79,6 @@ export default function AssistantsPage() {
         timeResponse: Number(formData.timeResponse), // Requerido (Number)
         assistensResponseP: Number(formData.assistensResponseP), // Requerido (Number)
 
-        // Campos de texto
-        typeSendMsg: formData.typeSendMsg || { id: 1, name: "por_partes" }, // Requerido (Object)
         emotesUse: formData.emotesUse ?? false, // Requerido (Boolean)
         stylesUse: formData.stylesUse ?? false, // Requerido (Boolean)
 

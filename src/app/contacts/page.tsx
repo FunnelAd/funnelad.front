@@ -12,13 +12,14 @@ import {
   Filter,
 } from "lucide-react";
 import { crmServices } from "@/core/services/crmService";
+import { ICustomer } from "@/core/types/crm";
 
 export default function ContactsPage() {
   useEffect(() => {
-    loadData()
+    loadData();
   }, []);
 
-  const [contacts, setContacts] = useState([]);
+  const [contacts, setContacts] = useState<ICustomer[]>([]);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
@@ -31,11 +32,12 @@ export default function ContactsPage() {
     phone: "",
   });
 
-
   async function loadData() {
-    const data = await crmServices.getCustomersByIdBusiness("685f5b9ad9a068c851b44116")
-    console.log(data)
-
+    const data = await crmServices.getCustomersByIdBusiness(
+      "685f5b9ad9a068c851b44116"
+    );
+    setContacts(data);
+    console.log(data);
   }
 
   const getStatusColor = (status) => {

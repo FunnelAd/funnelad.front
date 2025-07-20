@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      console.log(response);
+      console.log("Auth Response: ",response);
       const authData: AuthResponse = response;
 
       TokenService.setAuthData(authData);
