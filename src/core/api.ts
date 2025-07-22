@@ -4,8 +4,8 @@ import { AuthResponse } from "@/core/types/auth";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 
-// const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api-tq49.onrender.com";
+const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+// const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api-tq49.onrender.com";
 class TokenService {
   private static readonly TOKEN_KEY = "auth_token";
   private static readonly REFRESH_TOKEN_KEY = "refresh_token";
@@ -25,10 +25,10 @@ class TokenService {
     if (typeof window === "undefined") return;
     console.log(response)
     const decoded: { email?: string } = jwtDecode(response.access_token);
-    const isProd = process.env.NODE_ENV === "production";
+    // const isProd = process.env.NODE_ENV === "production";
     const cookieOptions = {
       expires: 7,
-      secure: isProd,         // Solo secure en producción
+      // secure: isProd,         // Solo secure en producción
       path: "/",
       sameSite: 'lax' as const,
       domain: window.location.hostname, // Asegura dominio local y en prod_hostname
