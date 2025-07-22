@@ -9,7 +9,7 @@ interface AppConfig {
 }
 
 const defaultConfig: AppConfig = {
-  version: '1.0.0',
+  version: '0.0.1 Beta',
   environment: 'development',
   buildDate: new Date().toISOString(),
   companyName: 'FunnelAd',
