@@ -40,7 +40,7 @@ export default function ContactsPage() {
     console.log(data);
   }
 
-  const getStatusColor = (status: any) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "Creado":
         return "bg-green-500/20 text-green-400 border-green-500/30";
