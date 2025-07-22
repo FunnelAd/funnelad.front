@@ -4,8 +4,11 @@ export interface ICustomer {
   _id?: string;
   name: string;
   order?: IOrder;
+  email: string;
+  phone: string;
+  ordersCount: number;
   orderList?: IOrder[];
-  idBusiness: string;
+  idBusiness?: string;
   createdAt?: Date;
   updatedAt?: Date;
   createdBy?: string;

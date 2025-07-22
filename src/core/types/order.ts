@@ -1,4 +1,5 @@
 export interface IOrder {
+  _id?: string;
   active: boolean,
   address: string,
   assistant?: string;

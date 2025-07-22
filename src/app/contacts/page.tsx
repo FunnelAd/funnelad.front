@@ -40,7 +40,7 @@ export default function ContactsPage() {
     console.log(data);
   }
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: any) => {
     switch (status) {
       case "Creado":
         return "bg-green-500/20 text-green-400 border-green-500/30";
@@ -78,118 +78,11 @@ export default function ContactsPage() {
         ordersCount: 0,
         lastOrder: null,
       };
-      setContacts([...contacts, contact]);
+      // setContacts([...contacts, contact]);
       setNewContact({ name: "", email: "", phone: "" });
       setShowCreateForm(false);
     }
   };
-
-  const ContactModal = ({ contact, onClose }) => (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-slate-800/90 backdrop-blur-md border border-yellow-500/20 rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-white">
-            Detalles del Contacto
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl font-bold transition-colors"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="space-y-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-600 to-yellow-500 rounded-xl flex items-center justify-center">
-              <User className="h-6 w-6 text-slate-900" />
-            </div>
-            <div>
-              <p className="font-semibold text-white text-lg">{contact.name}</p>
-              <p className="text-sm text-gray-400">Nombre completo</p>
-            </div>
-          </div>
-
-          {contact.email && (
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-slate-700/50 rounded-xl flex items-center justify-center">
-                <Mail className="h-6 w-6 text-yellow-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">{contact.email}</p>
-                <p className="text-sm text-gray-400">Correo electrónico</p>
-              </div>
-            </div>
-          )}
-
-          {contact.phone && (
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-slate-700/50 rounded-xl flex items-center justify-center">
-                <Phone className="h-6 w-6 text-yellow-500" />
-              </div>
-              <div>
-                <p className="font-semibold text-white">{contact.phone}</p>
-                <p className="text-sm text-gray-400">Teléfono</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-slate-700/50 rounded-xl flex items-center justify-center">
-              <Package className="h-6 w-6 text-yellow-500" />
-            </div>
-            <div>
-              <p className="font-semibold text-white">
-                {contact.ordersCount} pedidos
-              </p>
-              <p className="text-sm text-gray-400">Total de pedidos</p>
-            </div>
-          </div>
-
-          {contact.lastOrder && (
-            <div className="bg-slate-700/30 border border-yellow-500/20 p-6 rounded-xl">
-              <h4 className="font-semibold text-white mb-4">Último pedido</h4>
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-300">
-                  <span className="font-medium text-yellow-500">ID:</span>{" "}
-                  {contact.lastOrder.id}
-                </p>
-                <p className="text-gray-300">
-                  <span className="font-medium text-yellow-500">Fecha:</span>{" "}
-                  {contact.lastOrder.date}
-                </p>
-                <p className="text-gray-300">
-                  <span className="font-medium text-yellow-500">Total:</span> $
-                  {contact.lastOrder.total.toLocaleString()}
-                </p>
-                <p className="flex items-center">
-                  <span className="font-medium text-yellow-500 mr-2">
-                    Estado:
-                  </span>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs border ${getStatusColor(
-                      contact.lastOrder.status
-                    )}`}
-                  >
-                    {contact.lastOrder.status}
-                  </span>
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-8 flex space-x-4">
-          <button className="flex-1 bg-gradient-to-r from-slate-700 to-slate-600 text-white py-3 px-6 rounded-xl hover:from-slate-600 hover:to-slate-500 transition-all duration-300 font-semibold">
-            Editar Contacto
-          </button>
-          <button className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-500 text-slate-900 py-3 px-6 rounded-xl hover:from-yellow-500 hover:to-yellow-400 transition-all duration-300 font-semibold">
-            Crear Pedido
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8">
@@ -267,7 +160,7 @@ export default function ContactsPage() {
               <tbody className="divide-y divide-slate-700/50">
                 {filteredContacts.map((contact) => (
                   <tr
-                    key={contact.id}
+                    key={contact._id}
                     className="hover:bg-slate-700/30 transition-colors duration-200"
                   >
                     <td className="px-8 py-6 whitespace-nowrap">
@@ -312,20 +205,20 @@ export default function ContactsPage() {
                       </div>
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap">
-                      {contact.lastOrder ? (
+                      {contact.order ? (
                         <div className="text-sm">
                           <div className="text-white font-semibold mb-1">
-                            {contact.lastOrder.id}
+                            {contact.order._id}
                           </div>
-                          <div className="text-gray-400 mb-2">
-                            {contact.lastOrder.date}
-                          </div>
+                          {/* <div className="text-gray-400 mb-2">
+                            {contact.order.createdAt}
+                          </div> */}
                           <span
                             className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
-                              contact.lastOrder.status
+                              contact.order.status
                             )}`}
                           >
-                            {contact.lastOrder.status}
+                            {contact.order.status}
                           </span>
                         </div>
                       ) : (
@@ -335,7 +228,7 @@ export default function ContactsPage() {
                       )}
                     </td>
                     <td className="px-8 py-6 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-3">
+                      {/* <div className="flex space-x-3">
                         <button
                           onClick={() => setSelectedContact(contact)}
                           className="text-yellow-500 hover:text-yellow-400 p-2 rounded-lg hover:bg-yellow-500/10 transition-all duration-200"
@@ -345,7 +238,7 @@ export default function ContactsPage() {
                         <button className="text-blue-400 hover:text-blue-300 p-2 rounded-lg hover:bg-blue-500/10 transition-all duration-200">
                           <Edit className="h-5 w-5" />
                         </button>
-                      </div>
+                      </div> */}
                     </td>
                   </tr>
                 ))}
@@ -454,13 +347,6 @@ export default function ContactsPage() {
           </div>
         )}
 
-        {/* Modal de detalles del contacto */}
-        {selectedContact && (
-          <ContactModal
-            contact={selectedContact}
-            onClose={() => setSelectedContact(null)}
-          />
-        )}
       </div>
     </div>
   );

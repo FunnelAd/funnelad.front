@@ -8,6 +8,7 @@ import { AppConfigProvider } from "@/core/contexts/AppConfigContext";
 import { ThemeProvider } from "@/core/contexts/ThemeContext";
 import { Suspense } from "react"; // Import Suspense
 import { usePathname } from "next/navigation";
+import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,6 +31,22 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
           className="flex-1 overflow-y-auto w-full md:pl-16 pl-0" // Considerar hacer este padding dinámico según el estado real del sidebar
         >
           {children}
+          <Toaster position="top-right"
+            toastOptions={{
+              success: {
+                style: {
+                  background: "green",
+                  color: "white",
+                },
+              },
+              error: {
+                style: {
+                  background: "red",
+                  color: "white",
+                },
+              },
+            }}
+          />
         </main>
       </div>
     </>

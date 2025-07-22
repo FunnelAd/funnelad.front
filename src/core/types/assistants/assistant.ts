@@ -10,7 +10,6 @@ export interface Assistant {
   assistensResponseP: number;
   templates: Array<{ idTemplate: string; active: boolean }>;
   triggers: Array<{ idTriggers: string; active: boolean }>;
-  typeSendMsg: { id: number; name: string };
   emotesUse: boolean;
   stylesUse: boolean;
   voice: { id: number; name: string; gender: string };

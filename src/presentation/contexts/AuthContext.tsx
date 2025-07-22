@@ -61,7 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const logout = useCallback(async () => {
-    const refreshToken = TokenService.getRefreshToken();
+    // const refreshToken = TokenService.getRefreshToken();
+    const refreshToken = ""
 
     try {
       if (refreshToken) {
