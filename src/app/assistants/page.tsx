@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Assistant,
   CreateAssistantData,
-  // UpdateAssistantData,
+  UpdateAssistantData,
 } from "@/core/types/assistants/assistant";
 import { assistantService } from "@/core/services/assistantService";
 import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
@@ -119,69 +119,66 @@ export default function AssistantsPage() {
     }
   };
 
-  // const handleUpdateAssistant = async (id: string, formData: any) => {
-  //   setIsLoading(true);
-  //   try {
-  //     const updateData: UpdateAssistantData = {
-  //       // Mapeo similar al de create, pero para update.
-  //       // Para update, los campos que no son requeridos en el esquema (y que no se modifican)
-  //       // NO necesitan ser enviados si no los modificaste en el modal.
-  //       // Sin embargo, para los que Mongoose marcó como `required` en tu error,
-  //       // debes asegurarte de que siempre tengan un valor (incluso cadena vacía).
+  const handleUpdateAssistant = async (
+    id: string,
+    formData: UpdateAssistantData
+  ) => {
+    setIsLoading(true);
+    try {
+      const updateData: UpdateAssistantData = {
+        name: formData.name,
+        phone: formData.phone,
+        active: formData.active ?? true,
+        welcomeMsg: formData.welcomeMsg || "",
 
-  //       name: formData.name,
-  //       phone: formData.phone,
-  //       active: formData.active ?? true,
-  //       welcomeMsg: formData.welcomeMsg || "",
+        timeResponse: Number(formData.timeResponse),
+        assistensResponseP: Number(formData.assistensResponseP),
 
-  //       timeResponse: Number(formData.timeResponse),
-  //       assistensResponseP: Number(formData.assistensResponseP),
+        emotesUse: formData.emotesUse ?? false,
+        stylesUse: formData.stylesUse ?? false,
 
-  //       emotesUse: formData.emotesUse ?? false,
-  //       stylesUse: formData.stylesUse ?? false,
+        prompt: formData.prompt || "",
 
-  //       prompt: formData.prompt || "",
+        voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // ***Asegura gender aquí también***
+        amountAudio: Number(formData.amountAudio),
+        voiceResponse: formData.voiceResponse ?? false,
 
-  //       voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // ***Asegura gender aquí también***
-  //       amountAudio: Number(formData.amountAudio),
-  //       voiceResponse: formData.voiceResponse ?? false,
+        idPhoneNumber: formData.idPhoneNumber || "", // ***Requerido por Mongoose, asegúrate de enviar***
+        idWppBusinessAccount: formData.idWppBusinessAccount || "", // ***Requerido por Mongoose, asegúrate de enviar***
+        idMetaApp: formData.idMetaApp || "", // Opcional
+        tokenMetaPermanent: formData.tokenMetaPermanent || "", // ***Requerido por Mongoose, asegúrate de enviar***
+        webhook: formData.webhook || "", // Opcional
+        tokenWebhook: formData.tokenWebhook || "", // Opcional
 
-  //       idPhoneNumber: formData.idPhoneNumber || "", // ***Requerido por Mongoose, asegúrate de enviar***
-  //       idWppBusinessAccount: formData.idWppBusinessAccount || "", // ***Requerido por Mongoose, asegúrate de enviar***
-  //       idMetaApp: formData.idMetaApp || "", // Opcional
-  //       tokenMetaPermanent: formData.tokenMetaPermanent || "", // ***Requerido por Mongoose, asegúrate de enviar***
-  //       webhook: formData.webhook || "", // Opcional
-  //       tokenWebhook: formData.tokenWebhook || "", // Opcional
+        // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
+        // totalConversations: formData.totalConversations || 0,
+        // successRate: formData.successRate || 0,
 
-  //       // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
-  //       totalConversations: formData.totalConversations || 0,
-  //       successRate: formData.successRate || 0,
+        templates: formData.templates || [],
+        triggers: formData.triggers || [],
 
-  //       templates: formData.templates || [],
-  //       triggers: formData.triggers || [],
+        // idCompany, nit, createBy NO se envían en la actualización si son campos fijos.
+        // Si el backend los requiere, tu AssistantSchema debería tenerlos como no requeridos
+        // para updates o tu lógica de update en el backend debería ignorarlos si no se proporcionan.
+      };
 
-  //       // idCompany, nit, createBy NO se envían en la actualización si son campos fijos.
-  //       // Si el backend los requiere, tu AssistantSchema debería tenerlos como no requeridos
-  //       // para updates o tu lógica de update en el backend debería ignorarlos si no se proporcionan.
-  //     };
-
-  //     console.log(
-  //       "Enviando objeto final al backend para actualizar:",
-  //       JSON.stringify(updateData, null, 2)
-  //     );
-  //     await assistantService.updateAssistant(id, updateData);
-  //     await loadAssistants();
-  //     setIsCreateModalOpen(false);
-  //     setEditingAssistant(undefined);
-  //   } catch (error: any) {
-  //     console.error("Error al actualizar el asistente:", error);
-  //     alert(
-  //       `Error al actualizar asistente: ${error.message || "Error desconocido"}`
-  //     );
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+      console.log(
+        "Enviando objeto final al backend para actualizar:",
+        JSON.stringify(updateData, null, 2)
+      );
+      await assistantService.updateAssistant(id, updateData);
+      await loadAssistants();
+      setIsCreateModalOpen(false);
+      setEditingAssistant(undefined);
+    } catch (error: any) {
+      console.error("Error al actualizar el asistente:", error);
+      alert(
+        `Error al actualizar asistente: ${error.message || "Error desconocido"}`
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleDeleteAssistant = async (id: string) => {
     if (
@@ -210,132 +207,135 @@ export default function AssistantsPage() {
   };
 
   return (
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Asistentes</h1>
-          <button
-            onClick={handleCreateAssistant}
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Crear Asistente
-          </button>
-        </div>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">Asistentes</h1>
+        <button
+          onClick={handleCreateAssistant}
+          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Crear Asistente
+        </button>
+      </div>
 
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : assistants.length === 0 ? (
+        <div className="text-center py-12">
+          <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">
+            No hay asistentes
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Comienza creando tu primer asistente para mejorar la atención a tus
+            clientes.
+          </p>
+          <div className="mt-6">
+            <button
+              onClick={handleCreateAssistant}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              Crear Asistente
+            </button>
           </div>
-        ) : assistants.length === 0 ? (
-          <div className="text-center py-12">
-            <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">
-              No hay asistentes
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Comienza creando tu primer asistente para mejorar la atención a
-              tus clientes.
-            </p>
-            <div className="mt-6">
-              <button
-                onClick={handleCreateAssistant}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <PlusIcon className="h-5 w-5 mr-2" />
-                Crear Asistente
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {assistants.map((assistant) => (
-                <li key={assistant._id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <p className="text-sm font-medium text-blue-600 truncate">
-                          {assistant.name}
-                        </p>
-                        <div className="ml-2 flex-shrink-0 flex">
-                          <p
-                            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              assistant.active
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {assistant.active ? "Activo" : "Inactivo"}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="ml-2 flex-shrink-0 flex space-x-2">
-                        <button
-                          onClick={() => handleEditAssistant(assistant)}
-                          className="text-gray-400 hover:text-gray-500"
+        </div>
+      ) : (
+        <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <ul className="divide-y divide-gray-200">
+            {assistants.map((assistant) => (
+              <li key={assistant._id}>
+                <div className="px-4 py-4 sm:px-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <p className="text-sm font-medium text-blue-600 truncate">
+                        {assistant.name}
+                      </p>
+                      <div className="ml-2 flex-shrink-0 flex">
+                        <p
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            assistant.active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
                         >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAssistant(assistant._id!)}
-                          className="text-gray-400 hover:text-red-500"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mt-2 sm:flex sm:justify-between">
-                      {/* <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
-                          {assistant.description}
-                        </p>
-                      </div> */}
-                      <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>Creado el {formatDate(assistant.createdAt!)}</p>
-                      </div>
-                    </div>
-                    <div className="mt-2 sm:flex sm:justify-between">
-                      <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
-                          Modelo: {assistant.model}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>
-                          Último uso:{" "}
-                          {assistant.lastUsed
-                            ? formatDate(assistant.lastUsed)
-                            : "Nunca"}
+                          {assistant.active ? "Activo" : "Inactivo"}
                         </p>
                       </div>
                     </div>
-                    <div className="mt-2 sm:flex sm:justify-between">
-                      <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
-                          Conversaciones: {assistant.totalConversations || 0}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <p>Tasa de éxito: {assistant.successRate || 0}%</p>
-                      </div>
+                    <div className="ml-2 flex-shrink-0 flex space-x-2">
+                      <button
+                        onClick={() => handleEditAssistant(assistant)}
+                        className="text-gray-400 hover:text-gray-500"
+                      >
+                        <PencilIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAssistant(assistant._id!)}
+                        className="text-gray-400 hover:text-red-500"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
                     </div>
                   </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+                  <div className="mt-2 sm:flex sm:justify-between">
+                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                      <p>Creado el {formatDate(assistant.createdAt!)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 sm:flex sm:justify-between">
+                    <div className="sm:flex">
+                      <p className="flex items-center text-sm text-gray-500">
+                        Modelo: {assistant.model}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                      <p>
+                        Último uso:{" "}
+                        {assistant.lastUsed
+                          ? formatDate(assistant.lastUsed)
+                          : "Nunca"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-2 sm:flex sm:justify-between">
+                    <div className="sm:flex">
+                      <p className="flex items-center text-sm text-gray-500">
+                        Conversaciones: {assistant.totalConversations || 0}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                      <p>Tasa de éxito: {assistant.successRate || 0}%</p>
+                    </div>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-        <CreateAssistantModal
-          isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setEditingAssistant(undefined);
-          }}
-          onSave={handleSaveAssistant}
-          assistant={editingAssistant}
-          isEditing={!!editingAssistant}
-        />
-      </div>
+      <CreateAssistantModal
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingAssistant(undefined);
+        }}
+        onSave={(formData) => {
+          if (editingAssistant) {
+            // llamamos a tu update, pasando el _id del asistente
+            handleUpdateAssistant(editingAssistant._id!, formData);
+          } else {
+            // creamos uno nuevo
+            handleSaveAssistant(formData);
+          }
+        }}
+        assistant={editingAssistant}
+        isEditing={!!editingAssistant}
+      />
+    </div>
   );
 }

@@ -4,8 +4,8 @@ import { AuthResponse } from "@/core/types/auth";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 
+// const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 const baseURL = process.env.NEXT_PUBLIC_API_URL || "https://funnelad-api-tq49.onrender.com";
-
 class TokenService {
   private static readonly TOKEN_KEY = "auth_token";
   private static readonly REFRESH_TOKEN_KEY = "refresh_token";
@@ -69,7 +69,7 @@ api.interceptors.request.use(
 
     const token = TokenService.getToken();
     const email = TokenService.getEmail();
-
+    console.log(email)
     if (token) config.headers.Authorization = `Bearer ${token}`;
     if (email) config.headers.email = email;
 
