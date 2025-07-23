@@ -28,6 +28,7 @@ const initialFormState = {
   idPhoneNumber: "",
   idWppBusinessAccount: "",
   idMetaApp: "",
+  appSecretMeta: "",
   tokenMetaPermanent: "",
   webhook: "",
   tokenWebhook: "",
@@ -37,6 +38,7 @@ const initialFormState = {
   active: true,
   trainingType: "predefined",
   selectedModel: "",
+  audioEnabled: false,
 };
 
 interface CreateAssistantModalProps {
@@ -56,7 +58,7 @@ export default function CreateAssistantModal({
 }: CreateAssistantModalProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("general");
-    const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [form, setForm] = useState<any>(initialFormState);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -160,7 +162,7 @@ export default function CreateAssistantModal({
 
   const onConnectTelegram = async () => {
     if (form.tokenTelegram) {
-      setIsLoading(true)
+      setIsLoading(true);
       const toastId = toast.loading("Enviando datos...");
       try {
         const res = await telegramServices.connectTelegramWebhook(
@@ -175,8 +177,7 @@ export default function CreateAssistantModal({
         toast.error("Ocurrió un error", { id: toastId });
       }
 
-      setIsLoading(false)
-
+      setIsLoading(false);
     } else {
       // toast.success('Operación exitosa');
       toast.error("Token no valido");
@@ -198,7 +199,25 @@ export default function CreateAssistantModal({
   };
 
   const handleSubmit = () => {
-    // console.log(form);
+    console.log(form);
+
+    // 1. Nombre
+    if (!form.name.trim()) {
+      toast.error("El nombre es obligatorio");
+      return;
+    }
+    // 2. Teléfono (ej. mínimo 7 dígitos, solo números y opcional + prefijo)
+    const phoneRegex = /^\+?\d{7,15}$/;
+    if (!phoneRegex.test(form.phone)) {
+      toast.error("Ingresa un teléfono válido (solo números, 7–15 dígitos)");
+      return;
+    }
+    // 3. Prompt
+    if (!form.prompt.trim()) {
+      toast.error("El prompt es obligatorio");
+      return;
+    }
+
     onSave(form);
     onClose();
   };
@@ -332,10 +351,15 @@ export default function CreateAssistantModal({
                       {t("assistant_name")}
                     </label>
                     <input
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                      id="name"
+                      type="text"
                       value={form.name}
                       onChange={(e) => handleChange("name", e.target.value)}
-                      placeholder="Nombre del asistente"
+                      required
+                      minLength={2}
+                      pattern="[A-Za-zÀ-ÿ\s]+"
+                      title="Solo letras y espacios, mínimo 2 caracteres"
+                      className="w-full border px-3 py-2 rounded"
                     />
                   </div>
                   {/* Este campo no estaba en la versión anterior, se ha restaurado */}
@@ -344,10 +368,14 @@ export default function CreateAssistantModal({
                       Phone
                     </label>
                     <input
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                      id="phone"
+                      type="tel"
                       value={form.phone}
                       onChange={(e) => handleChange("phone", e.target.value)}
-                      placeholder="Número de teléfono"
+                      required
+                      pattern="^\+?\d{7,15}$"
+                      title="Solo números, opcional +, 7-15 dígitos"
+                      className="w-full border px-3 py-2 rounded"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -362,71 +390,6 @@ export default function CreateAssistantModal({
                       }
                       placeholder="Mensaje de bienvenida para los usuarios"
                     />
-                  </div>
-                </div>
-              </div>
-
-              {/* AI Response Configuration */}
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                    />
-                  </svg>
-                  {t("assistant_response")}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("response_time")}
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={300}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-                      value={form.timeResponse}
-                      onChange={(e) =>
-                        handleChange("timeResponse", Number(e.target.value))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Proporción de respuesta
-                    </label>
-                    <div className="space-y-2">
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={form.assistensResponseP}
-                        onChange={(e) =>
-                          handleChange(
-                            "assistensResponseP",
-                            Number(e.target.value)
-                          )
-                        }
-                        className="w-full accent-blue-500"
-                      />
-                      <div className="flex justify-between text-xs text-gray-600">
-                        <span>{t("text")}</span>
-                        <span className="font-semibold text-blue-600">
-                          {form.assistensResponseP}% {t("text")} /{" "}
-                          {100 - form.assistensResponseP}% {t("audio")}
-                        </span>
-                        <span>{t("audio")}</span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -548,11 +511,11 @@ export default function CreateAssistantModal({
                 )}
               </div>
 
-              {/* Text Configuration */}
+              {/* AI Response Configuration */}
               <div className="bg-gray-50 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <svg
-                    className="w-5 h-5 text-purple-500"
+                    className="w-5 h-5 text-green-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -561,52 +524,67 @@ export default function CreateAssistantModal({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h7"
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                     />
                   </svg>
-                  {t("text")}
+                  {t("assistant_response")}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="emotesUse"
-                        checked={form.emotesUse}
-                        onChange={(e) =>
-                          handleChange("emotesUse", e.target.checked)
-                        }
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label
-                        htmlFor="emotesUse"
-                        className="text-sm text-gray-700 font-medium"
-                      >
-                        {t("use_emojis")}
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="stylesUse"
-                        checked={form.stylesUse}
-                        onChange={(e) =>
-                          handleChange("stylesUse", e.target.checked)
-                        }
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label
-                        htmlFor="stylesUse"
-                        className="text-sm text-gray-700 font-medium"
-                      >
-                        {t("use_styles")}
-                      </label>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {t("response_time")}
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={300}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                      value={form.timeResponse}
+                      onChange={(e) =>
+                        handleChange("timeResponse", Number(e.target.value))
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="emotesUse"
+                      checked={form.emotesUse}
+                      onChange={(e) =>
+                        handleChange("emotesUse", e.target.checked)
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label
+                      htmlFor="emotesUse"
+                      className="text-sm text-gray-700 font-medium"
+                    >
+                      {t("use_emojis")}
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      id="stylesUse"
+                      checked={form.stylesUse}
+                      onChange={(e) =>
+                        handleChange("stylesUse", e.target.checked)
+                      }
+                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <label
+                      htmlFor="stylesUse"
+                      className="text-sm text-gray-700 font-medium"
+                    >
+                      {t("use_styles")}
+                    </label>
                   </div>
                 </div>
               </div>
 
               {/* Audio Configuration */}
+
               <div className="bg-gray-50 rounded-xl p-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                   <svg
@@ -624,111 +602,130 @@ export default function CreateAssistantModal({
                   </svg>
                   {t("audio")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("audio_voice")}
-                    </label>
-                    {loadingVoices ? (
-                      <div className="flex items-center justify-center p-4 border border-gray-300 rounded-lg bg-white">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                        <span className="ml-2 text-gray-600">
-                          Cargando voces...
-                        </span>
-                      </div>
-                    ) : (
-                      <VoiceSearchCombobox
-                        voices={filteredVoices}
-                        selectedValue={form.voice}
-                        onSelect={(selectedVoice) =>
-                          handleChange("voice", selectedVoice)
-                        }
-                      />
-                    )}
-                  </div>
-                  {form.voice?.id ? (
-                    <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-medium text-blue-900 mb-2">
-                        Voz seleccionada
-                      </h4>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-3 h-3 rounded-full ${
-                              form.voice.gender === "male"
-                                ? "bg-blue-400"
-                                : form.voice.gender === "female"
-                                ? "bg-pink-400"
-                                : "bg-gray-400"
-                            }`}
-                          />
-                          <span className="font-medium text-blue-900">
-                            {form.voice.name}
-                          </span>
-                          <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
-                            {form.voice.provider}
+
+                <div className="flex items-center gap-3 mb-4">
+                  <input
+                    type="checkbox"
+                    id="audioEnabled"
+                    checked={form.audioEnabled}
+                    onChange={(e) =>
+                      handleChange("audioEnabled", e.target.checked)
+                    }
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="audioEnabled"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Activar audio (opcional)
+                  </label>
+                </div>
+                {form.audioEnabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("audio_voice")}
+                      </label>
+                      {loadingVoices ? (
+                        <div className="flex items-center justify-center p-4 border border-gray-300 rounded-lg bg-white">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                          <span className="ml-2 text-gray-600">
+                            Cargando voces...
                           </span>
                         </div>
-                        <button
-                          onClick={() => handleTestVoice(form.voice.id)}
-                          disabled={testingVoice === form.voice.id}
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
-                        >
-                          {testingVoice === form.voice.id
-                            ? "Probando..."
-                            : "Probar voz"}
-                        </button>
+                      ) : (
+                        <VoiceSearchCombobox
+                          voices={filteredVoices}
+                          selectedValue={form.voice}
+                          onSelect={(selectedVoice) =>
+                            handleChange("voice", selectedVoice)
+                          }
+                        />
+                      )}
+                    </div>
+                    {form.voice?.id ? (
+                      <div className="md:col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-medium text-blue-900 mb-2">
+                          Voz seleccionada
+                        </h4>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-3 h-3 rounded-full ${
+                                form.voice.gender === "male"
+                                  ? "bg-blue-400"
+                                  : form.voice.gender === "female"
+                                  ? "bg-pink-400"
+                                  : "bg-gray-400"
+                              }`}
+                            />
+                            <span className="font-medium text-blue-900">
+                              {form.voice.name}
+                            </span>
+                            <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
+                              {form.voice.provider}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => handleTestVoice(form.voice.id)}
+                            disabled={testingVoice === form.voice.id}
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                          >
+                            {testingVoice === form.voice.id
+                              ? "Probando..."
+                              : "Probar voz"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {t("audio_count")}
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={10}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
+                        value={form.amountAudio}
+                        onChange={(e) =>
+                          handleChange("amountAudio", Number(e.target.value))
+                        }
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Número máximo de mensajes de audio por conversación
+                      </p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Proporción de respuesta
+                      </label>
+                      <div className="space-y-2">
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={form.assistensResponseP}
+                          onChange={(e) =>
+                            handleChange(
+                              "assistensResponseP",
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-full accent-blue-500"
+                        />
+                        <div className="flex justify-between text-xs text-gray-600">
+                          <span>{t("text")}</span>
+                          <span className="font-semibold text-blue-600">
+                            {form.assistensResponseP}% {t("text")} /{" "}
+                            {100 - form.assistensResponseP}% {t("audio")}
+                          </span>
+                          <span>{t("audio")}</span>
+                        </div>
                       </div>
                     </div>
-                  ) : null}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("audio_count")}
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={10}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-                      value={form.amountAudio}
-                      onChange={(e) =>
-                        handleChange("amountAudio", Number(e.target.value))
-                      }
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Número máximo de mensajes de audio por conversación
-                    </p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Configuraciones de audio
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={form.voiceResponse || false}
-                          onChange={(e) =>
-                            handleChange("voiceResponse", e.target.checked)
-                          }
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        Responder audios con audio
-                      </label>
-                      <label className="flex items-center gap-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={form.autoTranscribe || false}
-                          onChange={(e) =>
-                            handleChange("autoTranscribe", e.target.checked)
-                          }
-                          className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                        Transcribir audios automáticamente
-                      </label>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -815,7 +812,21 @@ export default function CreateAssistantModal({
                     placeholder="Token permanente de Meta"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    App Secret
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    value={form.appSecret}
+                    onChange={(e) => handleChange("appSecret", e.target.value)}
+                    placeholder="App Secret de tu aplicación Meta"
+                  />
+                </div>
               </div>
+
+              <br />
 
               <h5 className="text-md font-semibold text-gray-600 mb-4 flex items-center gap-3 border-b pb-2">
                 <svg
