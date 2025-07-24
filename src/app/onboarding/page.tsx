@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import OnboardingForm from '@/presentation/components/onboarding/OnboardingForm';
+import OnboardingForm from "@/presentation/components/features/OnboardingForm";
 
 export default function OnboardingPage() {
   return (
