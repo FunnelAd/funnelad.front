@@ -2,13 +2,14 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/presentation/components/layout/Sidebar";
-import { AuthProvider } from "@/presentation/contexts/AuthContext";
+import Sidebar from "@/presentation/layouts/Sidebar";
+import { AuthProvider } from "@/core/contexts/AuthContext";
 import { AppConfigProvider } from "@/core/contexts/AppConfigContext";
 import { ThemeProvider } from "@/core/contexts/ThemeContext";
 import { Suspense } from "react"; // Import Suspense
 import { usePathname } from "next/navigation";
-import { Toaster } from "react-hot-toast";
+import { ModalProvider } from "@/core/providers/ModalProviders";
+import { GlobalModal } from "@/presentation/components/ui/GlobalModal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -64,17 +65,20 @@ export default function RootLayout({
         <ThemeProvider>
           <AppConfigProvider>
             <AuthProvider>
-              <Suspense
-                fallback={
-                  <div className="w-full h-screen flex justify-center items-center">
-                    Cargando...
-                  </div>
-                }
-              >
-                {" "}
-                {/* Suspense Boundary */}
-                <RootLayoutContent>{children}</RootLayoutContent>
-              </Suspense>
+              <ModalProvider>
+                <Suspense
+                  fallback={
+                    <div className="w-full h-screen flex justify-center items-center">
+                      Cargando...
+                    </div>
+                  }
+                >
+                  {" "}
+                  {/* Suspense Boundary */}
+                  <RootLayoutContent>{children}</RootLayoutContent>
+                </Suspense>
+                <GlobalModal />
+              </ModalProvider>
             </AuthProvider>
           </AppConfigProvider>
         </ThemeProvider>

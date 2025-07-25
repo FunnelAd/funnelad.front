@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useAuth } from "@/presentation/contexts/AuthContext";
+import { useAuth } from "@/core/contexts/AuthContext";
 import { UserRole, ClientSubRole } from "@/core/types/auth";
 import { useRouter } from "next/navigation";
+import { authService } from "@/core/services/authService";
 
 type AuthMode = "login" | "register";
 
@@ -19,7 +20,6 @@ interface ValidationState {
 }
 
 export default function AuthPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("login");
   const [formData, setFormData] = useState({
     email: "",
@@ -42,15 +42,72 @@ export default function AuthPage() {
     hasSpecialChar: false,
     hasMinLength: false,
   });
-  const { login } = useAuth();
+  const { login, register } = useAuth();
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    const hasMinLength = password.length >= 8;
+
+    return {
+      hasUpperCase,
+      hasNumber,
+      hasSpecialChar,
+      hasMinLength,
+    };
+  };
+
+  useEffect(() => {
+    if (mode === "register") {
+      const emailValid = validateEmail(formData.email);
+      const passwordValidation = validatePassword(formData.password);
+      const passwordsMatch = formData.password === formData.confirmPassword;
+
+      setValidation({
+        email: emailValid,
+        password: Object.values(passwordValidation).every(Boolean),
+        confirmPassword: passwordsMatch,
+        ...passwordValidation,
+      });
+    }
+  }, [formData, mode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
+    if (mode === "register" && !validation.password) {
+      setError("La contraseña no cumple con los requisitos mínimos");
+      return;
+    }
+
+    if (mode === "register" && !validation.confirmPassword) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
     try {
       if (mode === "login") {
         await login(formData.email, formData.password);
+      } else {
+        await register({
+          email: formData.email,
+          password: formData.password,
+          storeName: formData.storeName,
+          phoneNumber: formData.phoneNumber,
+          countryCode: formData.countryCode,
+          role: formData.role,
+          clientSubRole:
+            formData.role === UserRole.CLIENT
+              ? formData.clientSubRole
+              : undefined,
+        });
       }
     } catch (error) {
       console.error("Error de autenticación:", error);
@@ -71,6 +128,15 @@ export default function AuthPage() {
 
   // Color dorado de FunnelAd
   const funneladGold = "#FFD700";
+
+  // Custom select style for dark mode
+  const selectClassName =
+    "mt-1 block w-full pl-3 pr-10 py-2 text-base rounded-md border border-gray-600 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 sm:text-sm transition-colors duration-200 appearance-none";
+
+  // Custom arrow for select
+  const customSelectWrapper = "relative";
+  const customSelectArrow =
+    "pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-yellow-400";
 
   const getInputClassName = (isValid: boolean) => {
     return `appearance-none block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 bg-gray-900 text-white ${
@@ -109,6 +175,98 @@ export default function AuthPage() {
             </div>
           )}
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {mode === "register" && (
+              <>
+                <div>
+                  <label
+                    htmlFor="role"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Tipo de cuenta
+                  </label>
+                  <div className={customSelectWrapper}>
+                    <select
+                      id="role"
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      className={selectClassName}
+                    >
+                      <option value={UserRole.CLIENT}>Cliente</option>
+                      <option value={UserRole.FUNNELAD}>FunnelAd</option>
+                    </select>
+                    <span className={customSelectArrow}>
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M7 10l5 5 5-5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+
+                {formData.role === UserRole.CLIENT && (
+                  <div className={customSelectWrapper}>
+                    <select
+                      id="clientSubRole"
+                      name="clientSubRole"
+                      value={formData.clientSubRole}
+                      onChange={handleChange}
+                      className={selectClassName}
+                    >
+                      <option value={ClientSubRole.ADMIN}>Administrador</option>
+                      <option value={ClientSubRole.AUXILIARY}>Auxiliar</option>
+                    </select>
+                    <span className={customSelectArrow}>
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M7 10l5 5 5-5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                )}
+
+                <div>
+                  <label
+                    htmlFor="storeName"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Nombre de la tienda/empresa
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="storeName"
+                      name="storeName"
+                      type="text"
+                      required
+                      value={formData.storeName}
+                      onChange={handleChange}
+                      className={getInputClassName(true)}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             <div>
               <label
                 htmlFor="email"
@@ -129,8 +287,72 @@ export default function AuthPage() {
                     mode === "login" || validation.email
                   )}
                 />
+                {mode === "register" && formData.email && !validation.email && (
+                  <p className="mt-1 text-sm text-red-600">
+                    Ingresa un correo electrónico válido
+                  </p>
+                )}
               </div>
             </div>
+
+            {mode === "register" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="countryCode"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Código de país
+                  </label>
+                  <div className={customSelectWrapper}>
+                    <select
+                      id="countryCode"
+                      name="countryCode"
+                      value={formData.countryCode}
+                      onChange={handleChange}
+                      className={selectClassName}
+                    >
+                      <option value="+1">+1 (USA)</option>
+                      <option value="+52">+52 (México)</option>
+                      <option value="+34">+34 (España)</option>
+                    </select>
+                    <span className={customSelectArrow}>
+                      <svg
+                        width="20"
+                        height="20"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M7 10l5 5 5-5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="phoneNumber"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Número de teléfono
+                  </label>
+                  <input
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    required
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    className={getInputClassName(true)}
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
               <label
@@ -152,8 +374,102 @@ export default function AuthPage() {
                     mode === "login" || validation.password
                   )}
                 />
+                {mode === "register" && (
+                  <div className="mt-2 space-y-1">
+                    <p
+                      className={`text-sm ${
+                        validation.hasMinLength
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      • Mínimo 8 caracteres
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        validation.hasUpperCase
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      • Al menos una letra mayúscula
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        validation.hasNumber
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      • Al menos un número
+                    </p>
+                    <p
+                      className={`text-sm ${
+                        validation.hasSpecialChar
+                          ? "text-green-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      • Al menos un carácter especial
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {mode === "register" && (
+              <>
+                <div>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="block text-sm font-medium text-gray-700"
+                  >
+                    Confirmar contraseña
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={getInputClassName(validation.confirmPassword)}
+                    />
+                    {formData.confirmPassword &&
+                      !validation.confirmPassword && (
+                        <p className="mt-1 text-sm text-red-600">
+                          Las contraseñas no coinciden
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    id="acceptTerms"
+                    name="acceptTerms"
+                    type="checkbox"
+                    required
+                    checked={formData.acceptTerms}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="acceptTerms"
+                    className="ml-2 block text-sm text-gray-900"
+                  >
+                    Acepto los{" "}
+                    <Link
+                      href="/terms"
+                      className="text-blue-600 hover:text-blue-500"
+                    >
+                      términos y condiciones
+                    </Link>
+                  </label>
+                </div>
+              </>
+            )}
 
             <div>
               <button
@@ -185,14 +501,7 @@ export default function AuthPage() {
             <div className="mt-6">
               <button
                 type="button"
-                onClick={() => {
-                  if (mode === "login") {
-                    router.push("/register"); // Navega a la ruta /register
-                    setMode("register");
-                  } else {
-                    setMode("login");
-                  }
-                }}
+                onClick={() => setMode(mode === "login" ? "register" : "login")}
                 className="w-full flex justify-center py-2 px-4 border border-yellow-400/60 rounded-md shadow-sm text-sm font-semibold bg-gray-900 hover:bg-gray-800 transition-colors duration-200"
                 style={{ color: funneladGold }}
               >

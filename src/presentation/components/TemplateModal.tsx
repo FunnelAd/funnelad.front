@@ -108,13 +108,13 @@ function DraggableMessage({ msg, onEdit, onDelete, isEditing, onSaveEdit, onCanc
       <div className="w-full flex flex-col items-end group">
         {/* Botones encima de la burbuja, alineados a la derecha, solo en hover */}
         <div className="flex gap-2 mb-1 justify-end w-full pr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
-          <button {...attributes} {...listeners} className="cursor-grab text-gray-500 hover:text-[#C9A14A] text-2xl p-2 rounded-lg bg-white/90 shadow-md" title="Arrastrar" style={{ minWidth: 40, minHeight: 40 }}>
+          <button {...attributes} {...listeners} className="cursor-grab text-gray-500 hover:text-[#C9A14A] text-2xl p-2 rounded-lg bg-white/90 shadow-md" title="Arrastrar" style={{minWidth: 40, minHeight: 40}}>
             ≡
           </button>
-          <button onClick={onEdit} className="bg-white/90 rounded-lg p-2 text-2xl text-[#C9A14A] shadow-md hover:bg-[#F5F6FA]" title="Editar" style={{ minWidth: 40, minHeight: 40 }}>
+          <button onClick={onEdit} className="bg-white/90 rounded-lg p-2 text-2xl text-[#C9A14A] shadow-md hover:bg-[#F5F6FA]" title="Editar" style={{minWidth: 40, minHeight: 40}}>
             ✎
           </button>
-          <button onClick={onDelete} className="bg-white/90 rounded-lg p-2 text-2xl text-red-500 shadow-md hover:bg-[#F5F6FA]" title="Eliminar" style={{ minWidth: 40, minHeight: 40 }}>
+          <button onClick={onDelete} className="bg-white/90 rounded-lg p-2 text-2xl text-red-500 shadow-md hover:bg-[#F5F6FA]" title="Eliminar" style={{minWidth: 40, minHeight: 40}}>
             ✕
           </button>
         </div>
@@ -126,7 +126,7 @@ function DraggableMessage({ msg, onEdit, onDelete, isEditing, onSaveEdit, onCanc
               value={editValue}
               onChange={e => setEditValue(e.target.value)}
               rows={3}
-              style={{ whiteSpace: 'pre-line' }}
+              style={{whiteSpace: 'pre-line'}}
             />
             <div className="flex gap-2 mt-2 justify-end">
               <button onClick={onSaveEdit} className="px-2 py-1 rounded bg-[#C9A14A] text-white text-xs">Guardar</button>
@@ -147,7 +147,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
   const [form, setForm] = useState<TemplateFormData>({
     name: '',
     messages: [],
-    template_type: 'soporte',
+    template_type: 'welcome',
     isActive: true,
   });
   const [inputValue, setInputValue] = useState('');
@@ -247,16 +247,9 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
   const handleAttachFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log(file)
       setAttachedFile(file);
       const reader = new FileReader();
       reader.onload = (ev) => {
-        console.log(ev.target?.result)
-
-
-
-
-
         setAttachedPreview(ev.target?.result as string);
       };
       reader.readAsDataURL(file);
@@ -264,17 +257,13 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
   };
 
   // Enviar mensaje
-  const handleSendMessage = async () => {
-
- 
-
+  const handleSendMessage = () => {
     if (!inputValue && !attachedFile) return;
     let type: TemplateMessageType = 'text';
     let content = inputValue;
     let fileName = undefined;
     let mimeType = undefined;
     // Si hay archivo adjunto, el mensaje es el archivo y la descripción
-
     if (attachedFile) {
       fileName = attachedFile.name;
       mimeType = attachedFile.type;
@@ -283,10 +272,6 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
       else if (attachedFile.type.startsWith('video/')) type = 'video';
       else type = 'file';
       // WhatsApp: la descripción es el texto del input
-      console.log(attachedPreview)
-
-      
-
       content = JSON.stringify({
         url: attachedPreview || '',
         description: inputValue || '',
@@ -407,8 +392,8 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
             <h2 className="text-3xl font-bold text-[#0B2C3D] tracking-tight flex items-center gap-3">
               <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-[#C9A14A] to-[#A8842C] flex items-center justify-center">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" fill="#fff" />
-                  <path d="M7 7h10v2H7zm0 4h10v2H7zm0 4h7v2H7z" fill="#fff" />
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" fill="#fff"/>
+                  <path d="M7 7h10v2H7zm0 4h10v2H7zm0 4h7v2H7z" fill="#fff"/>
                 </svg>
               </span>
               {isEditing ? t('edit_template') : t('new_template')}
@@ -444,10 +429,9 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
                     value={form.template_type}
                     onChange={e => handleChange('template_type', e.target.value)}
                   >
-                    <option value="soporte">{t('Soporte')}</option>
-                    <option value="ventas">{t('Ventas')}</option>
-                    <option value="marketing">{t('Marketing')}</option>
-                    <option value="Otro">{t('Otros')}</option>
+                    <option value="welcome">{t('welcome_message')}</option>
+                    <option value="farewell">{t('farewell_message')}</option>
+                    <option value="custom">{t('custom_message')}</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-4">
@@ -486,10 +470,10 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
                 style={
                   chatStyle === 'whatsapp'
                     ? {
-                      backgroundImage: "url('/assets/wa-bg-tile.png')",
-                      backgroundRepeat: 'repeat',
-                      backgroundSize: 'auto',
-                    }
+                        backgroundImage: "url('/assets/wa-bg-tile.png')",
+                        backgroundRepeat: 'repeat',
+                        backgroundSize: 'auto',
+                      }
                     : {}
                 }
               >
@@ -612,7 +596,7 @@ export default function TemplateModal({ isOpen, onClose, onSave, template, isEdi
                   <div className="absolute bottom-16 left-0 z-50">
                     {/* Emoji picker real aquí, por ahora solo algunos emojis de ejemplo */}
                     <div className="bg-white border rounded shadow p-2 flex flex-wrap gap-1">
-                      {["😀", "😂", "😍", "👍", "🙏", "🎉", "😎", "😢", "🔥", "❤️"].map(e => (
+                      {["😀","😂","😍","👍","🙏","🎉","😎","😢","🔥","❤️"].map(e => (
                         <button key={e} className="text-2xl" onClick={() => handleAddEmoji(e)}>{e}</button>
                       ))}
                     </div>

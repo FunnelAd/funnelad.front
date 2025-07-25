@@ -7,7 +7,6 @@ export interface AuthResponse {
 }
 
 export interface RegisterData {
-  name: string;
   email: string;
   password: string;
   storeName: string;
