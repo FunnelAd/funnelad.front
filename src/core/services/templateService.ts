@@ -1,6 +1,5 @@
-import { api } from '@/core/api';
-import { WhatsAppTemplate } from '@/presentation/components/CreateWhatsAppTemplateModal';
-import type { TemplateFormData } from '@/presentation/components/TemplateModal';
+import { api } from "@/core/api";
+import type { TemplateFormData } from "@/presentation/components/TemplateModal";
 
 export interface Template {
   id?: string;
@@ -17,39 +16,34 @@ export interface Template {
   databaseType: "mongodb";
   idCompany: "Funnelad";
   nit?: string;
-  
-
 }
 
 export const templateService = {
-  
   async getTemplates(): Promise<Template[]> {
-    const response = await api.get('api/templates');
-    console.log('Templates:', response);
+    const response = await api.get("api/templates");
+    console.log("Templates:", response);
     return response.data as Template[];
   },
 
-    async getWhatsappTemplates(): Promise<Template[]> {
-    const response = await api.get('api/templates-wpp');
-    console.log('Templates:', response);
+  async getWhatsappTemplates(): Promise<Template[]> {
+    const response = await api.get("api/templates-wpp");
+    console.log("Templates:", response);
     return response.data as Template[];
   },
-
-
-  
 
   async createTemplate(data: TemplateFormData): Promise<Template> {
-    const response = await api.post('api/templates', data);
-    console.log('Create Template:', response);
+    const response = await api.post("api/templates", data);
+    console.log("Create Template:", response);
     return response.data as Template;
   },
 
-    async createTemplateWhatsapp(data: WhatsAppTemplate): Promise<WhatsAppTemplate> {
-    const response = await api.post('api/templates', data);
-    console.log('Create Template:', response);
+  async createTemplateWhatsapp(
+    data: WhatsAppTemplate
+  ): Promise<WhatsAppTemplate> {
+    const response = await api.post("api/templates", data);
+    console.log("Create Template:", response);
     return response.data as WhatsAppTemplate;
   },
-
 
   async updateTemplate(id: string, data: TemplateFormData): Promise<Template> {
     const response = await api.put(`api/templates/${id}`, data);
@@ -59,4 +53,4 @@ export const templateService = {
   async deleteTemplate(id: string): Promise<void> {
     await api.delete(`api/templates/${id}`);
   },
-}; 
+};

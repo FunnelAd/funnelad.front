@@ -1,5 +1,6 @@
 import { api } from "@/core/api";
 import type { AuthResponse } from "@/core/types/auth";
+import type { RegisterData } from "@/core/types/auth/responses";
 
 /**
  * Servicio para realizar las llamadas a la API relacionadas con la autenticación.

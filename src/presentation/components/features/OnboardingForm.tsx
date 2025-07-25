@@ -17,16 +17,16 @@ import {
   VOICE_CONFIG_OPTIONS,
 } from "@/app/onboarding/constants/onboardingSteps";
 import { api } from "@/core/api";
-import type { OnBoardingData } from "../../../core/types/onboarding";
-import type { Variants } from "framer-motion";
+import { OnboardingFormData } from "@/core/modules/onboarding/onboarding.interface";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
 
   const [formData, setFormData] = useState<
-    OnBoardingData & {
+    OnboardingFormData & {
       password: string;
+      identification: string;
       webSite: string;
     }
   >({
@@ -36,31 +36,26 @@ const OnboardingForm: React.FC = () => {
     email: "",
     whatsapp: "",
 
-    // Campos adicionales del formulario que NO van al schema de Onboarding
-    password: "",
-    identification: "",
-    webSite: "",
-
     // Tipo de agente
-    agentTypes: [],
+    agentTypes: [] as string[],
 
     // Canales de texto
-    textChannels: [],
+    textChannels: [] as string[],
 
-    // Configuración del agente de texto (ajustados a tipos del schema: boolean, number)
+    // Configuración del agente de texto
     textConfig: {
-      useEmojis: false, // Ahora boolean
+      useEmojis: "moderate",
       textStyle: "casual",
-      modelTemperature: 0.5, // Ahora number
+      modelTemperature: "0.5",
     },
 
     // Configuración del agente de voz
     voiceConfig: {
       voiceType: "female",
-      voiceId: "1",
+      voiceId: "",
       speechRate: "medium",
       callHandling: "both",
-      temperature: 50, // Ya es number
+      temperature: 50, // Valor inicial del slider (50%)
     },
   });
 
@@ -75,7 +70,7 @@ const OnboardingForm: React.FC = () => {
 
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  const handleConfirmPasswordChange = (e: any) => {
+  const handleConfirmPasswordChange = (e) => {
     setConfirmPasswordValue(e.target.value);
     // El error se actualizará mediante el useEffect o podrías añadir lógica aquí
   };
@@ -224,46 +219,23 @@ const OnboardingForm: React.FC = () => {
   };
 
   // Manejar cambios en la configuración del agente de texto
-  const handleTextConfigChange = (
-    option: keyof typeof formData.textConfig,
-    value: any
-  ) => {
-    let processedValue = value;
-
-    // Hacemos la conversión de tipo explícitamente
-    if (option === "useEmojis") {
-      processedValue = value === "true" || value === true; // Acepta string 'true' o booleano true
-    }
-    if (option === "modelTemperature") {
-      processedValue = parseFloat(value); // Convierte string "0.5" a número 0.5
-    }
-
+  const handleTextConfigChange = (option: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       textConfig: {
         ...prev.textConfig,
-        [option]: processedValue,
+        [option]: value,
       },
     }));
   };
 
   // Manejar cambios en la configuración del agente de voz
-  const handleVoiceConfigChange = (
-    option: keyof typeof formData.voiceConfig, // Tipado más estricto
-    value: any
-  ) => {
-    let processedValue = value;
-
-    // Hacemos la conversión para el campo de temperatura
-    if (option === "temperature") {
-      processedValue = parseFloat(value);
-    }
-
+  const handleVoiceConfigChange = (option: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       voiceConfig: {
         ...prev.voiceConfig,
-        [option]: processedValue,
+        [option]: value,
       },
     }));
   };
@@ -278,8 +250,6 @@ const OnboardingForm: React.FC = () => {
         newErrors.businessName = "El nombre del negocio es requerido";
       if (!formData.fullName.trim())
         newErrors.fullName = "Tu nombre es requerido";
-      if (!formData.identification.trim())
-        newErrors.identification = "Tu identifiacion es requerida";
       if (!formData.email.trim()) {
         newErrors.email = "El correo electrónico es requerido";
       } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -337,7 +307,7 @@ const OnboardingForm: React.FC = () => {
     }
   };
 
-  // Enviar el formulario de Onboarding al backend
+  // Enviar el formulario
   const handleSubmit = async () => {
     // Validación final para los campos más cruciales si se llega aquí.
     // Esto es un fallback por si un usuario salta validaciones o flujos.
@@ -356,12 +326,10 @@ const OnboardingForm: React.FC = () => {
 
     const payloadToSend = {
       businessName: formData.businessName,
-      identification: formData.identification,
       fullName: formData.fullName,
       email: formData.email,
       password: formData.password,
       whatsapp: formData.whatsapp,
-
       agentTypes: formData.agentTypes,
       textChannels: formData.textChannels,
       textConfig: formData.textConfig,
@@ -378,27 +346,33 @@ const OnboardingForm: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    setErrors({}); // Limpiar errores antes de enviar
+    setErrors({}); // Limpiamos errores antes de enviar
 
     try {
-      const response = await api.post(
-        "/api/onboarding/submit",
-        payloadToSend // Enviamos los datos ya mapeados
+      const response = await fetch(
+        "http://localhost:3001/api/onboarding/submit",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
       );
 
-      console.log("✅ Solicitud de onboarding guardada:", response.data);
-      alert("¡Hemos recibido tu solicitud! Nos pondremos en contacto pronto.");
-      router.push("/gracias");
-    } catch (error: any) {
-      console.error("❌ Error al enviar la solicitud de onboarding:", error);
-
-      let errorMessage = "Ocurrió un error inesperado al enviar tu solicitud.";
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Error en el envío del formulario");
       }
 
-      setErrors({ submit: errorMessage });
-      alert(errorMessage);
+      const result = await response.json();
+      console.log("✅ Respuesta del servidor:", result);
+
+      alert("¡Formulario enviado exitosamente!");
+      router.push("/gracias"); // o a donde quieras redirigir
+    } catch (error: any) {
+      console.error("❌ Error al enviar el formulario:", error);
+      alert(error.message || "Error en el envío del formulario");
     } finally {
       setIsSubmitting(false);
     }
@@ -460,6 +434,15 @@ const OnboardingForm: React.FC = () => {
                 FunnelAd te ayuda a automatizar tus ventas y atención al cliente
                 con inteligencia artificial.
               </p>
+              {/* <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleNext}
+                className="px-8 py-4 bg-[#C9A14A] text-white font-medium rounded-md hover:bg-[#B8912A] transition-colors duration-300 flex items-center text-lg"
+              >
+                CONTINUAR
+                <ArrowRightIcon className="w-5 h-5 ml-2" />
+              </motion.button> */}
             </div>
             <div className="md:w-1/2">
               <motion.div
@@ -547,64 +530,6 @@ const OnboardingForm: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <label
-                    htmlFor="webSite"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    Pagina Web
-                  </label>
-                  <input
-                    type="text"
-                    id="webSite"
-                    name="webSite"
-                    value={formData.webSite}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.webSite ? "border-red-500" : "border-[#C9A14A]"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
-                  />
-                  {errors.webSite && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {errors.webSite}
-                    </p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <label
-                    htmlFor="identification"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    CC/NIT
-                  </label>
-                  <input
-                    type="text"
-                    id="identification"
-                    name="identification"
-                    value={formData.identification}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border ${
-                      errors.identification
-                        ? "border-red-500"
-                        : "border-[#C9A14A]"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
-                  />
-                  {errors.identification && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {errors.identification}
-                    </p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
                   <label
@@ -653,111 +578,6 @@ const OnboardingForm: React.FC = () => {
                   />
                   {errors.email && (
                     <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }} // Ajusta el delay si es necesario (ej. 0.1s después del email)
-                >
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    value={formData.password} // Asume que esto viene del estado de tu formulario
-                    onChange={handleChange} // Asume que esto viene de los props o está definido en el componente
-                    className={`w-full px-4 py-3 border ${
-                      errors.password ? "border-red-500" : "border-[#C9A14A]" // Asume que errors.password existe
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
-                    autoComplete="new-password" // Útil para campos de establecimiento de contraseña
-                  />
-                  {/* Mensaje de error general para la contraseña */}
-                  {errors.password && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {errors.password}
-                    </p>
-                  )}
-
-                  {/* Indicaciones de requisitos de contraseña */}
-                  {/* Estas se muestran si el usuario ha comenzado a escribir una contraseña */}
-                  {formData.password && formData.password.length > 0 && (
-                    <div className="mt-2 space-y-0.5">
-                      <p
-                        className={`text-xs ${
-                          passwordCriteria.minLength
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        • Mínimo 8 caracteres
-                      </p>
-                      <p
-                        className={`text-xs ${
-                          passwordCriteria.hasUpperCase
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        • Al menos una letra mayúscula (A-Z)
-                      </p>
-                      <p
-                        className={`text-xs ${
-                          passwordCriteria.hasNumber
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        • Al menos un número (0-9)
-                      </p>
-                      <p
-                        className={`text-xs ${
-                          passwordCriteria.hasSpecialChar
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        • Al menos un carácter especial (ej. !@#$%&*)
-                      </p>
-                    </div>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <label
-                    htmlFor="confirmPasswordOnboarding" // ID único para el input
-                    className="block text-sm font-medium text-gray-300 mb-1"
-                  >
-                    Confirmar contraseña
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPasswordOnboarding" // ID único
-                    name="confirmPasswordOnboarding" // Nombre único, no usado por handleChange genérico si usas handler específico
-                    value={confirmPasswordValue}
-                    onChange={handleConfirmPasswordChange} // O directamente: (e) => setConfirmPasswordValue(e.target.value)
-                    className={`w-full px-4 py-3 border ${
-                      confirmPasswordError
-                        ? "border-red-500"
-                        : "border-[#C9A14A]"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-[#C9A14A] text-white bg-gray-700/80 backdrop-blur-sm`}
-                    autoComplete="new-password"
-                  />
-                  {/* Error específico del campo "Confirmar contraseña" */}
-                  {confirmPasswordError && (
-                    <p className="mt-1 text-sm text-red-500">
-                      {confirmPasswordError}
-                    </p>
                   )}
                 </motion.div>
 

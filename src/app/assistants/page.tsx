@@ -1,182 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Assistant,
-  CreateAssistantData,
-  UpdateAssistantData,
-} from "@/core/types/assistants/assistant";
+import React, { useState, useEffect } from "react";
+import { Assistant } from "@/core/types/assistant";
 import { assistantService } from "@/core/services/assistantService";
 import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
-import { useAuth } from "@/presentation/contexts/AuthContext";
-
+import type { CreateAssistantFormData } from "@/presentation/components/CreateAssistantModal";
 import {
   PlusIcon,
   PencilIcon,
   TrashIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
+import { useModal } from "@/core/hooks/useModal";
 
 export default function AssistantsPage() {
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingAssistant, setEditingAssistant] = useState<
-    Assistant | undefined
-  >();
 
-  const { user } = useAuth();
+  const { showModal } = useModal();
 
   useEffect(() => {
     loadAssistants();
   }, []);
 
   const loadAssistants = async () => {
-    setIsLoading(true);
     try {
       const data = await assistantService.getAssistants();
       setAssistants(data);
     } catch (error) {
       console.error("Error loading assistants:", error);
-      // Handle the error appropriately, e.g., show an error message to the user
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateAssistant = () => {
-    setEditingAssistant(undefined);
-    setIsCreateModalOpen(true);
+    console.log("Creating new assistant");
+    showModal(
+      <CreateAssistantModal onSave={handleSaveAssistant} isEditing={false} />
+    );
   };
+
+  // const handleEditAssistant = (assistant: Assistant) => {
+  //   setEditingAssistant(assistant);
+  //   setIsCreateModalOpen(true);
+  // };
 
   const handleEditAssistant = (assistant: Assistant) => {
-    setEditingAssistant(assistant);
-    setIsCreateModalOpen(true);
+    showModal(
+      <CreateAssistantModal
+        onSave={handleSaveAssistant}
+        assistant={assistant}
+        isEditing={true}
+      />
+    );
   };
 
-  const currentStore = {
-    id: "store_abc123",
-    name: "Mi Tienda Principal",
-    nit: "900123456-7",
-  };
-
-  const handleSaveAssistant = async (formData: CreateAssistantData) => {
-    setIsLoading(true);
+  const handleSaveAssistant = async (formData: CreateAssistantFormData) => {
     try {
-      // Mapeo cuidadoso de formData del modal a CreateAssistantData
-      const completeData: CreateAssistantData = {
-        // Campos fijos desde el contexto del usuario/tienda
-        businessid: currentStore.id, // Requerido
-        nit: currentStore.nit, // Requerido
-        createBy: user?.email || "unknown_creator", // Requerido: Asegúrate de que user.email exista
-
-        // Campos generales y de respuesta
-        name: formData.name, // Requerido
-        phone: formData.phone, // Requerido
-        active: formData.active ?? true, // Requerido, pero puede tener un default
-        welcomeMsg: formData.welcomeMsg || "", // Puede ser opcional, pero aquí aseguramos un string vacío si es null/undefined
-
-        timeResponse: Number(formData.timeResponse), // Requerido (Number)
-        assistensResponseP: Number(formData.assistensResponseP), // Requerido (Number)
-
-        emotesUse: formData.emotesUse ?? false, // Requerido (Boolean)
-        stylesUse: formData.stylesUse ?? false, // Requerido (Boolean)
-
-        prompt: formData.prompt || "", // Opcional en el esquema, aquí aseguramos string vacío
-
-        // Campos de audio
-        voice: formData.voice || { id: 0, name: "Default", gender: "unknown" }, // Requerido (Object): ***Asegúrate de que gender siempre tenga un valor***
-        amountAudio: Number(formData.amountAudio), // Requerido (Number)
-        voiceResponse: formData.voiceResponse ?? false, // Requerido (Boolean)
-
-        idPhoneNumber: formData.idPhoneNumber || "",
-        idWppBusinessAccount: formData.idWppBusinessAccount || "",
-        idMetaApp: formData.idMetaApp || "", // Opcional
-        tokenMetaPermanent: formData.tokenMetaPermanent || "", // Requerido
-        tokenTelegram: formData.tokenTelegram || "",
-
-        webhook: formData.webhook || "", // Opcional
-        tokenWebhook: formData.tokenWebhook || "", // Opcional
-        templates: formData.templates || [],
-        triggers: formData.triggers || [],
-      };
-
-      console.log(
-        "Enviando objeto final al backend para crear:",
-        JSON.stringify(completeData, null, 2)
-      );
-
-      await assistantService.createAssistant(completeData);
-      await loadAssistants(); // Recargar la lista
-      setIsCreateModalOpen(false); // Cerrar el modal
-    } catch (error) {
-      console.error("Error al crear el asistente:", error);
-      // Aquí es donde puedes mostrar el error de Mongoose al usuario
-      // Por ejemplo, si tu AppError tiene un mensaje de error legible:
-      alert(`Error al crear asistente: ${error || "Error desconocido"}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleUpdateAssistant = async (
-    id: string,
-    formData: UpdateAssistantData
-  ) => {
-    setIsLoading(true);
-    try {
-      const updateData: UpdateAssistantData = {
-        name: formData.name,
-        phone: formData.phone,
-        active: formData.active ?? true,
-        welcomeMsg: formData.welcomeMsg || "",
-
-        timeResponse: Number(formData.timeResponse),
-        assistensResponseP: Number(formData.assistensResponseP),
-
-        emotesUse: formData.emotesUse ?? false,
-        stylesUse: formData.stylesUse ?? false,
-
-        prompt: formData.prompt || "",
-
-        voice: formData.voice || { id: 0, name: "", gender: "unknown" }, // ***Asegura gender aquí también***
-        amountAudio: Number(formData.amountAudio),
-        voiceResponse: formData.voiceResponse ?? false,
-
-        idPhoneNumber: formData.idPhoneNumber || "", // ***Requerido por Mongoose, asegúrate de enviar***
-        idWppBusinessAccount: formData.idWppBusinessAccount || "", // ***Requerido por Mongoose, asegúrate de enviar***
-        idMetaApp: formData.idMetaApp || "", // Opcional
-        tokenMetaPermanent: formData.tokenMetaPermanent || "", // ***Requerido por Mongoose, asegúrate de enviar***
-        webhook: formData.webhook || "", // Opcional
-        tokenWebhook: formData.tokenWebhook || "", // Opcional
-
-        // Campos estadísticos (mantener si se modifican, o si son requeridos y vienen en la data)
-        // totalConversations: formData.totalConversations || 0,
-        // successRate: formData.successRate || 0,
-
-        templates: formData.templates || [],
-        triggers: formData.triggers || [],
-
-        // idCompany, nit, createBy NO se envían en la actualización si son campos fijos.
-        // Si el backend los requiere, tu AssistantSchema debería tenerlos como no requeridos
-        // para updates o tu lógica de update en el backend debería ignorarlos si no se proporcionan.
-      };
-
-      console.log(
-        "Enviando objeto final al backend para actualizar:",
-        JSON.stringify(updateData, null, 2)
-      );
-      await assistantService.updateAssistant(id, updateData);
+      if (formData.id) {
+        await assistantService.updateAssistant(formData.id, formData);
+      } else {
+        await assistantService.createAssistant(formData);
+      }
       await loadAssistants();
-      setIsCreateModalOpen(false);
-      setEditingAssistant(undefined);
-    } catch (error: any) {
-      console.error("Error al actualizar el asistente:", error);
-      alert(
-        `Error al actualizar asistente: ${error.message || "Error desconocido"}`
-      );
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error("Error saving assistant:", error);
     }
   };
 
@@ -184,16 +73,11 @@ export default function AssistantsPage() {
     if (
       window.confirm("¿Estás seguro de que deseas eliminar este asistente?")
     ) {
-      setIsLoading(true);
       try {
         await assistantService.deleteAssistant(id);
-        // If delete is successful, update the local state
-        setAssistants(assistants.filter((a) => a._id !== id));
+        setAssistants(assistants.filter((a) => a.id !== id));
       } catch (error) {
         console.error("Error deleting assistant:", error);
-        // Handle the error here, e.g., show an error message to the user
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -247,7 +131,7 @@ export default function AssistantsPage() {
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {assistants.map((assistant) => (
-              <li key={assistant._id}>
+              <li key={assistant.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -257,12 +141,12 @@ export default function AssistantsPage() {
                       <div className="ml-2 flex-shrink-0 flex">
                         <p
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            assistant.active
+                            assistant.isActive
                               ? "bg-green-100 text-green-800"
                               : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {assistant.active ? "Activo" : "Inactivo"}
+                          {assistant.isActive ? "Activo" : "Inactivo"}
                         </p>
                       </div>
                     </div>
@@ -274,7 +158,7 @@ export default function AssistantsPage() {
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleDeleteAssistant(assistant._id!)}
+                        onClick={() => handleDeleteAssistant(assistant.id)}
                         className="text-gray-400 hover:text-red-500"
                       >
                         <TrashIcon className="h-5 w-5" />
@@ -282,8 +166,13 @@ export default function AssistantsPage() {
                     </div>
                   </div>
                   <div className="mt-2 sm:flex sm:justify-between">
+                    <div className="sm:flex">
+                      <p className="flex items-center text-sm text-gray-500">
+                        {assistant.description}
+                      </p>
+                    </div>
                     <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                      <p>Creado el {formatDate(assistant.createdAt!)}</p>
+                      <p>Creado el {formatDate(assistant.createdAt)}</p>
                     </div>
                   </div>
                   <div className="mt-2 sm:flex sm:justify-between">
@@ -318,24 +207,16 @@ export default function AssistantsPage() {
         </div>
       )}
 
-      <CreateAssistantModal
-        isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setEditingAssistant(undefined);
-        }}
-        onSave={(formData) => {
-          if (editingAssistant) {
-            // llamamos a tu update, pasando el _id del asistente
-            handleUpdateAssistant(editingAssistant._id!, formData);
-          } else {
-            // creamos uno nuevo
-            handleSaveAssistant(formData);
-          }
-        }}
-        assistant={editingAssistant}
-        isEditing={!!editingAssistant}
-      />
+      {/* <CreateAssistantModal
+          isOpen={isCreateModalOpen}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setEditingAssistant(undefined);
+          }}
+          onSave={handleSaveAssistant}
+          assistant={editingAssistant}
+          isEditing={!!editingAssistant}
+        /> */}
     </div>
   );
 }
