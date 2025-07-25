@@ -4,6 +4,8 @@ import { initReactI18next } from 'react-i18next';
 const resources = {
   es: {
     translation: {
+      token_telegram: "Token Telegram",
+      chatid_telegram: "ID Telegram",
       welcome: 'Bienvenido',
       save: 'Guardar',
       cancel: 'Cancelar',

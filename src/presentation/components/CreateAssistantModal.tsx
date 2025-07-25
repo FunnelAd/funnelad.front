@@ -23,6 +23,34 @@ const TABS = [
   { key: "integrations", label: "integrations" },
 ];
 
+const initialFormState = {
+  name: "",
+  phone: "",
+  welcomeMsg: "",
+  timeResponse: 30,
+  assistensResponseP: 80,
+  emotesUse: false,
+  stylesUse: false,
+  voice: { id: 0, name: "", gender: "unknown", provider: "" },
+  amountAudio: 0,
+  voiceResponse: false,
+  autoTranscribe: false,
+  idPhoneNumber: "",
+  idWppBusinessAccount: "",
+  idMetaApp: "",
+  appSecretMeta: "",
+  tokenMetaPermanent: "",
+  webhook: "",
+  tokenWebhook: "",
+  tokenTelegram: "",
+  chatidTelegram: "",
+  prompt: "",
+  active: true,
+  trainingType: "predefined",
+  selectedModel: "",
+  audioEnabled: false,
+};
+
 interface CreateAssistantModalProps {
   //isOpen: boolean;
   // onClose: () => void;
@@ -83,6 +111,49 @@ export default function CreateAssistantModal({
     webhookUrl: "",
     webhookToken: "",
   });
+
+  const [availableVoices, setAvailableVoices] = useState<IVoice[]>([]);
+  const [loadingVoices, setLoadingVoices] = useState(false);
+  const [testingVoice, setTestingVoice] = useState<string | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<string>("all");
+
+  const predefinedModels = [
+    {
+      id: "sales_assistant",
+      name: "Asistente de Ventas",
+      description: "Especializado en convertir leads y cerrar ventas",
+      prompt:
+        "Eres un asistente experto en ventas con más de 10 años de experiencia. Tu objetivo principal es ayudar a los clientes a encontrar el producto perfecto para sus necesidades y guiarlos hacia la compra. Eres persuasivo pero no agresivo, empático y siempre enfocado en el beneficio del cliente.",
+    },
+    {
+      id: "customer_support",
+      name: "Soporte al Cliente",
+      description: "Resuelve problemas y brinda asistencia técnica",
+      prompt:
+        "Eres un especialista en atención al cliente altamente capacitado. Tu misión es resolver cualquier problema, duda o consulta que tengan los usuarios de manera rápida y efectiva. Eres paciente, comprensivo y siempre buscas la mejor solución para cada situación.",
+    },
+    {
+      id: "appointment_scheduler",
+      name: "Agendador de Citas",
+      description: "Gestiona y programa citas de manera eficiente",
+      prompt:
+        "Eres un asistente especializado en la gestión y programación de citas. Tu trabajo es ayudar a los clientes a encontrar el horario perfecto, confirmar disponibilidad y asegurar que toda la información necesaria esté completa para cada cita.",
+    },
+    {
+      id: "lead_qualifier",
+      name: "Calificador de Leads",
+      description: "Identifica y califica prospectos potenciales",
+      prompt:
+        "Eres un experto en calificación de leads con gran habilidad para identificar oportunidades de negocio. Tu objetivo es hacer las preguntas correctas para entender las necesidades del prospecto y determinar su nivel de interés y capacidad de compra.",
+    },
+    {
+      id: "product_advisor",
+      name: "Asesor de Productos",
+      description: "Proporciona información detallada sobre productos",
+      prompt:
+        "Eres un consultor experto en productos con conocimiento profundo de todas las características, beneficios y casos de uso. Tu misión es educar a los clientes sobre los productos disponibles y ayudarles a tomar decisiones informadas.",
+    },
+  ];
 
   useEffect(() => {
     if (assistant && isEditing) {
@@ -160,7 +231,39 @@ export default function CreateAssistantModal({
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleChange = (field: string, value: any) => {
+    setForm((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const modelId = e.target.value;
+    const selectedModel = predefinedModels.find(
+      (model) => model.id === modelId
+    );
+    handleChange("selectedModel", modelId);
+    handleChange("prompt", selectedModel?.prompt || "");
+  };
+
   const handleSubmit = () => {
+    console.log(form);
+
+    // 1. Nombre
+    if (!form.name.trim()) {
+      toast.error("El nombre es obligatorio");
+      return;
+    }
+    // 2. Teléfono (ej. mínimo 7 dígitos, solo números y opcional + prefijo)
+    const phoneRegex = /^\+?\d{7,15}$/;
+    if (!phoneRegex.test(form.phone)) {
+      toast.error("Ingresa un teléfono válido (solo números, 7–15 dígitos)");
+      return;
+    }
+    // 3. Prompt
+    if (!form.prompt.trim()) {
+      toast.error("El prompt es obligatorio");
+      return;
+    }
+
     onSave(form);
     hideModal();
   };

@@ -1,4 +1,4 @@
-import { User, UserRole, ClientSubRole } from './user';
+import { ClientSubRole, User, UserRole } from "./user";
 
 export interface AuthResponse {
   access_token: string;

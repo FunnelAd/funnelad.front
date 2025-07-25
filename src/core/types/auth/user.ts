@@ -12,11 +12,11 @@ export interface User {
 }
 
 export enum UserRole {
-  CLIENT = 'client',
-  FUNNELAD = 'funnelad'
+  CLIENT = 'CLIENT',
+  FUNNELAD = 'FUNNELAD'
 }
 
 export enum ClientSubRole {
-  ADMIN = 'admin',
-  AUXILIARY = 'auxiliary'
+  ADMIN = 'ADMIN',
+  AUXILIARY = 'AUXILIARY'
 }

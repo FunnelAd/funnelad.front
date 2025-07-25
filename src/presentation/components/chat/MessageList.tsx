@@ -20,55 +20,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages: propMessages, curre
 
     // De lo contrario, usar mensajes de demostración
     const demoMessages: Message[] = [
-      {
-        id: '1',
-        content: '¡Hola! ¿Cómo puedo ayudarte hoy?',
-        sender: 'asistente@funnelad.com',
-        timestamp: new Date(Date.now() - 3600000),
-        isRead: true,
-      },
-      {
-        id: '2',
-        content: 'Necesito información sobre los planes de suscripción',
-        sender: currentUser,
-        timestamp: new Date(Date.now() - 3500000),
-        isRead: true,
-      },
-      {
-        id: '3',
-        content: 'Claro, tenemos varios planes disponibles. ¿Estás interesado en el plan básico, profesional o empresarial?',
-        sender: 'asistente@funnelad.com',
-        timestamp: new Date(Date.now() - 3400000),
-        isRead: true,
-      },
-      {
-        id: '4',
-        content: 'Me interesa el plan empresarial. ¿Qué características incluye?',
-        sender: currentUser,
-        timestamp: new Date(Date.now() - 3300000),
-        isRead: true,
-      },
-      {
-        id: '5',
-        content: 'El plan empresarial incluye todas las características premium, soporte 24/7, integraciones ilimitadas y hasta 50 usuarios. ¿Te gustaría una demostración personalizada?',
-        sender: 'asistente@funnelad.com',
-        timestamp: new Date(Date.now() - 3200000),
-        isRead: true,
-      },
-      {
-        id: '6',
-        content: 'Sí, me encantaría programar una demostración para la próxima semana.',
-        sender: currentUser,
-        timestamp: new Date(Date.now() - 3100000),
-        isRead: true,
-      },
-      {
-        id: '7',
-        content: 'Perfecto, he agendado una demostración para el próximo martes a las 10:00 AM. Te enviaré un correo con los detalles de la reunión. ¿Hay algo más en lo que pueda ayudarte?',
-        sender: 'asistente@funnelad.com',
-        timestamp: new Date(Date.now() - 3000000),
-        isRead: false,
-      }
+    
     ];
 
     // Simular carga de mensajes con un pequeño retraso
@@ -95,7 +47,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages: propMessages, curre
       ) : (
         messages.map((message, index) => (
           <div
-            key={message.id || index}
+            key={message.sessionid || index}
             className={`mb-4 flex ${
               message.sender === currentUser ? 'justify-end' : 'justify-start'
             }`}

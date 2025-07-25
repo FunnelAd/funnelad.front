@@ -8,220 +8,29 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
-
-// Definición de los pasos del onboarding
-const STEPS = [
-  {
-    id: "welcome",
-    title: "Es hora de dar vida a tu negocio",
-    description:
-      "Bienvenido a FunnelAd, donde transformamos tu presencia digital",
-  },
-  {
-    id: "info",
-    title: "Información general",
-    description: "Cuéntanos sobre ti y tu negocio",
-  },
-  {
-    id: "agent",
-    title: "¿Qué tipo de agente deseas?",
-    description:
-      "Selecciona el tipo de asistente que mejor se adapte a tus necesidades",
-  },
-  {
-    id: "text-channels",
-    title: "Canales de comunicación",
-    description: "Selecciona los canales donde operará tu agente de texto",
-  },
-  {
-    id: "text-config",
-    title: "Configuración del agente de texto",
-    description: "Personaliza el comportamiento de tu asistente de texto",
-  },
-  {
-    id: "voice-config",
-    title: "Configuración del agente de voz",
-    description: "Personaliza el comportamiento de tu asistente de voz",
-  },
-  {
-    id: "confirmation",
-    title: "Confirmación",
-    description: "¡Todo listo para comenzar!",
-  },
-];
-
-// Tipos de agentes disponibles
-const AGENT_TYPES = [
-  {
-    id: "text",
-    name: "AGENTE DE TEXTO",
-    description: "Apto para responder mensajes en canales de texto.",
-    icon: "/images/onboarding/text-agent-icon.svg",
-    bgColor: "bg-[#002639]",
-  },
-  {
-    id: "voice",
-    name: "AGENTE DE VOZ",
-    description: "Apto para generar y recibir llamadas",
-    icon: "/images/onboarding/voice-agent-icon.svg",
-    bgColor: "bg-[#1D5A7A]",
-  },
-];
-
-// Canales de comunicación para el agente de texto
-const TEXT_CHANNELS = [
-  {
-    id: "whatsapp",
-    name: "WhatsApp",
-    icon: "/images/onboarding/whatsapp-icon.svg",
-    description: "Mensajería instantánea más popular",
-  },
-  {
-    id: "instagram",
-    name: "Instagram",
-    icon: "/images/onboarding/instagram-icon.svg",
-    description: "Mensajes directos en Instagram",
-  },
-  {
-    id: "webchat",
-    name: "Webchat",
-    icon: "/images/onboarding/webchat-icon.svg",
-    description: "Chat en tu sitio web",
-  },
-  {
-    id: "messenger",
-    name: "Messenger",
-    icon: "/images/onboarding/messenger-icon.svg",
-    description: "Chat de Facebook",
-  },
-  {
-    id: "email",
-    name: "Email",
-    icon: "/images/onboarding/email-icon.svg",
-    description: "Comunicación por correo electrónico",
-  },
-];
-
-// Opciones de configuración para el agente de texto
-const TEXT_CONFIG_OPTIONS = {
-  useEmojis: [
-    {
-      id: "none",
-      name: "Sin emojis",
-      description: "Comunicación formal sin emojis",
-    },
-    { id: "few", name: "Pocos emojis", description: "Uso ocasional de emojis" },
-    {
-      id: "moderate",
-      name: "Uso moderado",
-      description: "Balance entre formal y casual",
-    },
-    {
-      id: "many",
-      name: "Muchos emojis",
-      description: "Comunicación casual y expresiva",
-    },
-  ],
-  textStyle: [
-    {
-      id: "formal",
-      name: "Formal",
-      description: "Lenguaje profesional y estructurado",
-    },
-    {
-      id: "casual",
-      name: "Casual",
-      description: "Lenguaje amigable y cercano",
-    },
-    {
-      id: "technical",
-      name: "Técnico",
-      description: "Enfocado en detalles técnicos",
-    },
-    {
-      id: "sales",
-      name: "Ventas",
-      description: "Orientado a conversiones y ventas",
-    },
-  ],
-  modelTemperature: [
-    {
-      id: "0.2",
-      name: "Baja",
-      description: "Respuestas más predecibles y conservadoras",
-    },
-    {
-      id: "0.5",
-      name: "Media",
-      description: "Balance entre creatividad y precisión",
-    },
-    {
-      id: "0.8",
-      name: "Alta",
-      description: "Respuestas más creativas y variadas",
-    },
-  ],
-};
-
-// Voces disponibles para el agente de voz
-const AVAILABLE_VOICES = [
-  { name: "Carlos", voice_type: "masculine", id: "21ad5a61dwa65" },
-  { name: "María", voice_type: "feminine", id: "32be7c82fgb76" },
-  { name: "Alex", voice_type: "neutral", id: "43cf8d93hic87" },
-  { name: "Sofía", voice_type: "feminine", id: "54dg9e04jid98" },
-  { name: "Diego", voice_type: "masculine", id: "65eh0f15kie09" },
-];
-
-// Opciones de configuración para el agente de voz
-const VOICE_CONFIG_OPTIONS = {
-  voiceType: [
-    {
-      id: "male",
-      name: "Voz masculina",
-      description: "Tono grave y profesional",
-    },
-    {
-      id: "female",
-      name: "Voz femenina",
-      description: "Tono cálido y amigable",
-    },
-    {
-      id: "neutral",
-      name: "Voz neutral",
-      description: "Tono balanceado y versátil",
-    },
-  ],
-  speechRate: [
-    { id: "slow", name: "Lenta", description: "Habla pausada y clara" },
-    { id: "medium", name: "Media", description: "Velocidad de habla estándar" },
-    { id: "fast", name: "Rápida", description: "Habla ágil y dinámica" },
-  ],
-  callHandling: [
-    {
-      id: "inbound",
-      name: "Recibir llamadas",
-      description: "Solo responde llamadas entrantes",
-    },
-    {
-      id: "outbound",
-      name: "Realizar llamadas",
-      description: "Solo realiza llamadas salientes",
-    },
-    {
-      id: "both",
-      name: "Ambas direcciones",
-      description: "Recibe y realiza llamadas",
-    },
-  ],
-};
+import {
+  AGENT_TYPES,
+  AVAILABLE_VOICES,
+  STEPS,
+  TEXT_CHANNELS,
+  TEXT_CONFIG_OPTIONS,
+  VOICE_CONFIG_OPTIONS,
+} from "@/app/onboarding/constants/onboardingSteps";
+import { api } from "@/core/api";
+import { OnboardingFormData } from "@/core/modules/onboarding/onboarding.interface";
 
 const OnboardingForm: React.FC = () => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Modificamos el estado para incluir todos los nuevos campos
-  const [formData, setFormData] = useState({
-    // Información general
+  const [formData, setFormData] = useState<
+    OnboardingFormData & {
+      password: string;
+      identification: string;
+      webSite: string;
+    }
+  >({
+    // Información general (todos estos son requeridos en el schema)
     businessName: "",
     fullName: "",
     email: "",
@@ -249,6 +58,59 @@ const OnboardingForm: React.FC = () => {
       temperature: 50, // Valor inicial del slider (50%)
     },
   });
+
+  const [passwordCriteria, setPasswordCriteria] = useState({
+    minLength: false,
+    hasUpperCase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
+
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPasswordValue(e.target.value);
+    // El error se actualizará mediante el useEffect o podrías añadir lógica aquí
+  };
+
+  // Deberías tener una función que actualice este estado
+  // cada vez que formData.password cambia.
+  useEffect(() => {
+    if (formData.password && formData.password.length > 0) {
+      // Asegúrate que formData.password existe
+      setPasswordCriteria({
+        minLength: formData.password.length >= 8,
+        hasUpperCase: /[A-Z]/.test(formData.password),
+        hasNumber: /[0-9]/.test(formData.password),
+        hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(formData.password),
+      });
+    } else {
+      // Reset criteria if password is empty
+      setPasswordCriteria({
+        minLength: false,
+        hasUpperCase: false,
+        hasNumber: false,
+        hasSpecialChar: false, // Corregido: todos los campos a false
+      });
+    }
+  }, [formData.password]);
+
+  useEffect(() => {
+    // Solo validar si el campo confirmPassword tiene algún contenido
+    if (confirmPasswordValue.length > 0) {
+      if (formData.password !== confirmPasswordValue) {
+        setConfirmPasswordError("Las contraseñas no coinciden.");
+      } else {
+        setConfirmPasswordError(""); // Limpiar error si coinciden
+      }
+    } else {
+      // Si el campo está vacío, no debería haber error de "no coincidencia"
+      // Podrías tener otra lógica para "campo requerido" en el submit o al perder el foco (onBlur)
+      setConfirmPasswordError("");
+    }
+  }, [formData.password, confirmPasswordValue]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -447,6 +309,42 @@ const OnboardingForm: React.FC = () => {
 
   // Enviar el formulario
   const handleSubmit = async () => {
+    // Validación final para los campos más cruciales si se llega aquí.
+    // Esto es un fallback por si un usuario salta validaciones o flujos.
+    if (
+      !formData.email ||
+      !formData.businessName ||
+      !formData.fullName ||
+      !formData.whatsapp
+    ) {
+      alert(
+        "Faltan datos cruciales para el onboarding. Por favor, revisa los pasos."
+      );
+      setCurrentStep(1); // O el paso donde están los campos faltantes
+      return;
+    }
+
+    const payloadToSend = {
+      businessName: formData.businessName,
+      fullName: formData.fullName,
+      email: formData.email,
+      password: formData.password,
+      whatsapp: formData.whatsapp,
+      agentTypes: formData.agentTypes,
+      textChannels: formData.textChannels,
+      textConfig: formData.textConfig,
+      voiceConfig: formData.voiceConfig,
+    };
+
+    const selectedVoice = AVAILABLE_VOICES.find(
+      (v) => v.id === formData.voiceConfig.voiceId
+    );
+    if (selectedVoice) {
+      payloadToSend.voiceConfig.voiceType = selectedVoice.voice_type; // Usar el tipo de voz del constante
+    } else {
+      payloadToSend.voiceConfig.voiceType = "unknown"; // O un valor por defecto si es requerido por el esquema
+    }
+
     setIsSubmitting(true);
     setErrors({}); // Limpiamos errores antes de enviar
 
@@ -514,7 +412,7 @@ const OnboardingForm: React.FC = () => {
         duration: 0.3,
       },
     },
-  };
+  } as Variants;
 
   // Renderizar el paso actual
   const renderStep = () => {
@@ -536,7 +434,7 @@ const OnboardingForm: React.FC = () => {
                 FunnelAd te ayuda a automatizar tus ventas y atención al cliente
                 con inteligencia artificial.
               </p>
-              <motion.button
+              {/* <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleNext}
@@ -544,7 +442,7 @@ const OnboardingForm: React.FC = () => {
               >
                 CONTINUAR
                 <ArrowRightIcon className="w-5 h-5 ml-2" />
-              </motion.button>
+              </motion.button> */}
             </div>
             <div className="md:w-1/2">
               <motion.div
@@ -871,7 +769,7 @@ const OnboardingForm: React.FC = () => {
                         handleTextConfigChange("useEmojis", option.id)
                       }
                       className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                        formData.textConfig.useEmojis === option.id
+                        formData.textConfig.useEmojis === (option.id === "true")
                           ? "bg-[#C9A14A] text-white"
                           : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
@@ -880,7 +778,8 @@ const OnboardingForm: React.FC = () => {
                       <p className="text-xs mt-1 opacity-80 hidden md:block">
                         {option.description}
                       </p>
-                      {formData.textConfig.useEmojis === option.id && (
+                      {formData.textConfig.useEmojis ===
+                        (option.id === "true") && (
                         <CheckCircleIcon className="w-4 h-4 mt-1 text-white" />
                       )}
                     </motion.div>
@@ -935,7 +834,8 @@ const OnboardingForm: React.FC = () => {
                         handleTextConfigChange("modelTemperature", option.id)
                       }
                       className={`p-3 rounded-lg cursor-pointer transition-all duration-300 ${
-                        formData.textConfig.modelTemperature === option.id
+                        formData.textConfig.modelTemperature ===
+                        Number(option.id)
                           ? "bg-[#C9A14A] text-white"
                           : "bg-gray-800 text-gray-300 hover:bg-gray-700"
                       }`}
@@ -944,7 +844,8 @@ const OnboardingForm: React.FC = () => {
                       <p className="text-xs mt-1 opacity-80 hidden md:block">
                         {option.description}
                       </p>
-                      {formData.textConfig.modelTemperature === option.id && (
+                      {formData.textConfig.modelTemperature ===
+                        Number(option.id) && (
                         <CheckCircleIcon className="w-4 h-4 mt-1 text-white" />
                       )}
                     </motion.div>

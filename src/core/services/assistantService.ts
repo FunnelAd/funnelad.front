@@ -2,90 +2,82 @@ import {
   Assistant,
   CreateAssistantData,
   UpdateAssistantData,
-} from "../types/assistant";
-
-// Simulación de datos para desarrollo
-const MOCK_ASSISTANTS: Assistant[] = [
-  {
-    id: "1",
-    name: "Asistente de Ventas",
-    description: "Asistente especializado en ventas y atención al cliente",
-    model: "gpt-4",
-    createdAt: "2024-03-15T10:00:00Z",
-    updatedAt: "2024-03-15T10:00:00Z",
-    isActive: true,
-    storeId: "store1",
-    storeName: "Mi Tienda",
-    createdBy: "admin@funnelad.com",
-    lastUsed: "2024-03-20T15:30:00Z",
-    totalConversations: 150,
-    successRate: 85,
-  },
-  {
-    id: "2",
-    name: "Asistente de Soporte",
-    description: "Asistente para resolver dudas y problemas técnicos",
-    model: "gpt-3.5-turbo",
-    createdAt: "2024-03-16T14:00:00Z",
-    updatedAt: "2024-03-16T14:00:00Z",
-    isActive: true,
-    storeId: "store1",
-    storeName: "Mi Tienda",
-    createdBy: "admin@funnelad.com",
-    lastUsed: "2024-03-19T09:15:00Z",
-    totalConversations: 75,
-    successRate: 92,
-  },
-];
+} from "../types/assistants/assistant";
+import { api, TokenService } from "../api"; // Asumo que 'api' es tu instancia de Axios o un wrapper similar
 
 export const assistantService = {
   async getAssistants(): Promise<Assistant[]> {
-    // Simulación de llamada a API
-
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(MOCK_ASSISTANTS);
-      }, 500);
-    });
+    try {
+      const token = TokenService.getToken();
+      const email = TokenService.getEmail();
+      const response = await api.get("/api/assistants/getAll", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(email ? { email } : {}),
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data as Assistant[];
+    } catch (error) {
+      console.error("Error al obtener asistentes:", error);
+      // Re-lanzar el error para que los componentes puedan manejarlo
+      throw error;
+    }
   },
 
   async createAssistant(data: CreateAssistantData): Promise<Assistant> {
-    // Simulación de llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newAssistant: Assistant = {
-          id: Date.now().toString(),
-          ...data,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          isActive: true,
-          storeName: "Mi Tienda", // Esto vendría del backend
-          createdBy: "admin@funnelad.com", // Esto vendría del backend
-        };
-        resolve(newAssistant);
-      }, 500);
-    });
+    console.log(
+      "Enviando estos datos al backend para crear:",
+      JSON.stringify(data, null, 2)
+    );
+
+    try {
+      const response = await api.post("/api/assistants/create", data);
+      return response.data as Assistant;
+    } catch (error) {
+      console.error("Error al crear asistente:", error);
+      // Re-lanzar el error
+      throw error;
+    }
   },
 
   async updateAssistant(
     id: string,
     data: UpdateAssistantData
   ): Promise<Assistant> {
-    // Simulación de llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const assistant = MOCK_ASSISTANTS.find((a) => a.id === id);
-        if (!assistant) {
-          throw new Error("Assistant not found");
-        }
-        const updatedAssistant = {
-          ...assistant,
-          ...data,
-          updatedAt: new Date().toISOString(),
-        };
-        resolve(updatedAssistant);
-      }, 500);
-    });
+    console.log(
+      `Enviando estos datos al backend para actualizar el asistente ${id}:`,
+      JSON.stringify(data, null, 2)
+    );
+    try {
+      const token = TokenService.getToken();
+      const email = TokenService.getEmail();
+      // console.log(token)
+      // const response = await api.post(
+      //   "/api/crm/customer",
+      //   {idBusiness:idBusiness},
+      //   {
+      //     headers: {
+      //       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      //       ...(email ? { email } : {}),
+      //       "Content-Type": "application/json",
+      //     },
+      //   }
+      // )
+
+      const response = await api.put(`/api/assistants/${id}`, data, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(email ? { email } : {}),
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data as Assistant;
+    } catch (error) {
+      console.error(`Error al actualizar asistente con ID ${id}:`, error);
+      // Re-lanzar el error
+      throw error;
+    }
   },
 
   async deleteAssistant(id: string): Promise<void> {

@@ -3,6 +3,7 @@ export interface Trigger {
   name: string;
   description: string;
   model: string;
+  content: string;
   createdAt: string;
   updatedAt: string;
   isActive: boolean;
@@ -15,6 +16,7 @@ export interface Trigger {
   phone?: string;
   triggerTemplateId?: string;
   responseTime?: number;
+  type: string;
   responseType?: number;
   messageSendType?: string;
   useEmojis?: boolean;

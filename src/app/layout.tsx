@@ -32,6 +32,22 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
           className="flex-1 overflow-y-auto w-full md:pl-16 pl-0" // Considerar hacer este padding dinámico según el estado real del sidebar
         >
           {children}
+          <Toaster position="top-right"
+            toastOptions={{
+              success: {
+                style: {
+                  background: "green",
+                  color: "white",
+                },
+              },
+              error: {
+                style: {
+                  background: "red",
+                  color: "white",
+                },
+              },
+            }}
+          />
         </main>
       </div>
     </>
