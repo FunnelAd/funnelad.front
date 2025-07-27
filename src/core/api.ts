@@ -23,14 +23,14 @@ class TokenService {
 
   static setAuthData(response: AuthResponse): void {
     if (typeof window === "undefined") return;
-    console.log("response auth: ", response)
+    console.log("response auth: ", response);
     const decoded: { email?: string } = jwtDecode(response.access_token);
     const isProd = process.env.NODE_ENV === "test";
     const cookieOptions = {
       expires: 7,
-      secure: isProd,         // Solo secure en producción
+      secure: isProd, // Solo secure en producción
       path: "/",
-      sameSite: 'lax' as const,
+      sameSite: "lax" as const,
       // domain: window.location.hostname, // Asegura dominio local y en prod_hostname
     };
 
@@ -39,7 +39,11 @@ class TokenService {
     Cookies.set(this.TOKEN_KEY, response.access_token, cookieOptions);
     // Guarda refresh token
     if (response.refresh_token) {
-      Cookies.set(this.REFRESH_TOKEN_KEY, response.refresh_token, cookieOptions);
+      Cookies.set(
+        this.REFRESH_TOKEN_KEY,
+        response.refresh_token,
+        cookieOptions
+      );
     }
     // Guarda email extraído
     if (decoded.email) {
@@ -69,7 +73,7 @@ api.interceptors.request.use(
 
     const token = TokenService.getToken();
     const email = TokenService.getEmail();
-    console.log(email)
+    console.log(email);
     if (token) config.headers.Authorization = `Bearer ${token}`;
     if (email) config.headers.email = email;
 
@@ -77,6 +81,5 @@ api.interceptors.request.use(
   },
   (error: any) => Promise.reject(error)
 );
-
 
 export { api, TokenService };

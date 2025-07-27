@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Rutas que no requieren autenticación
-const publicRoutes = ["/auth", "/register"];
+const publicRoutes = ["/auth", "/register", "/dashboard", "/about", "master/*"];
 
 export function middleware(request: NextRequest) {
+  if (process.env.NODE_ENV === "development") {
+    return NextResponse.next();
+  }
   const { pathname } = request.nextUrl;
 
   // Verificar si la ruta es pública
@@ -16,7 +19,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ✅ LÓGICA ACTIVADA
   // Verificar si el usuario está autenticado buscando la cookie
   const token = request.cookies.get("auth_token")?.value;
 

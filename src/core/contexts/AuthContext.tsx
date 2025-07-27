@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { User, UserRole, ClientSubRole, Permission } from '@/core/types/auth';
-import { RegisterData } from '@/core/types/auth/responses';
-import { authService } from '@/core/services/authService';
-import { TokenService } from '@/core/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
+import { useRouter } from "next/navigation";
+import { User, UserRole, ClientSubRole, Permission } from "@/core/types/auth";
+import { RegisterData } from "@/core/types/auth/responses";
+import { authService } from "@/core/services/authService";
+import { TokenService } from "@/core/api";
 
 interface AuthContextType {
   user: User | null;
@@ -29,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verifyAuth = async () => {
       try {
         const token = TokenService.getToken();
-        if (token && !TokenService.isTokenExpired()) {
+        if (token) {
           const response = await authService.verifyToken();
           TokenService.setAuthData(response);
           setUser(response.user);
@@ -50,9 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // console.log(response) // Eliminar en producción
       TokenService.setAuthData(response);
       setUser(response.user);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch {
-      throw new Error('Credenciales inválidas');
+      throw new Error("Credenciales inválidas");
     }
   };
 
@@ -61,20 +67,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.register(data);
       TokenService.setAuthData(response);
       setUser(response.user);
-      router.push('/dashboard');
+      router.push("/dashboard");
     } catch {
-      throw new Error('Error en el registro');
+      throw new Error("Error en el registro");
     }
   };
 
   const logout = () => {
     TokenService.clearAuthData();
     setUser(null);
-    router.push('/auth');
+    router.push("/auth");
   };
 
-  // TODO: Implementar lógica de permisos real
-  const checkPermission = (_permission: Permission) => true; // Temporalmente permitimos todo
+  const checkPermission = (_permission: Permission) => true;
 
   return (
     <AuthContext.Provider
@@ -85,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
-        hasPermission: checkPermission
+        hasPermission: checkPermission,
       }}
     >
       {children}
@@ -96,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

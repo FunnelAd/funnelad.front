@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useAuth } from "@/core/contexts/AuthContext";
 import { UserRole, ClientSubRole } from "@/core/types/auth";
@@ -33,7 +33,7 @@ export default function AuthPage() {
     clientSubRole: ClientSubRole.ADMIN,
   });
   const [error, setError] = useState<string | null>(null);
-  const [validation] = useState<ValidationState>({
+  const [validation, setValidation] = useState<ValidationState>({
     email: false,
     password: false,
     confirmPassword: false,
