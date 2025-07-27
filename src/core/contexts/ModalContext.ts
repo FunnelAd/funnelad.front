@@ -1,4 +1,3 @@
-// src/contexts/ModalContext.ts
 import { createContext, ReactNode } from "react";
 
 // Interfaz que define la estructura del valor del contexto
