@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Assistant } from "@/core/types/assistant";
+import { IAssistant, CreateAssistantData } from "@/core/types/assistant";
 import { assistantService } from "@/core/services/assistantService";
 import CreateAssistantModal from "@/presentation/components/CreateAssistantModal";
-import type { CreateAssistantFormData } from "@/presentation/components/CreateAssistantModal";
 import {
   PlusIcon,
   PencilIcon,
@@ -14,7 +13,7 @@ import {
 import { useModal } from "@/core/hooks/useModal";
 
 export default function AssistantsPage() {
-  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const [assistants, setAssistants] = useState<IAssistant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { showModal } = useModal();
@@ -46,7 +45,7 @@ export default function AssistantsPage() {
   //   setIsCreateModalOpen(true);
   // };
 
-  const handleEditAssistant = (assistant: Assistant) => {
+  const handleEditAssistant = (assistant: IAssistant) => {
     showModal(
       <CreateAssistantModal
         onSave={handleSaveAssistant}
@@ -56,10 +55,10 @@ export default function AssistantsPage() {
     );
   };
 
-  const handleSaveAssistant = async (formData: CreateAssistantFormData) => {
+  const handleSaveAssistant = async (formData: CreateAssistantData) => {
     try {
-      if (formData.id) {
-        await assistantService.updateAssistant(formData.id, formData);
+      if (formData._id) {
+        await assistantService.updateAssistant(formData._id, formData);
       } else {
         await assistantService.createAssistant(formData);
       }
@@ -75,7 +74,7 @@ export default function AssistantsPage() {
     ) {
       try {
         await assistantService.deleteAssistant(id);
-        setAssistants(assistants.filter((a) => a.id !== id));
+        setAssistants(assistants.filter((a) => a._id !== id));
       } catch (error) {
         console.error("Error deleting assistant:", error);
       }
@@ -131,7 +130,7 @@ export default function AssistantsPage() {
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
             {assistants.map((assistant) => (
-              <li key={assistant.id}>
+              <li key={assistant._id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
@@ -158,7 +157,7 @@ export default function AssistantsPage() {
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleDeleteAssistant(assistant.id)}
+                        onClick={() => handleDeleteAssistant(assistant._id)}
                         className="text-gray-400 hover:text-red-500"
                       >
                         <TrashIcon className="h-5 w-5" />
