@@ -1,629 +1,533 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import "@/i18n";
 import { useModal } from "@/core/hooks/useModal";
-import { Assistant } from "@/core/types/assistant";
+import { CreateAssistantData } from "@/core/types/assistant";
+import toast from "react-hot-toast";
+import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 
-// Simulación de plantillas de bienvenida
-const WELCOME_TEMPLATES = [
-  {
-    id: "1",
-    name: "Bienvenida estándar",
-    content: "¡Hola! ¿En qué puedo ayudarte hoy?",
-  },
-  {
-    id: "2",
-    name: "Bienvenida formal",
-    content: "Bienvenido a nuestro servicio, ¿cómo puedo asistirle?",
-  },
+const STEPS = [
+  { id: 1, label: 'general' },
+  { id: 2, label: 'channels' },
+  { id: 3, label: 'prompt' },
+  { id: 4, label: 'configuration' },
+  { id: 5, label: 'voice' },
 ];
 
-const TABS = [
-  { key: "general", label: "general" },
-  { key: "integrations", label: "integrations" },
+// Añadimos atributos para autocompletar campos
+const AGENTS = [
+  {
+    id: 'sales',
+    title: 'Agente Ventas',
+    description: 'Impulsa tus ventas con respuestas persuasivas y personalizadas.',
+    promptTemplate: 'Eres un agente de ventas enfocado en cerrar tratos con lenguaje persuasivo.',
+    communicationStyle: 'formal',
+    emojiUsage: 'low',
+    creativity: 70,
+    behavior: 'Prioriza destacar beneficios del producto y llamar a la acción.',
+  },
+  {
+    id: 'support',
+    title: 'Soporte',
+    description: 'Responde consultas técnicas y soporte al cliente de forma clara.',
+    promptTemplate: 'Eres un agente de soporte técnico que explica pasos y soluciona problemas.',
+    communicationStyle: 'formal',
+    emojiUsage: 'none',
+    creativity: 40,
+    behavior: 'Explica soluciones paso a paso con paciencia.',
+  },
+  {
+    id: 'customer',
+    title: 'Atención al Cliente',
+    description: 'Atiende clientes con un tono amigable y empático.',
+    promptTemplate: 'Eres un agente de atención al cliente que escucha y empatiza.',
+    communicationStyle: 'friendly',
+    emojiUsage: 'moderate',
+    creativity: 50,
+    behavior: 'Responde con empatía y resolviendo dudas rápidamente.',
+  },
+  {
+    id: 'custom',
+    title: 'Personalizado',
+    description: 'Define tu propio prompt para casos especiales.',
+    promptTemplate: '',
+    communicationStyle: '',
+    emojiUsage: '',
+    creativity: 50,
+    behavior: '',
+  }
 ];
 
-const initialFormState = {
-  name: "",
-  phone: "",
-  welcomeMsg: "",
-  timeResponse: 30,
-  assistensResponseP: 80,
-  emotesUse: false,
-  stylesUse: false,
-  voice: { id: 0, name: "", gender: "unknown", provider: "" },
-  amountAudio: 0,
-  voiceResponse: false,
-  autoTranscribe: false,
-  idPhoneNumber: "",
-  idWppBusinessAccount: "",
-  idMetaApp: "",
-  appSecretMeta: "",
-  tokenMetaPermanent: "",
-  webhook: "",
-  tokenWebhook: "",
-  tokenTelegram: "",
-  chatidTelegram: "",
-  prompt: "",
-  active: true,
-  trainingType: "predefined",
-  selectedModel: "",
-  audioEnabled: false,
-};
-
-interface CreateAssistantModalProps {
-  //isOpen: boolean;
-  // onClose: () => void;
-  onSave: (formData: CreateAssistantFormData) => void;
-  assistant?: Assistant;
-  isEditing?: boolean;
-}
-
-export interface CreateAssistantFormData {
-  id?: string;
-  name: string;
-  phone: string;
-  welcomeTemplateId: string;
-  isActive: boolean;
-  responseTime: number;
-  responseType: number;
-  messageSendType: string;
-  useEmojis: boolean;
-  useStyles: boolean;
-  audioVoice: string;
-  audioCount: number;
-  replyAudioWithAudio: boolean;
-  whatsappNumber: string;
-  whatsappBusinessId: string;
-  metaAppId: string;
-  metaToken: string;
-  webhookUrl: string;
-  webhookToken: string;
-}
-
-// onClose, onSave,
-
-export default function CreateAssistantModal({
+export default function CreateAssistantModalModern({
   onSave,
   assistant,
   isEditing = false,
-}: CreateAssistantModalProps) {
+}: {
+  onSave: (data: CreateAssistantData) => void;
+  assistant?: Partial<CreateAssistantData>;
+  isEditing?: boolean;
+}) {
   const { t } = useTranslation();
   const { hideModal } = useModal();
-  const [activeTab, setActiveTab] = useState("general");
-  const [form, setForm] = useState<CreateAssistantFormData>({
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState<CreateAssistantData>({
+    _id: "",
     name: "",
-    phone: "",
-    welcomeTemplateId: "",
-    isActive: true,
+    prompt: "",
+    description: "",
     responseTime: 30,
+    isActive: true,
     responseType: 80,
-    messageSendType: "por_partes",
     useEmojis: false,
     useStyles: false,
+    voiceResponse: false,
     audioVoice: "",
     audioCount: 0,
-    replyAudioWithAudio: false,
+    channels: ["whatsapp"],
+    communicationStyle: "formal",
+    emojiUsage: "moderate",
+    creativity: 50,
+    voiceSelection: "carlos",
+    voiceTemperature: 30,
+    callDirection: "bidirectional",
+    welcomeMessage: "",
+    model: "gpt-4",
+    phone: "",
+    idBusiness: "",
+    createBy: "", // Ojo al typo que espera el backend
+    welcomeMsg: "",
+    welcomeTemplateId: "",
     whatsappNumber: "",
     whatsappBusinessId: "",
-    metaAppId: "",
-    metaToken: "",
-    webhookUrl: "",
+    voice: { id: 0, name: "", gender: "" },
+    amountAudio: 0,
+    idPhoneNumber: "",
+    idWppBusinessAccount: "",
+    idMetaApp: "",
+    tokenMetaPermanent: "",
+    webhook: "",
+    tokenWebhook: "",
+    tokenTelegram: "",
+    chatidTelegram: "",
+    lastUsed: "",
     webhookToken: "",
+    webhookUrl: "",
+    metaToken: "",
+    metaAppId: "",
+    agentType: "sales",
+    agentPrompt: AGENTS.find(a => a.id === 'sales')!.promptTemplate,
+    behaviorDescription: AGENTS.find(a => a.id === 'sales')!.behavior,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [availableVoices, setAvailableVoices] = useState<IVoice[]>([]);
-  const [loadingVoices, setLoadingVoices] = useState(false);
-  const [testingVoice, setTestingVoice] = useState<string | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<string>("all");
 
-  const predefinedModels = [
-    {
-      id: "sales_assistant",
-      name: "Asistente de Ventas",
-      description: "Especializado en convertir leads y cerrar ventas",
-      prompt:
-        "Eres un asistente experto en ventas con más de 10 años de experiencia. Tu objetivo principal es ayudar a los clientes a encontrar el producto perfecto para sus necesidades y guiarlos hacia la compra. Eres persuasivo pero no agresivo, empático y siempre enfocado en el beneficio del cliente.",
-    },
-    {
-      id: "customer_support",
-      name: "Soporte al Cliente",
-      description: "Resuelve problemas y brinda asistencia técnica",
-      prompt:
-        "Eres un especialista en atención al cliente altamente capacitado. Tu misión es resolver cualquier problema, duda o consulta que tengan los usuarios de manera rápida y efectiva. Eres paciente, comprensivo y siempre buscas la mejor solución para cada situación.",
-    },
-    {
-      id: "appointment_scheduler",
-      name: "Agendador de Citas",
-      description: "Gestiona y programa citas de manera eficiente",
-      prompt:
-        "Eres un asistente especializado en la gestión y programación de citas. Tu trabajo es ayudar a los clientes a encontrar el horario perfecto, confirmar disponibilidad y asegurar que toda la información necesaria esté completa para cada cita.",
-    },
-    {
-      id: "lead_qualifier",
-      name: "Calificador de Leads",
-      description: "Identifica y califica prospectos potenciales",
-      prompt:
-        "Eres un experto en calificación de leads con gran habilidad para identificar oportunidades de negocio. Tu objetivo es hacer las preguntas correctas para entender las necesidades del prospecto y determinar su nivel de interés y capacidad de compra.",
-    },
-    {
-      id: "product_advisor",
-      name: "Asesor de Productos",
-      description: "Proporciona información detallada sobre productos",
-      prompt:
-        "Eres un consultor experto en productos con conocimiento profundo de todas las características, beneficios y casos de uso. Tu misión es educar a los clientes sobre los productos disponibles y ayudarles a tomar decisiones informadas.",
-    },
-  ];
+  // Al cambiar agente, autocompletamos
+  const selectAgent = (agentId: string) => {
+    const agent = AGENTS.find(a => a.id === agentId)!;
+    setForm(prev => ({
+      ...prev,
+      agentType: agent.id,
+      agentPrompt: agent.promptTemplate,
+      communicationStyle: agent.communicationStyle,
+      emojiUsage: agent.emojiUsage,
+      creativity: agent.creativity,
+      behaviorDescription: agent.behavior,
+    }));
+    setErrors(prev => ({ ...prev, agentType: '', agentPrompt: '' }));
+  };
+
+
+
 
   useEffect(() => {
-    if (assistant && isEditing) {
-      setForm({
-        id: assistant.id,
-        name: assistant.name,
-        phone: assistant.phone || "",
-        welcomeTemplateId: assistant.welcomeTemplateId || "",
-        isActive: assistant.isActive,
-        responseTime: assistant.responseTime || 30,
-        responseType: assistant.responseType || 80,
-        messageSendType: assistant.messageSendType || "por_partes",
-        useEmojis: assistant.useEmojis || false,
-        useStyles: assistant.useStyles || false,
-        audioVoice: assistant.audioVoice || "",
-        audioCount: assistant.audioCount || 0,
-        replyAudioWithAudio: assistant.replyAudioWithAudio || false,
-        whatsappNumber: assistant.whatsappNumber || "",
-        whatsappBusinessId: assistant.whatsappBusinessId || "",
-        metaAppId: assistant.metaAppId || "",
-        metaToken: assistant.metaToken || "",
-        webhookUrl: assistant.webhookUrl || "",
-        webhookToken: assistant.webhookToken || "",
-      });
-    } else {
-      // Reset form when opening for creation
-      setForm({
-        name: "",
-        phone: "",
-        welcomeTemplateId: "",
-        isActive: true,
-        responseTime: 30,
-        responseType: 80,
-        messageSendType: "por_partes",
-        useEmojis: false,
-        useStyles: false,
-        audioVoice: "",
-        audioCount: 0,
-        replyAudioWithAudio: false,
-        whatsappNumber: "",
-        whatsappBusinessId: "",
-        metaAppId: "",
-        metaToken: "",
-        webhookUrl: "",
-        webhookToken: "",
-      });
-    }
+    if (assistant && isEditing) setForm((prev) => ({ ...prev, ...assistant }));
   }, [assistant, isEditing]);
 
-  // useEffect(() => {
-  //   const handleEscape = (event: KeyboardEvent) => {
-  //     if (event.key === 'Escape') {
-  //       onClose();
-  //     }
-  //   };
-
-  //   const handleClickOutside = (event: MouseEvent) => {
-  //     if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-  //       onClose();
-  //     }
-  //   };
-
-  //   if (isOpen) {
-  //     document.addEventListener('keydown', handleEscape);
-  //     document.addEventListener('mousedown', handleClickOutside);
-  //   }
-
-  //   return () => {
-  //     document.removeEventListener('keydown', handleEscape);
-  //     document.removeEventListener('mousedown', handleClickOutside);
-  //   };
-  // }, [isOpen, onClose]);
-
-  const handleChange = (field: string, value: string | number | boolean) => {
+  const handleChange = (field: keyof CreateAssistantData, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleChange = (field: string, value: any) => {
-    setForm((prev: any) => ({ ...prev, [field]: value }));
+  const validateStep = () => {
+    const newErrors: Record<string, string> = {};
+    if (step === 1) {
+      if (!form.name.trim()) newErrors.name = t("El nombre es obligatorio");
+      if (!form.model) newErrors.model = t("Selecciona un modelo");
+    }
+    if (step === 3 && !form.agentType) {
+      newErrors.agentType = t("Selecciona un agente");
+    }
+    if (step === 3 && form.agentType === 'custom' && !form.agentPrompt.trim()) {
+      newErrors.agentPrompt = t("Escribe un prompt personalizado");
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+  const next = () => {
+    if (step < STEPS.length) {
+      if (!validateStep()) return;
+      setStep((prev) => prev + 1);
+    } else {
+      handleSubmit();
+    }
   };
 
-  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const modelId = e.target.value;
-    const selectedModel = predefinedModels.find(
-      (model) => model.id === modelId
-    );
-    handleChange("selectedModel", modelId);
-    handleChange("prompt", selectedModel?.prompt || "");
-  };
+  const back = () => step > 1 && setStep((prev) => prev - 1);
 
   const handleSubmit = () => {
-    console.log(form);
-
-    // 1. Nombre
     if (!form.name.trim()) {
-      toast.error("El nombre es obligatorio");
+      toast.error(t("El nombre es obligatorio"));
       return;
     }
-    // 2. Teléfono (ej. mínimo 7 dígitos, solo números y opcional + prefijo)
-    const phoneRegex = /^\+?\d{7,15}$/;
-    if (!phoneRegex.test(form.phone)) {
-      toast.error("Ingresa un teléfono válido (solo números, 7–15 dígitos)");
-      return;
-    }
-    // 3. Prompt
-    if (!form.prompt.trim()) {
-      toast.error("El prompt es obligatorio");
-      return;
-    }
-
     onSave(form);
     hideModal();
   };
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-[#0B2C3D] tracking-tight flex items-center gap-3">
-          <span className="inline-block w-8 h-8 rounded-full bg-gradient-to-br from-[#C9A14A] to-[#A8842C] flex items-center justify-center">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-              <path
-                d="M3 12c0-2.21 1.79-4 4-4h2V6a3 3 0 1 1 6 0v2h2a4 4 0 1 1 0 8h-2v2a3 3 0 1 1-6 0v-2H7a4 4 0 0 1-4-4Z"
-                fill="#fff"
-              />
-            </svg>
-          </span>
-          {isEditing ? t("edit_assistant") : t("new_assistant")}
-        </h2>
-        <button
-          onClick={hideModal}
-          className="text-gray-500 hover:text-gray-700"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex border-b border-[#C9A14A]/30 mb-8">
-        {TABS.map((tab) => (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div className="absolute inset-0 bg-black/60" onClick={hideModal} />
+      <div className="relative w-full max-w-3xl mx-auto p-8 bg-[#0f1a24] rounded-2xl shadow-xl">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold text-gray-50">
+            {isEditing ? t("edit_assistant") : t("new_assistant")}
+          </h2>
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-6 py-2 -mb-px border-b-2 transition-colors duration-200 font-semibold text-lg focus:outline-none ${
-              activeTab === tab.key
-                ? "border-[#C9A14A] text-[#C9A14A]"
-                : "border-transparent text-gray-500 hover:text-[#C9A14A]"
-            }`}
+            onClick={hideModal}
+            className="p-1 rounded-full hover:bg-gray-700 text-gray-300"
           >
-            {t(tab.label)}
+            <X size={20} />
           </button>
-        ))}
-      </div>
+        </div>
 
-      {/* Content (Formularios) */}
-      {activeTab === "general" && (
-        <form className="space-y-8">
-          {/* General */}
-          <div>
-            <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
-              {t("general")}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Steps */}
+        <div className="flex items-center justify-between mb-8">
+          {STEPS.map((s) => (
+            <div key={s.id} className="flex-1 flex items-center">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-200 
+                  ${s.id < step
+                    ? 'bg-green-500 text-white'
+                    : s.id === step
+                      ? 'bg-yellow-400 text-gray-900'
+                      : 'bg-gray-700 text-gray-400'
+                  }`}
+              >
+                {s.id < step ? <Check size={16} /> : s.id}
+              </div>
+              {s.id < STEPS.length && (
+                <div
+                  className={`flex-1 h-px mx-2 transition-colors duration-200 
+                    ${s.id < step ? 'bg-green-500' : 'bg-gray-700'}`}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="max-h-[60vh] overflow-y-auto pr-4">
+          {step === 1 && (
+            <div className="space-y-6">
+              {/* Name */}
               <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("assistant_name")}
+                <label className="block mb-1 text-sm font-medium text-white">
+                  {t("assistant_name")} *
                 </label>
                 <input
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
+                  type="text"
+                  placeholder={t("Ej: Asistente de Ventas") as string}
                   value={form.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
+                  onChange={e => handleChange('name', e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                 />
+                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
-              <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("phone")}
-                </label>
-                <input
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("welcome_message")}
-                </label>
-                <select
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.welcomeTemplateId}
-                  onChange={(e) =>
-                    handleChange("welcomeTemplateId", e.target.value)
-                  }
-                >
-                  <option value="">{t("select_welcome_message")}</option>
-                  {WELCOME_TEMPLATES.map((tpl) => (
-                    <option key={tpl.id} value={tpl.id}>
-                      {tpl.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
 
-          {/* IA */}
-          <div>
-            <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
-              {t("assistant_response")}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+              {/* Model */}
               <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("status")}
+                <label className="block mb-1 text-sm font-medium text-white">
+                  {t("modelo_ia")} *
                 </label>
                 <select
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.isActive ? "active" : "inactive"}
-                  onChange={(e) =>
-                    handleChange("isActive", e.target.value === "active")
-                  }
+                  value={form.model}
+                  onChange={e => handleChange('model', e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                 >
-                  <option value="active">{t("active")}</option>
-                  <option value="inactive">{t("inactive")}</option>
+                  <option value="">{t("Selecciona modelo")}</option>
+                  <option value="gpt-4">GPT-4 (Recomendado)</option>
+                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                  <option value="claude">Claude</option>
                 </select>
+                {errors.model && <p className="mt-1 text-sm text-red-500">{errors.model}</p>}
               </div>
+
+              {/* Welcome */}
               <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("response_time")}
+                <label className="block mb-1 text-sm font-medium text-white">
+                  {t("welcome_message")} *
                 </label>
                 <input
-                  type="number"
-                  min={1}
-                  max={300}
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.responseTime}
-                  onChange={(e) =>
-                    handleChange("responseTime", Number(e.target.value))
-                  }
+                  type="text"
+                  placeholder={t("¡Hola! ¿En qué puedo ayudarte hoy?") as string}
+                  value={form.welcomeMessage}
+                  onChange={e => handleChange('welcomeMessage', e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                 />
+                {errors.welcomeMessage && <p className="mt-1 text-sm text-red-500">{errors.welcomeMessage}</p>}
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("response_type_label")}
+
+              {/* Description */}
+              <div>
+                <label className="block mb-1 text-sm font-medium text-white">
+                  {t("description")} *
                 </label>
-                <div className="flex items-center gap-4">
-                  <span className="text-[#0B2C3D]">{t("text")}</span>
+                <input
+                  type="text"
+                  placeholder={t("Descricion del agente...") as string}
+                  value={form.description}
+                  onChange={e => handleChange('description', e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                />
+                {errors.welcomeMessage && <p className="mt-1 text-sm text-red-500">{errors.welcomeMessage}</p>}
+              </div>
+
+              {/* Time & Active */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-white">
+                    {t("response_time")} (s)
+                  </label>
                   <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={form.responseType}
-                    onChange={(e) =>
-                      handleChange("responseType", Number(e.target.value))
-                    }
-                    className="w-full accent-[#C9A14A]"
+                    type="number"
+                    min={10}
+                    max={120}
+                    value={form.responseTime}
+                    onChange={e => handleChange('responseTime', Number(e.target.value))}
+                    className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                   />
-                  <span className="text-[#0B2C3D]">{t("audio")}</span>
                 </div>
-                <p className="text-center text-sm text-gray-500 mt-1">
-                  {form.responseType}% {t("text")} / {100 - form.responseType}%{" "}
-                  {t("audio")}
-                </p>
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-white">
+                    {t("status")}
+                  </label>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-gray-400">{t("inactive")}</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.isActive}
+                        onChange={e => handleChange('isActive', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-700 peer-checked:bg-green-500 rounded-full transition-colors"></div>
+                      <div className="absolute left-0.5 top-0.5 w-5 h–5 bg-white peer-checked:translate-x-5 rounded-full transition-transform" />
+                    </label>
+                    <span className="text-gray-400">{t("active")}</span>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Texto */}
-          <div>
-            <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
-              {t("text_style")}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("message_send_type")}
-                </label>
-                <select
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.messageSendType}
-                  onChange={(e) =>
-                    handleChange("messageSendType", e.target.value)
-                  }
-                >
-                  <option value="por_partes">{t("by_parts")}</option>
-                  <option value="completo">{t("complete")}</option>
-                </select>
-              </div>
-              <div className="flex items-center gap-4">
-                <input
-                  id="useEmojis"
-                  type="checkbox"
-                  checked={form.useEmojis}
-                  onChange={(e) => handleChange("useEmojis", e.target.checked)}
-                  className="accent-[#C9A14A] w-5 h-5 rounded"
-                />
-                <label
-                  htmlFor="useEmojis"
-                  className="text-[#0B2C3D] font-semibold"
-                >
-                  {t("use_emojis")}
-                </label>
-              </div>
-              <div className="flex items-center gap-4">
-                <input
-                  id="useStyles"
-                  type="checkbox"
-                  checked={form.useStyles}
-                  onChange={(e) => handleChange("useStyles", e.target.checked)}
-                  className="accent-[#C9A14A] w-5 h-5 rounded"
-                />
-                <label
-                  htmlFor="useStyles"
-                  className="text-[#0B2C3D] font-semibold"
-                >
-                  {t("use_styles")}
-                </label>
+
+          {step === 2 && (
+            <div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {['whatsapp', 'instagram', 'webchat', 'messenger', 'email', 'phone'].map(ch => (
+                  <label key={ch} className="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      value={ch}
+                      checked={form.channels.includes(ch)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        handleChange('channels', form.channels.includes(val)
+                          ? form.channels.filter(c => c !== val)
+                          : [...form.channels, val]
+                        );
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="p-4 border-2 rounded-lg flex flex-col items-center space-y-2 peer-checked:border-yellow-400 peer-checked:bg-gray-800 transition-all">
+                      <span className="text-2xl">{ch === 'whatsapp' ? '💬' : ch === 'instagram' ? '📷' : ch === 'webchat' ? '🌐' : ch === 'messenger' ? '📘' : ch === 'email' ? '📧' : '📞'}</span>
+                      <span className="capitalize text-white font-medium">{t(ch)}</span>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Audio */}
-          <div>
-            <h3 className="text-xl font-bold text-[#C9A14A] mb-4">
-              {t("audio")}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("audio_voice")}
-                </label>
-                <select
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.audioVoice}
-                  onChange={(e) => handleChange("audioVoice", e.target.value)}
-                >
-                  <option value="">{t("select_voice")}</option>
-                  <option value="voz1">Voz 1</option>
-                  <option value="voz2">Voz 2</option>
-                </select>
+          {step === 3 && (
+            <div className="space-y-4">
+              <label className="block text-sm font-medium text-white mb-2">{t("Selecciona un agente")} *</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {AGENTS.map(agent => (
+                  <label key={agent.id} className="cursor-pointer">
+                    <input
+                      type="radio"
+                      name="agentType"
+                      value={agent.id}
+                      checked={form.agentType === agent.id}
+                      onChange={() => selectAgent(agent.id)}
+                      className="sr-only peer"
+                    />
+                    <div className="p-5 border-2 rounded-2xl bg-gray-800 hover:shadow-lg transition-all peer-checked:border-yellow-400 peer-checked:bg-gray-700">
+                      <h3 className="text-lg font-semibold text-white mb-1">{agent.title}</h3>
+                      <p className="text-sm text-gray-300 mb-2">{agent.description}</p>
+                      <div className="text-xs text-gray-400 mb-2">
+                        <p>Uso de emojis: <span className="font-medium text-white capitalize">{agent.emojiUsage}</span></p>
+                        <p>Estilo de comunicación: <span className="font-medium text-white capitalize">{agent.communicationStyle}</span></p>
+                        <p>Comportamiento: <span className="font-medium text-white">{agent.behavior}</span></p>
+                      </div>
+                      {form.agentType === agent.id && agent.id === 'custom' && (
+                        <textarea
+                          placeholder={t("Escribe el prompt personalizado aquí...") as string}
+                          value={form.agentPrompt}
+                          onChange={e => handleChange('agentPrompt', e.target.value)}
+                          className="w-full mt-2 p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                          rows={4}
+                        />
+                      )}
+                    </div>
+                  </label>
+                ))}
               </div>
+              {errors.agentType && <p className="mt-1 text-sm text-red-500">{errors.agentType}</p>}
+              {errors.agentPrompt && <p className="mt-1 text-sm text-red-500">{errors.agentPrompt}</p>}
+            </div>
+          )}
+          {/* Step 3 - Configuration */}
+          {step === 4 && (
+            <div className="space-y-6">
+              <label className="block text-sm font-medium text-white mb-2">
+                {t("communication_style")} *
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {['formal', 'informal', 'friendly'].map(style => (
+                  <label key={style} className="cursor-pointer">
+                    <input type="radio" name="communicationStyle" value={style} className="sr-only peer"
+                      checked={form.communicationStyle === style}
+                      onChange={() => handleChange('communicationStyle', style)}
+                    />
+                    <div className="p-4 border-2 rounded-lg text-center peer-checked:border-yellow-400 peer-checked:bg-gray-800 transition-all">
+                      <span className="capitalize text-white font-medium">{t(style)}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {errors.communicationStyle && <p className="mt-1 text-sm text-red-500">{errors.communicationStyle}</p>}
+
+              <label className="block text-sm font-medium text-white mb-2">
+                {t("emoji_usage")} *
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {['none', 'low', 'moderate', 'high'].map(level => (
+                  <label key={level} className="cursor-pointer">
+                    <input type="radio" name="emojiUsage" value={level} className="sr-only peer"
+                      checked={form.emojiUsage === level}
+                      onChange={() => handleChange('emojiUsage', level)}
+                    />
+                    <div className="p-4 border-2 rounded-lg text-center peer-checked:border-yellow-400 peer-checked:bg-gray-800 transition-all">
+                      <span className="capitalize text-white font-medium">{t(level)}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+              {errors.emojiUsage && <p className="mt-1 text-sm text-red-500">{errors.emojiUsage}</p>}
+
               <div>
-                <label className="block text-[#0B2C3D] font-semibold mb-1">
-                  {t("audio_count")}
+                <label className="block mb-1 text-sm font-medium text-white">
+                  {t("creativity")} ({form.creativity}%)
                 </label>
                 <input
-                  type="number"
+                  type="range"
                   min={0}
-                  max={10}
-                  className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                  value={form.audioCount}
-                  onChange={(e) =>
-                    handleChange("audioCount", Number(e.target.value))
-                  }
+                  max={100}
+                  value={form.creativity}
+                  onChange={e => handleChange('creativity', Number(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                 />
               </div>
-              <div className="flex items-center gap-4">
-                <input
-                  id="replyAudioWithAudio"
-                  type="checkbox"
-                  checked={form.replyAudioWithAudio}
-                  onChange={(e) =>
-                    handleChange("replyAudioWithAudio", e.target.checked)
-                  }
-                  className="accent-[#C9A14A] w-5 h-5 rounded"
-                />
-                <label
-                  htmlFor="replyAudioWithAudio"
-                  className="text-[#0B2C3D] font-semibold"
-                >
-                  {t("reply_audio_with_audio")}
+            </div>
+          )}
+
+          {/* Step 4 - Voice */}
+          {step === 5 && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3">
+                <label className="text-sm font-medium text-white">{t("voice_response")}</label>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.voiceResponse}
+                    onChange={e => handleChange('voiceResponse', e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-700 peer-checked:bg-green-500 rounded-full transition-colors"></div>
+                  <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white peer-checked:translate-x-5 rounded-full transition-transform" />
                 </label>
               </div>
-            </div>
-          </div>
-        </form>
-      )}
 
-      {activeTab === "integrations" && (
-        <form className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <label className="block text-[#0B2C3D] font-semibold mb-1">
-                {t("whatsapp_number")}
-              </label>
-              <input
-                className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.whatsappNumber}
-                onChange={(e) => handleChange("whatsappNumber", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-[#0B2C3D] font-semibold mb-1">
-                {t("whatsapp_business_id")}
-              </label>
-              <input
-                className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.whatsappBusinessId}
-                onChange={(e) =>
-                  handleChange("whatsappBusinessId", e.target.value)
-                }
-              />
-            </div>
-            <div>
-              <label className="block text-[#0B2C3D] font-semibold mb-1">
-                {t("meta_app_id")}
-              </label>
-              <input
-                className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.metaAppId}
-                onChange={(e) => handleChange("metaAppId", e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-[#0B2C3D] font-semibold mb-1">
-                {t("meta_token")}
-              </label>
-              <input
-                className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.metaToken}
-                onChange={(e) => handleChange("metaToken", e.target.value)}
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-[#0B2C3D] font-semibold mb-1">
-                {t("webhook_config")}
-              </label>
-              <input
-                className="w-full rounded-lg p-2 mb-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.webhookUrl}
-                onChange={(e) => handleChange("webhookUrl", e.target.value)}
-                placeholder={t("webhook_url")}
-              />
-              <input
-                className="w-full rounded-lg p-2 border-2 border-[#F5F6FA] focus:border-[#C9A14A] focus:ring-0 bg-[#F5F6FA] text-[#0B2C3D]"
-                value={form.webhookToken}
-                onChange={(e) => handleChange("webhookToken", e.target.value)}
-                placeholder={t("webhook_token")}
-              />
-            </div>
-          </div>
-        </form>
-      )}
+              {form.voiceResponse && (
+                <>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    {t("select_voice")} *
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {['carlos', 'sofia', 'maria'].map(v => (
+                      <label key={v} className="cursor-pointer">
+                        <input type="radio" name="voiceSelection" value={v} className="sr-only peer"
+                          checked={form.voiceSelection === v}
+                          onChange={() => handleChange('voiceSelection', v)}
+                        />
+                        <div className="p-4 border-2 rounded-lg text-center peer-checked:border-yellow-400 peer-checked:bg-gray-800 transition-all">
+                          <span className="capitalize text-white font-medium">{t(v)}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  {errors.voiceSelection && <p className="mt-1 text-sm text-red-500">{errors.voiceSelection}</p>}
 
-      {/* Footer */}
-      <div className="flex justify-end gap-4 mt-8 pt-4 border-t border-gray-200">
-        <button
-          onClick={hideModal}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-        >
-          {t("cancel")}
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="bg-gradient-to-r from-[#C9A14A] to-[#A8842C] hover:from-[#A8842C] hover:to-[#C9A14A] text-white px-6 py-2 rounded-lg font-semibold"
-        >
-          {t("save_assistant")}
-        </button>
+                  <div>
+                    <label className="block mb-1 text-sm font-medium text-white">
+                      {t("voice_tone")} ({form.voiceTemperature}%)
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={form.voiceTemperature}
+                      onChange={e => handleChange('voiceTemperature', Number(e.target.value))}
+                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-700">
+          <button
+            onClick={back}
+            disabled={step === 1}
+            className="flex items-center space-x-2 text-gray-300 hover:text-gray-100 disabled:opacity-50"
+          >
+            <ChevronLeft size={18} />
+            <span>{t("back")}</span>
+          </button>
+          <button
+            onClick={next}
+            className="flex items-center space-x-2 bg-yellow-400 text-gray-900 px-5 py-2 rounded-lg font-medium hover:bg-yellow-300"
+          >
+            <span>
+              {step < STEPS.length ? t("continue") : t("finish")}
+            </span>
+            {step < STEPS.length ? <ChevronRight size={18} /> : null}
+          </button>
+        </div>
       </div>
     </div>
   );

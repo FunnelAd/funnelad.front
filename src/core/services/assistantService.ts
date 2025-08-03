@@ -1,12 +1,12 @@
 import {
-  Assistant,
+  IAssistant,
   CreateAssistantData,
   UpdateAssistantData,
-} from "../types/assistants/assistant";
+} from "../types/assistant";
 import { api, TokenService } from "../api"; // Asumo que 'api' es tu instancia de Axios o un wrapper similar
 
 export const assistantService = {
-  async getAssistants(): Promise<Assistant[]> {
+  async getAssistants(): Promise<IAssistant[]> {
     try {
       const token = TokenService.getToken();
       const email = TokenService.getEmail();
@@ -17,7 +17,7 @@ export const assistantService = {
           "Content-Type": "application/json",
         },
       });
-      return response.data as Assistant[];
+      return response.data as IAssistant[];
     } catch (error) {
       console.error("Error al obtener asistentes:", error);
       // Re-lanzar el error para que los componentes puedan manejarlo
@@ -25,7 +25,7 @@ export const assistantService = {
     }
   },
 
-  async createAssistant(data: CreateAssistantData): Promise<Assistant> {
+  async createAssistant(data: CreateAssistantData): Promise<IAssistant> {
     console.log(
       "Enviando estos datos al backend para crear:",
       JSON.stringify(data, null, 2)
@@ -33,7 +33,7 @@ export const assistantService = {
 
     try {
       const response = await api.post("/api/assistants/create", data);
-      return response.data as Assistant;
+      return response.data as IAssistant;
     } catch (error) {
       console.error("Error al crear asistente:", error);
       // Re-lanzar el error
@@ -44,7 +44,7 @@ export const assistantService = {
   async updateAssistant(
     id: string,
     data: UpdateAssistantData
-  ): Promise<Assistant> {
+  ): Promise<IAssistant> {
     console.log(
       `Enviando estos datos al backend para actualizar el asistente ${id}:`,
       JSON.stringify(data, null, 2)
@@ -72,7 +72,7 @@ export const assistantService = {
           "Content-Type": "application/json",
         },
       });
-      return response.data as Assistant;
+      return response.data as IAssistant;
     } catch (error) {
       console.error(`Error al actualizar asistente con ID ${id}:`, error);
       // Re-lanzar el error
