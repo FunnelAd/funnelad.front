@@ -1,29 +1,44 @@
 "use client";
 
-import React, { useState, FC, useEffect } from "react";
+import React, { useState, FC, useEffect, KeyboardEvent } from "react";
 import { useModal } from "@/core/hooks/useModal"; // Ajusta la ruta a tu hook de modales
-import { PencilIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/solid";
+import {
+  PencilIcon,
+  TrashIcon,
+  PlusIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 import Dropdown, { Option } from "@/presentation/components/ui/Dropdown"; // Asumiendo que tienes un Dropdown reutilizable
+import { Toaster, toast } from "sonner"; // Importamos Sonner
 
 // --- Tipos y Datos de Ejemplo ---
 type Prompt = {
   id: string;
-  type: "Fallback" | "Error" | "Welcome";
+  type: "Fallback" | "Error" | "Welcome" | "Custom";
   content: string;
+  tags: string[];
 };
 
 const mockPrompts: Prompt[] = [
-  { id: "1", type: "Welcome", content: "Hola, ¿cómo puedo ayudarte hoy?" },
+  {
+    id: "1",
+    type: "Welcome",
+    content: "Hola, ¿cómo puedo ayudarte hoy?",
+    tags: ["inicio", "saludo"],
+  },
   {
     id: "2",
     type: "Fallback",
     content: "Lo siento, no entendí eso. ¿Puedes reformularlo?",
+    tags: ["soporte", "duda"],
   },
   {
     id: "3",
-    type: "Error",
+    type: "Custom",
     content:
-      "Parece que hubo un problema. Por favor, intenta de nuevo más tarde.",
+      "Para agendar una cita, necesito tu nombre y correo. ¿Me los podrías dar?",
+    tags: ["agendamiento", "ventas"],
   },
 ];
 
@@ -32,7 +47,7 @@ const mockAssistant = {
   name: "Agente de Soporte IA",
 };
 
-// --- Modales (Plantillas) ---
+// --- Modales ---
 const PromptForm: FC<{
   onSave: (data: any) => void;
   initialData?: Prompt | null;
@@ -41,6 +56,7 @@ const PromptForm: FC<{
     { value: "Fallback", label: "Fallback" },
     { value: "Error", label: "Error" },
     { value: "Welcome", label: "Welcome" },
+    { value: "Custom", label: "Personalizado" },
   ];
 
   const findOption = (options: Option[], value: string) =>
@@ -50,24 +66,50 @@ const PromptForm: FC<{
     initialData ? findOption(promptOptions, initialData.type) : null
   );
   const [content, setContent] = useState(initialData?.content || "");
+  const [tags, setTags] = useState<string[]>(initialData?.tags || []);
+  const [currentTag, setCurrentTag] = useState("");
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleTagInput = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && currentTag.trim() !== "") {
+      e.preventDefault();
+      if (!tags.includes(currentTag.trim())) {
+        setTags((prev) => [...prev, currentTag.trim()]);
+      }
+      setCurrentTag("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags((prev) => prev.filter((tag) => tag !== tagToRemove));
+  };
 
   const handleSubmit = () => {
     if (selectedType && content) {
-      onSave({ type: selectedType.value, content });
+      onSave({ type: selectedType.value, content, tags });
     } else {
-      alert("Por favor, selecciona un tipo y escribe un contenido.");
+      toast.error("Por favor, selecciona un tipo y escribe un contenido.");
     }
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-xl w-full max-w-md">
+    <div
+      className={`p-6 bg-white rounded-lg shadow-xl w-full max-w-lg transition-all duration-300 ease-out ${
+        isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+      }`}
+    >
       <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">
         {initialData ? "Editar" : "Crear"} Prompt
       </h2>
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Tipo de Prompt
+            Tipo de Prompt <span className="text-red-500">*</span>
           </label>
           <Dropdown
             options={promptOptions}
@@ -78,7 +120,7 @@ const PromptForm: FC<{
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Contenido
+            Contenido <span className="text-red-500">*</span>
           </label>
           <textarea
             value={content}
@@ -88,6 +130,35 @@ const PromptForm: FC<{
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Etiquetas (presiona Enter para agregar)
+          </label>
+          <div className="mt-1 flex flex-wrap items-center gap-2 p-2 border border-gray-300 rounded-md">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-x-1.5 py-1.5 px-3 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
+              >
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="text-teal-600 hover:text-teal-800"
+                >
+                  <XMarkIcon className="h-3.5 w-3.5" />
+                </button>
+              </span>
+            ))}
+            <input
+              type="text"
+              value={currentTag}
+              onChange={(e) => setCurrentTag(e.target.value)}
+              onKeyDown={handleTagInput}
+              placeholder="Añadir etiqueta..."
+              className="flex-grow bg-transparent border-none focus:ring-0 text-sm"
+            />
+          </div>
+        </div>
       </div>
       <div className="flex justify-center pt-8">
         <button
@@ -96,6 +167,43 @@ const PromptForm: FC<{
         >
           Guardar
         </button>
+      </div>
+    </div>
+  );
+};
+
+// --- Nuevo Modal de Confirmación para Eliminar ---
+const DeleteConfirmationModal: FC<{
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ onConfirm, onCancel }) => {
+  return (
+    <div className="p-6 bg-white rounded-lg shadow-xl w-full max-w-sm">
+      <div className="flex flex-col items-center text-center">
+        <div className="bg-red-100 p-3 rounded-full">
+          <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+        </div>
+        <h3 className="mt-4 text-lg font-medium text-gray-900">
+          ¿Eliminar Prompt?
+        </h3>
+        <p className="mt-2 text-sm text-gray-500">
+          Esta acción no se puede deshacer. Toda la información asociada a este
+          prompt se perderá permanentemente.
+        </p>
+        <div className="mt-6 flex justify-center gap-4 w-full">
+          <button
+            onClick={onCancel}
+            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            className="w-full px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -124,6 +232,7 @@ export default function PromptsManager() {
           };
           setPrompts((prev) => [...prev, newPrompt]);
           hideModal();
+          toast.success("Prompt creado exitosamente.");
         }}
       />
     );
@@ -138,20 +247,28 @@ export default function PromptsManager() {
             prev.map((p) => (p.id === prompt.id ? { ...p, ...updatedData } : p))
           );
           hideModal();
+          toast.success("Prompt actualizado correctamente.");
         }}
       />
     );
   };
 
   const handleDeletePrompt = (id: string) => {
-    // Reemplazamos window.confirm por una lógica de modal si es necesario
-    if (confirm("¿Estás seguro de que quieres eliminar este prompt?")) {
-      setPrompts((prev) => prev.filter((p) => p.id !== id));
-    }
+    showModal(
+      <DeleteConfirmationModal
+        onCancel={hideModal}
+        onConfirm={() => {
+          setPrompts((prev) => prev.filter((p) => p.id !== id));
+          hideModal();
+          toast.success("Prompt eliminado.");
+        }}
+      />
+    );
   };
 
   return (
     <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
+      <Toaster richColors position="bottom-right" />
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900">
@@ -179,7 +296,17 @@ export default function PromptsManager() {
                   <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full mb-3">
                     {prompt.type}
                   </span>
-                  <p className="text-gray-600 text-sm">{prompt.content}</p>
+                  <p className="text-gray-600 text-sm mb-4">{prompt.content}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {prompt.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-block bg-teal-100 text-teal-800 text-xs font-medium px-2 py-1 rounded-md"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-200">
                   <div className="flex items-center space-x-4">
