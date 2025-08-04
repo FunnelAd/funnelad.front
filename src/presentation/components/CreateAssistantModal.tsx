@@ -4,6 +4,14 @@ import { useModal } from "@/core/hooks/useModal";
 import { CreateAssistantData } from "@/core/types/assistant";
 import toast from "react-hot-toast";
 import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { FaWhatsapp, FaInstagram, FaGlobe, FaFacebookMessenger, FaEnvelope, FaPhone, FaTelegram } from 'react-icons/fa';
+import { IVoice } from "@/core/types/voices";
+import VoiceDropdown from "./VoiceDropdown ";
+import { ItelegramAccount } from "@/core/types/telegram";
+import { IMetaAccount } from "@/core/types/meta";
+import { integrationService } from "@/core/services/integrationService";
+import { Integration } from "@/core/types/integration";
+
 
 const STEPS = [
   { id: 1, label: 'general' },
@@ -11,44 +19,67 @@ const STEPS = [
   { id: 3, label: 'prompt' },
   { id: 4, label: 'configuration' },
   { id: 5, label: 'voice' },
+  { id: 6, label: 'integraciones' },
+  // { id: 7, label: 'telegram' },
+  // { id: 8, label: 'email' },
 ];
 
 // Añadimos atributos para autocompletar campos
 const AGENTS = [
   {
     id: 'sales',
-    title: 'Agente Ventas',
-    description: 'Impulsa tus ventas con respuestas persuasivas y personalizadas.',
-    promptTemplate: 'Eres un agente de ventas enfocado en cerrar tratos con lenguaje persuasivo.',
+    title: 'Sales Agent',
+    description: 'Boost your sales with persuasive and personalized responses.',
+    promptTemplate: 'You are a sales agent focused on closing deals using persuasive language.',
     communicationStyle: 'formal',
     emojiUsage: 'low',
     creativity: 70,
-    behavior: 'Prioriza destacar beneficios del producto y llamar a la acción.',
+    behavior: 'Prioritize highlighting product benefits and calling to action.',
   },
   {
     id: 'support',
-    title: 'Soporte',
-    description: 'Responde consultas técnicas y soporte al cliente de forma clara.',
-    promptTemplate: 'Eres un agente de soporte técnico que explica pasos y soluciona problemas.',
+    title: 'Support',
+    description: 'Answer technical and customer support queries clearly.',
+    promptTemplate: 'You are a technical support agent who explains steps and solves problems.',
     communicationStyle: 'formal',
     emojiUsage: 'none',
     creativity: 40,
-    behavior: 'Explica soluciones paso a paso con paciencia.',
+    behavior: 'Explain solutions step-by-step with patience.',
   },
   {
     id: 'customer',
-    title: 'Atención al Cliente',
-    description: 'Atiende clientes con un tono amigable y empático.',
-    promptTemplate: 'Eres un agente de atención al cliente que escucha y empatiza.',
+    title: 'Customer Service',
+    description: 'Assist customers with a friendly and empathetic tone.',
+    promptTemplate: 'You are a customer service agent who listens and empathizes.',
     communicationStyle: 'friendly',
     emojiUsage: 'moderate',
     creativity: 50,
-    behavior: 'Responde con empatía y resolviendo dudas rápidamente.',
+    behavior: 'Respond with empathy and resolve questions quickly.',
+  },
+  {
+    id: 'repair',
+    title: 'Customer Service',
+    description: 'Assist customers with a friendly and empathetic tone.',
+    promptTemplate: 'You are a customer service agent who listens and empathizes.',
+    communicationStyle: 'friendly',
+    emojiUsage: 'moderate',
+    creativity: 50,
+    behavior: 'Respond with empathy and resolve questions quickly.',
+  },
+  {
+    id: 'customeer',
+    title: 'Customer Service',
+    description: 'Assist customers with a friendly and empathetic tone.',
+    promptTemplate: 'You are a customer service agent who listens and empathizes.',
+    communicationStyle: 'friendly',
+    emojiUsage: 'moderate',
+    creativity: 50,
+    behavior: 'Respond with empathy and resolve questions quickly.',
   },
   {
     id: 'custom',
-    title: 'Personalizado',
-    description: 'Define tu propio prompt para casos especiales.',
+    title: 'Custom',
+    description: 'Define your own prompt for special cases.',
     promptTemplate: '',
     communicationStyle: '',
     emojiUsage: '',
@@ -56,6 +87,57 @@ const AGENTS = [
     behavior: '',
   }
 ];
+
+const SAMPLE_VOICES: IVoice[] = [
+  {
+    id: 'carlos-openai',
+    name: 'Carlos',
+    gender: 'male',
+    language: 'Spanish (Spain)',
+    provider: 'openai',
+    sample_url: 'https://example.com/carlos-sample.mp3'
+  },
+  {
+    id: 'sofia-elevenlabs',
+    name: 'Sofia',
+    gender: 'female',
+    language: 'Spanish (Mexico)',
+    provider: 'elevenlabs',
+    sample_url: 'https://example.com/sofia-sample.mp3'
+  },
+  {
+    id: 'maria-azure',
+    name: 'María',
+    gender: 'female',
+    language: 'Spanish (Argentina)',
+    provider: 'azure',
+    sample_url: 'https://example.com/maria-sample.mp3'
+  },
+  {
+    id: 'diego-google',
+    name: 'Diego',
+    gender: 'male',
+    language: 'Spanish (Colombia)',
+    provider: 'google',
+    sample_url: 'https://example.com/diego-sample.mp3'
+  },
+  {
+    id: 'ana-aws',
+    name: 'Ana',
+    gender: 'female',
+    language: 'Spanish (Peru)',
+    provider: 'aws',
+    sample_url: 'https://example.com/ana-sample.mp3'
+  },
+  {
+    id: 'alex-openai',
+    name: 'Alex',
+    gender: 'unknown',
+    language: 'Spanish (Chile)',
+    provider: 'openai'
+  }
+];
+
 
 export default function CreateAssistantModalModern({
   onSave,
@@ -70,11 +152,10 @@ export default function CreateAssistantModalModern({
   const { hideModal } = useModal();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<CreateAssistantData>({
-    _id: "",
     name: "",
     prompt: "",
     description: "",
-    responseTime: 30,
+    responseTime: 15,
     isActive: true,
     responseType: 80,
     useEmojis: false,
@@ -82,7 +163,7 @@ export default function CreateAssistantModalModern({
     voiceResponse: false,
     audioVoice: "",
     audioCount: 0,
-    channels: ["whatsapp"],
+    channels: [],
     communicationStyle: "formal",
     emojiUsage: "moderate",
     creativity: 50,
@@ -116,10 +197,54 @@ export default function CreateAssistantModalModern({
     agentType: "sales",
     agentPrompt: AGENTS.find(a => a.id === 'sales')!.promptTemplate,
     behaviorDescription: AGENTS.find(a => a.id === 'sales')!.behavior,
+    selectedVoice: null as IVoice | null,
+    metaAccount: '',
+    telegramBot: '',
+    emailNotifications: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Estados para las listas
+  const [metaAccounts, setMetaAccounts] = useState<Integration[]>([]);
+  const [telegramBots, setTelegramBots] = useState<Integration[]>([]);
+  useEffect(() => {
+    // Si hay assistant y estamos editando, actualiza el formulario
+    if (assistant && isEditing) setForm((prev) => ({ ...prev, ...assistant }));
+    fetchIntegrations();
+  }, [assistant, isEditing]);
 
 
+
+  // Función corregida para fetchIntegrations
+  async function fetchIntegrations() {
+    try {
+      // Reemplaza esta URL por la de tu backend
+      const data = await integrationService.getAllIntegrations("685f5b9ad9a068c851b44116");
+      // console.log("Integrations data:", data);
+
+      // Filtra y asigna las cuentas según el tipo
+      if (Array.isArray(data)) {
+        const filteredMeta = data.filter((acc: any) => acc.provider === 'Meta');
+        const filteredTelegram = data.filter((acc: any) => acc.provider === 'Telegram');
+
+        // Log de los datos filtrados ANTES de setear el estado
+        console.log("Filtered Meta accounts Fetch:", filteredMeta);
+        console.log("Filtered Telegram bots Fetch:", filteredTelegram);
+
+        setMetaAccounts(filteredMeta);
+        setTelegramBots(filteredTelegram);
+      } else {
+        console.warn("Data is not an array:", data);
+        setMetaAccounts([]);
+        setTelegramBots([]);
+      }
+    } catch (err) {
+      console.error("Error loading integrations:", err);
+      toast.error('Error loading integrations');
+      // Resetea los estados en caso de error
+      setMetaAccounts([]);
+      setTelegramBots([]);
+    }
+  }
   // Al cambiar agente, autocompletamos
   const selectAgent = (agentId: string) => {
     const agent = AGENTS.find(a => a.id === agentId)!;
@@ -138,9 +263,6 @@ export default function CreateAssistantModalModern({
 
 
 
-  useEffect(() => {
-    if (assistant && isEditing) setForm((prev) => ({ ...prev, ...assistant }));
-  }, [assistant, isEditing]);
 
   const handleChange = (field: keyof CreateAssistantData, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -149,14 +271,13 @@ export default function CreateAssistantModalModern({
   const validateStep = () => {
     const newErrors: Record<string, string> = {};
     if (step === 1) {
-      if (!form.name.trim()) newErrors.name = t("El nombre es obligatorio");
-      if (!form.model) newErrors.model = t("Selecciona un modelo");
+      if (!form.name.trim()) newErrors.name = t("The name is required.");
     }
     if (step === 3 && !form.agentType) {
-      newErrors.agentType = t("Selecciona un agente");
+      newErrors.agentType = t("Select an agent");
     }
     if (step === 3 && form.agentType === 'custom' && !form.agentPrompt.trim()) {
-      newErrors.agentPrompt = t("Escribe un prompt personalizado");
+      newErrors.agentPrompt = t("Write a custom prompt");
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -164,7 +285,16 @@ export default function CreateAssistantModalModern({
   const next = () => {
     if (step < STEPS.length) {
       if (!validateStep()) return;
-      setStep((prev) => prev + 1);
+      if (form.agentType === 'custom' && step === 3) {
+        setStep((prev) => prev + 1);
+      }
+      else if (form.agentType !== 'custom' && step === 3) {
+        // setStep((prev) => prev * 0 + STEPS.length);
+        setStep((prev) => prev * 0 + 5);
+      }
+      else {
+        setStep((prev) => prev + 1);
+      }
     } else {
       handleSubmit();
     }
@@ -174,7 +304,7 @@ export default function CreateAssistantModalModern({
 
   const handleSubmit = () => {
     if (!form.name.trim()) {
-      toast.error(t("El nombre es obligatorio"));
+      toast.error(t("The name is required."));
       return;
     }
     onSave(form);
@@ -188,7 +318,7 @@ export default function CreateAssistantModalModern({
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-50">
-            {isEditing ? t("edit_assistant") : t("new_assistant")}
+            {isEditing ? t("edit_assistant") : "new_assistant"}
           </h2>
           <button
             onClick={hideModal}
@@ -211,7 +341,7 @@ export default function CreateAssistantModalModern({
                       : 'bg-gray-700 text-gray-400'
                   }`}
               >
-                {s.id < step ? <Check size={16} /> : s.id}
+                {s.id < step ? <Check size={8} /> : s.id}
               </div>
               {s.id < STEPS.length && (
                 <div
@@ -230,11 +360,11 @@ export default function CreateAssistantModalModern({
               {/* Name */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-white">
-                  {t("assistant_name")} *
+                  {("assistant_name")} *
                 </label>
                 <input
                   type="text"
-                  placeholder={t("Ej: Asistente de Ventas") as string}
+                  placeholder={t("Ej: Sales Assistant") as string}
                   value={form.name}
                   onChange={e => handleChange('name', e.target.value)}
                   className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
@@ -242,32 +372,14 @@ export default function CreateAssistantModalModern({
                 {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
 
-              {/* Model */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-white">
-                  {t("modelo_ia")} *
-                </label>
-                <select
-                  value={form.model}
-                  onChange={e => handleChange('model', e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
-                >
-                  <option value="">{t("Selecciona modelo")}</option>
-                  <option value="gpt-4">GPT-4 (Recomendado)</option>
-                  <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                  <option value="claude">Claude</option>
-                </select>
-                {errors.model && <p className="mt-1 text-sm text-red-500">{errors.model}</p>}
-              </div>
-
               {/* Welcome */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-white">
-                  {t("welcome_message")} *
+                  {("welcome_message")} *
                 </label>
                 <input
                   type="text"
-                  placeholder={t("¡Hola! ¿En qué puedo ayudarte hoy?") as string}
+                  placeholder={t("Hello! How can I help you today?") as string}
                   value={form.welcomeMessage}
                   onChange={e => handleChange('welcomeMessage', e.target.value)}
                   className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
@@ -282,7 +394,7 @@ export default function CreateAssistantModalModern({
                 </label>
                 <input
                   type="text"
-                  placeholder={t("Descricion del agente...") as string}
+                  placeholder={t("Agent description...") as string}
                   value={form.description}
                   onChange={e => handleChange('description', e.target.value)}
                   className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
@@ -294,11 +406,11 @@ export default function CreateAssistantModalModern({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block mb-1 text-sm font-medium text-white">
-                    {t("response_time")} (s)
+                    {("response_time")} (s) - (min: 15s, max: 120s)
                   </label>
                   <input
                     type="number"
-                    min={10}
+                    min={15}
                     max={120}
                     value={form.responseTime}
                     onChange={e => handleChange('responseTime', Number(e.target.value))}
@@ -307,10 +419,10 @@ export default function CreateAssistantModalModern({
                 </div>
                 <div>
                   <label className="block mb-1 text-sm font-medium text-white">
-                    {t("status")}
+                    {("status")}
                   </label>
                   <div className="flex items-center space-x-3">
-                    <span className="text-gray-400">{t("inactive")}</span>
+                    <span className="text-gray-400">{("inactive")}</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -321,7 +433,7 @@ export default function CreateAssistantModalModern({
                       <div className="w-11 h-6 bg-gray-700 peer-checked:bg-green-500 rounded-full transition-colors"></div>
                       <div className="absolute left-0.5 top-0.5 w-5 h–5 bg-white peer-checked:translate-x-5 rounded-full transition-transform" />
                     </label>
-                    <span className="text-gray-400">{t("active")}</span>
+                    <span className="text-gray-400">{("active")}</span>
                   </div>
                 </div>
               </div>
@@ -332,7 +444,7 @@ export default function CreateAssistantModalModern({
           {step === 2 && (
             <div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {['whatsapp', 'instagram', 'webchat', 'messenger', 'email', 'phone'].map(ch => (
+                {['whatsapp', 'telegram'].map(ch => (
                   <label key={ch} className="cursor-pointer">
                     <input
                       type="checkbox"
@@ -348,9 +460,21 @@ export default function CreateAssistantModalModern({
                       className="sr-only peer"
                     />
                     <div className="p-4 border-2 rounded-lg flex flex-col items-center space-y-2 peer-checked:border-yellow-400 peer-checked:bg-gray-800 transition-all">
-                      <span className="text-2xl">{ch === 'whatsapp' ? '💬' : ch === 'instagram' ? '📷' : ch === 'webchat' ? '🌐' : ch === 'messenger' ? '📘' : ch === 'email' ? '📧' : '📞'}</span>
+                      <span className="text-2xl text-white">
+                        {
+                          ch === 'whatsapp' ? <FaWhatsapp /> :
+                            ch === 'instagram' ? <FaInstagram /> :
+                              ch === 'webchat' ? <FaGlobe /> :
+                                ch === 'messenger' ? <FaFacebookMessenger /> :
+                                  ch === 'email' ? <FaEnvelope /> :
+                                    ch === 'telegram' ? <FaTelegram /> :
+
+                                      <FaPhone />
+                        }
+                      </span>
                       <span className="capitalize text-white font-medium">{t(ch)}</span>
                     </div>
+
                   </label>
                 ))}
               </div>
@@ -359,7 +483,7 @@ export default function CreateAssistantModalModern({
 
           {step === 3 && (
             <div className="space-y-4">
-              <label className="block text-sm font-medium text-white mb-2">{t("Selecciona un agente")} *</label>
+              <label className="block text-sm font-medium text-white mb-2">{t("Select an agent")} *</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {AGENTS.map(agent => (
                   <label key={agent.id} className="cursor-pointer">
@@ -381,7 +505,7 @@ export default function CreateAssistantModalModern({
                       </div>
                       {form.agentType === agent.id && agent.id === 'custom' && (
                         <textarea
-                          placeholder={t("Escribe el prompt personalizado aquí...") as string}
+                          placeholder={t("Enter your custom prompt here...") as string}
                           value={form.agentPrompt}
                           onChange={e => handleChange('agentPrompt', e.target.value)}
                           className="w-full mt-2 p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
@@ -396,7 +520,7 @@ export default function CreateAssistantModalModern({
               {errors.agentPrompt && <p className="mt-1 text-sm text-red-500">{errors.agentPrompt}</p>}
             </div>
           )}
-          {/* Step 3 - Configuration */}
+          {/* Step 4 - Configuration */}
           {step === 4 && (
             <div className="space-y-6">
               <label className="block text-sm font-medium text-white mb-2">
@@ -451,7 +575,7 @@ export default function CreateAssistantModalModern({
             </div>
           )}
 
-          {/* Step 4 - Voice */}
+          {/* Step 5 - Voice */}
           {step === 5 && (
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
@@ -470,41 +594,176 @@ export default function CreateAssistantModalModern({
 
               {form.voiceResponse && (
                 <>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    {t("select_voice")} *
-                  </label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {['carlos', 'sofia', 'maria'].map(v => (
-                      <label key={v} className="cursor-pointer">
-                        <input type="radio" name="voiceSelection" value={v} className="sr-only peer"
-                          checked={form.voiceSelection === v}
-                          onChange={() => handleChange('voiceSelection', v)}
-                        />
-                        <div className="p-4 border-2 rounded-lg text-center peer-checked:border-yellow-400 peer-checked:bg-gray-800 transition-all">
-                          <span className="capitalize text-white font-medium">{t(v)}</span>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                  {errors.voiceSelection && <p className="mt-1 text-sm text-red-500">{errors.voiceSelection}</p>}
-
                   <div>
+                    <label className="block text-sm font-medium text-white mb-3">
+                      {t("select_voice")} *
+                    </label>
+                    <VoiceDropdown
+                      voices={SAMPLE_VOICES}
+                      selectedVoice={form.selectedVoice}
+                      onSelect={(voice) => {
+                        handleChange('selectedVoice', voice);
+                        // También puedes mantener compatibilidad con el campo anterior
+                        handleChange('voiceSelection', voice.name.toLowerCase());
+                      }}
+                      placeholder="Select a voice for your assistant"
+                      className="mb-4"
+                    />
+                    {errors.voiceSelection && (
+                      <p className="mt-1 text-sm text-red-500">{errors.voiceSelection}</p>
+                    )}
+                  </div>
+
+                  {/* <div>
                     <label className="block mb-1 text-sm font-medium text-white">
                       {t("voice_tone")} ({form.voiceTemperature}%)
                     </label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={form.voiceTemperature}
-                      onChange={e => handleChange('voiceTemperature', Number(e.target.value))}
-                      className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                    />
-                  </div>
+                    <div className="px-3 py-2 bg-gray-800 rounded-lg border border-gray-600">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={form.voiceTemperature}
+                        onChange={e => handleChange('voiceTemperature', Number(e.target.value))}
+                        className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                      />
+                      <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>Monotono</span>
+                        <span>Natural</span>
+                        <span>Expresivo</span>
+                      </div>
+                    </div>
+                  </div> */}
+
+                  {/* Información adicional de la voz seleccionada */}
+                  {form.selectedVoice && (
+                    <div className="p-4 bg-gray-800 rounded-lg border border-gray-600">
+                      <h4 className="text-sm font-medium text-white mb-2">Voice information</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Name:</span>
+                          <span className="text-white">{form.selectedVoice.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Lenguaje:</span>
+                          <span className="text-white">{form.selectedVoice.language}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Provider:</span>
+                          <span className="text-white capitalize">{form.selectedVoice.provider}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Gender:</span>
+                          <span className="text-white capitalize">{form.selectedVoice.gender}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
+
             </div>
           )}
+
+          {/* Step 6 - Whatsapp Meta */}
+
+          {step === 6 && (
+
+            <div className="space-y-6">
+
+              {/* Integración con Meta */}
+              {Array.isArray(form.channels) && form.channels.includes("whatsapp") && (
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-white">
+                    {t("meta_account")} *
+                  </label>
+                  {metaAccounts && metaAccounts.length > 0 ? (
+                    <select
+                      value={form.metaAccount}
+                      onChange={e => handleChange('metaAccount', e.target.value)}
+                      className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{t("Select Meta account")}</option>
+                      {metaAccounts.map((account) => (
+                        <option key={account._id} value={account._id}>
+                          {account.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-400">{t("There are no Meta accounts registered.")}</p>
+                      <button
+                        type="button"
+                        onClick={() => window.open('/integrations', '_blank')}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors"
+                      >
+                        {t("Connect Meta account")}
+                      </button>
+                    </div>
+                  )}
+                  {errors.metaAccount && <p className="mt-1 text-sm text-red-500">{errors.metaAccount}</p>}
+                </div>
+              )}
+              {/* Integración con Telegram */}
+
+              {Array.isArray(form.channels) && form.channels.includes("telegram") && (
+
+                <div>
+                  <label className="block mb-1 text-sm font-medium text-white">
+                    {t("telegram_bot")} *
+                  </label>
+                  {telegramBots && telegramBots.length > 0 ? (
+                    <select
+                      value={form.telegramBot}
+                      onChange={e => handleChange('telegramBot', e.target.value)}
+                      className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                    >
+                      <option value="">{t("Select Telegram bot")}</option>
+                      {telegramBots.map((bot) => (
+                        <option key={bot._id} value={bot._id}>
+                          {bot.name} -
+                          {/* @{bot.username} */}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-400">{t("There are no registered Telegram bots.")}</p>
+                      <button
+                        type="button"
+                        onClick={() => window.open('/integrations/telegram/create', '_blank')}
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors"
+                      >
+                        {t("Create Telegram bot")}
+                      </button>
+                    </div>
+                  )}
+                  {errors.telegramBot && <p className="mt-1 text-sm text-red-500">{errors.telegramBot}</p>}
+                </div>
+              )}
+
+              {/* Correo Electrónico */}
+              <div>
+                <label className="block mb-1 text-sm font-medium text-white">
+                  {t("email_notifications")}
+                </label>
+                <input
+                  type="email"
+                  placeholder={t("correo@ejemplo.com") as string}
+                  value={form.emailNotifications}
+                  onChange={e => handleChange('emailNotifications', e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                />
+                <p className="mt-1 text-xs text-gray-400">{t("Optional: Receive email notifications")}</p>
+                {errors.emailNotifications && <p className="mt-1 text-sm text-red-500">{errors.emailNotifications}</p>}
+              </div>
+            </div>
+
+
+
+          )}
+
 
         </div>
 

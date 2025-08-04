@@ -23,10 +23,9 @@ export interface connectTelegramWebhookResponse {
     error_code?: number
 }
 
-export interface ItelegramAccount {
+export interface IMetaAccount {
     id: string;
     name: string;
     tokenTelegram: string;
-    username: string;
 
 }

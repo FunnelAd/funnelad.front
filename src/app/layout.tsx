@@ -2,6 +2,7 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
+import Script from 'next/script';
 import Sidebar from "@/presentation/layouts/Sidebar";
 import { AuthProvider } from "@/core/contexts/AuthContext";
 import { AppConfigProvider } from "@/core/contexts/AppConfigContext";
@@ -27,6 +28,15 @@ function RootLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       <div className="flex h-screen">
+        <head>
+        <Script
+          src="https://connect.facebook.net/en_US/sdk.js"
+          strategy="afterInteractive"
+          onLoad={() => console.log('Facebook SDK cargado — window.FB disponible')}
+          crossOrigin="anonymous"
+        />
+      </head>
+        
         <Sidebar /* onExpandChange={setIsSidebarExpanded} */ />{" "}
         {/* Prop no utilizada actualmente para ajustar el padding del main */}
         <main

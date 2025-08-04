@@ -1,3 +1,5 @@
+import { IVoice } from "./voices";
+
 export interface IAssistant {
   _id: string;
   name: string;
@@ -51,11 +53,16 @@ export interface IAssistant {
   voiceTemperature: number;
   callDirection: string;
   welcomeMessage: string;
-  behaviorDescription: string
+  behaviorDescription: string;
+  selectedVoice: IVoice | null;
+  metaAccount:string,
+  telegramBot: string,
+  emailNotifications: string,
 }
 
 export type CreateAssistantData = Omit<
   IAssistant,
+  | "_id"
   | "createdAt"
   | "updatedAt"
   | "updatedBy"
