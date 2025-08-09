@@ -24,7 +24,7 @@ export function initFacebookSdk(): Promise<any> {
         appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "1355829762191593", 
         autoLogAppEvents: true,
         xfbml: true,
-        version: process.env.NEXT_PUBLIC_FACEBOOK_SDK_VERSION || "v19.0",
+        version: process.env.NEXT_PUBLIC_FACEBOOK_SDK_VERSION || "v23.0",
       });
       resolve(window.FB);
     };
