@@ -6,6 +6,7 @@ import { useAuth } from "@/core/contexts/AuthContext";
 import { UserRole, ClientSubRole } from "@/core/types/auth";
 import { useRouter } from "next/navigation";
 import { authService } from "@/core/services/authService";
+import Link from "next/link";
 
 type AuthMode = "login" | "register";
 

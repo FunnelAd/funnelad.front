@@ -39,12 +39,6 @@ export default function AssistantsPage() {
       <CreateAssistantModal onSave={handleSaveAssistant} isEditing={false} />
     );
   };
-
-  // const handleEditAssistant = (assistant: Assistant) => {
-  //   setEditingAssistant(assistant);
-  //   setIsCreateModalOpen(true);
-  // };
-
   const handleEditAssistant = (assistant: IAssistant) => {
     showModal(
       <CreateAssistantModal
@@ -157,7 +151,7 @@ export default function AssistantsPage() {
                         <PencilIcon className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => handleDeleteAssistant(assistant._id)}
+                        onClick={() => handleDeleteAssistant(assistant._id || "")}
                         className="text-gray-400 hover:text-red-500"
                       >
                         <TrashIcon className="h-5 w-5" />
@@ -205,17 +199,6 @@ export default function AssistantsPage() {
           </ul>
         </div>
       )}
-
-      {/* <CreateAssistantModal
-          isOpen={isCreateModalOpen}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setEditingAssistant(undefined);
-          }}
-          onSave={handleSaveAssistant}
-          assistant={editingAssistant}
-          isEditing={!!editingAssistant}
-        /> */}
     </div>
   );
 }

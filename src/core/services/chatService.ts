@@ -21,17 +21,17 @@ export const chatService = {
   async getConversations(): Promise<Conversation[]> {
     const response = await api.get("api/conversations");
     console.log("Conversations:", response);
-    return response.data;
+    return response.data as Conversation[];
   },
 
   async getConversation(id: string): Promise<Conversation> {
     const response = await api.get(`api/conversations/${id}`);
-    return response.data;
+    return response.data as Conversation;
   },
 
   async createConversation(participants: string[]): Promise<Conversation> {
     const response = await api.post("api/conversations", { participants });
-    return response.data;
+    return response.data as Conversation;
   },
 
   async sendMessage(conversationId: string, content: string): Promise<Message> {

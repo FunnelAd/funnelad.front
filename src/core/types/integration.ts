@@ -1,4 +1,4 @@
-export type IntegrationType = "Meta" | "Telegram" | "Email";
+export type IntegrationType = "WABA" | "Telegram" | "Email";
 
 export interface Integration {
   _id: string;
@@ -10,7 +10,7 @@ export interface Integration {
   lastSync: string;
   config: {
     apiKey?: string;
-    webhookUrl?: string;
+    urlBotTelegram?: string;
     botToken?: string;
     smtpServer?: string;
     email?: string;

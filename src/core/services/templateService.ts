@@ -37,13 +37,13 @@ export const templateService = {
     return response.data as Template;
   },
 
-  async createTemplateWhatsapp(
-    data: WhatsAppTemplate
-  ): Promise<WhatsAppTemplate> {
-    const response = await api.post("api/templates", data);
-    console.log("Create Template:", response);
-    return response.data as WhatsAppTemplate;
-  },
+  // async createTemplateWhatsapp(
+  //   data: WhatsAppTemplate
+  // ): Promise<WhatsAppTemplate> {
+  //   const response = await api.post("api/templates", data);
+  //   console.log("Create Template:", response);
+  //   return response.data as WhatsAppTemplate;
+  // },
 
   async updateTemplate(id: string, data: TemplateFormData): Promise<Template> {
     const response = await api.put(`api/templates/${id}`, data);

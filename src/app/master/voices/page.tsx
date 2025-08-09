@@ -13,7 +13,7 @@ const mockVoices: IVoice[] = [
     gender: "female",
     provider: "Google",
     language: "en-US",
-    status: "Active",
+    status: "active",
   },
   {
     id: "2",
@@ -21,7 +21,7 @@ const mockVoices: IVoice[] = [
     gender: "male",
     provider: "ElevenLabs",
     language: "en-UK",
-    status: "Pending",
+    status: "active",
   },
   {
     id: "3",
@@ -29,20 +29,20 @@ const mockVoices: IVoice[] = [
     gender: "female",
     provider: "Google",
     language: "es-ES",
-    status: "Inactive",
+    status: "active",
   },
 ];
 
 // --- Componente para la Insignia de Estado ---
-const StatusBadge: FC<{ status: "Active" | "Pending" | "Inactive" }> = ({
+const StatusBadge: FC<{ status: "active"  | "inactive" }> = ({
   status,
 }) => {
   const baseClasses =
     "px-2 inline-flex text-xs leading-5 font-semibold rounded-full";
   const statusClasses = {
-    Active: "bg-green-100 text-green-800",
-    Pending: "bg-yellow-100 text-yellow-800",
-    Inactive: "bg-red-100 text-red-800",
+    active: "bg-green-100 text-green-800",
+    // Pending: "bg-yellow-100 text-yellow-800",
+    inactive: "bg-red-100 text-red-800",
   };
 
   return (

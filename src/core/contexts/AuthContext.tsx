@@ -63,14 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (data: RegisterData) => {
-    try {
-      const response = await authService.register(data);
-      TokenService.setAuthData(response);
-      setUser(response.user);
-      router.push("/dashboard");
-    } catch {
-      throw new Error("Error en el registro");
-    }
+    // try {
+    //   const response = await authService.register(data);
+    //   TokenService.setAuthData(response);
+    //   setUser(response.user);
+    //   router.push("/dashboard");
+    // } catch {
+    //   throw new Error("Error en el registro");
+    // }
   };
 
   const logout = () => {

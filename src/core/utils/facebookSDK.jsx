@@ -7,7 +7,7 @@ export function initFacebookSdk({ version = 'v16.0' } = {}) {
     }
     window.fbAsyncInit = function () {
       window.FB.init({
-        appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+        appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "1355829762191593",
         cookie: true,
         xfbml: true,
         version,

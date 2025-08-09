@@ -19,6 +19,7 @@ export type Permission =
 
 export interface User {
   id: string;
+  auth0Id: string;
   name: string;
   email: string;
   role: UserRole;

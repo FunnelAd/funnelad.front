@@ -47,7 +47,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages: propMessages, curre
       ) : (
         messages.map((message, index) => (
           <div
-            key={message.sessionid || index}
+            key={message.id || index}
             className={`mb-4 flex ${
               message.sender === currentUser ? 'justify-end' : 'justify-start'
             }`}

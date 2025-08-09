@@ -7,11 +7,9 @@ import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaGlobe, FaFacebookMessenger, FaEnvelope, FaPhone, FaTelegram } from 'react-icons/fa';
 import { IVoice } from "@/core/types/voices";
 import VoiceDropdown from "./VoiceDropdown ";
-import { ItelegramAccount } from "@/core/types/telegram";
-import { IMetaAccount } from "@/core/types/meta";
 import { integrationService } from "@/core/services/integrationService";
 import { Integration } from "@/core/types/integration";
-
+import { Plus } from 'lucide-react';
 
 const STEPS = [
   { id: 1, label: 'general' },
@@ -95,7 +93,8 @@ const SAMPLE_VOICES: IVoice[] = [
     gender: 'male',
     language: 'Spanish (Spain)',
     provider: 'openai',
-    sample_url: 'https://example.com/carlos-sample.mp3'
+    sample_url: 'https://example.com/carlos-sample.mp3',
+    status: 'active'
   },
   {
     id: 'sofia-elevenlabs',
@@ -103,7 +102,9 @@ const SAMPLE_VOICES: IVoice[] = [
     gender: 'female',
     language: 'Spanish (Mexico)',
     provider: 'elevenlabs',
-    sample_url: 'https://example.com/sofia-sample.mp3'
+    sample_url: 'https://example.com/sofia-sample.mp3',
+    status: 'active'
+
   },
   {
     id: 'maria-azure',
@@ -111,7 +112,9 @@ const SAMPLE_VOICES: IVoice[] = [
     gender: 'female',
     language: 'Spanish (Argentina)',
     provider: 'azure',
-    sample_url: 'https://example.com/maria-sample.mp3'
+    sample_url: 'https://example.com/maria-sample.mp3',
+    status: 'active'
+
   },
   {
     id: 'diego-google',
@@ -119,7 +122,9 @@ const SAMPLE_VOICES: IVoice[] = [
     gender: 'male',
     language: 'Spanish (Colombia)',
     provider: 'google',
-    sample_url: 'https://example.com/diego-sample.mp3'
+    sample_url: 'https://example.com/diego-sample.mp3',
+    status: 'active'
+
   },
   {
     id: 'ana-aws',
@@ -127,14 +132,18 @@ const SAMPLE_VOICES: IVoice[] = [
     gender: 'female',
     language: 'Spanish (Peru)',
     provider: 'aws',
-    sample_url: 'https://example.com/ana-sample.mp3'
+    sample_url: 'https://example.com/ana-sample.mp3',
+    status: 'active'
+
   },
   {
     id: 'alex-openai',
     name: 'Alex',
     gender: 'unknown',
     language: 'Spanish (Chile)',
-    provider: 'openai'
+    provider: 'openai',
+    status: 'active',
+    sample_url: 'https://example.com/alex-sample.mp3',
   }
 ];
 
@@ -210,6 +219,7 @@ export default function CreateAssistantModalModern({
     // Si hay assistant y estamos editando, actualiza el formulario
     if (assistant && isEditing) setForm((prev) => ({ ...prev, ...assistant }));
     fetchIntegrations();
+    fetchPrompts();
   }, [assistant, isEditing]);
 
 
@@ -218,7 +228,38 @@ export default function CreateAssistantModalModern({
   async function fetchIntegrations() {
     try {
       // Reemplaza esta URL por la de tu backend
-      const data = await integrationService.getAllIntegrations("685f5b9ad9a068c851b44116");
+      const data = await integrationService.getAllIntegrations();
+      // console.log("Integrations data:", data);
+
+      // Filtra y asigna las cuentas según el tipo
+      if (Array.isArray(data)) {
+        const filteredMeta = data.filter((acc: any) => acc.provider === 'Meta');
+        const filteredTelegram = data.filter((acc: any) => acc.provider === 'Telegram');
+
+        // Log de los datos filtrados ANTES de setear el estado
+        console.log("Filtered Meta accounts Fetch:", filteredMeta);
+        console.log("Filtered Telegram bots Fetch:", filteredTelegram);
+
+        setMetaAccounts(filteredMeta);
+        setTelegramBots(filteredTelegram);
+      } else {
+        console.warn("Data is not an array:", data);
+        setMetaAccounts([]);
+        setTelegramBots([]);
+      }
+    } catch (err) {
+      console.error("Error loading integrations:", err);
+      toast.error('Error loading integrations');
+      // Resetea los estados en caso de error
+      setMetaAccounts([]);
+      setTelegramBots([]);
+    }
+  }
+
+  async function fetchPrompts() {
+    try {
+      // Reemplaza esta URL por la de tu backend
+      const data = await integrationService.getAllIntegrations();
       // console.log("Integrations data:", data);
 
       // Filtra y asigna las cuentas según el tipo
@@ -314,7 +355,7 @@ export default function CreateAssistantModalModern({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
       <div className="absolute inset-0 bg-black/60" onClick={hideModal} />
-      <div className="relative w-full max-w-3xl mx-auto p-8 bg-[#0f1a24] rounded-2xl shadow-xl">
+      <div className="relative w-full max-w-5xl mx-auto p-8 bg-[#0f1a24] rounded-2xl shadow-xl">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold text-gray-50">
@@ -354,13 +395,16 @@ export default function CreateAssistantModalModern({
         </div>
 
         {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto pr-4">
+        <div className="max-h-[50vh] overflow-y-auto pr-4">
           {step === 1 && (
             <div className="space-y-6">
+              <label className="block mb-1 text-lg font-medium text-white font-semibold ">{t("general_data")}</label>
+              <br />
               {/* Name */}
               <div>
+
                 <label className="block mb-1 text-sm font-medium text-white">
-                  {("assistant_name")} *
+                  {t("assistant_name")} *
                 </label>
                 <input
                   type="text"
@@ -375,7 +419,7 @@ export default function CreateAssistantModalModern({
               {/* Welcome */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-white">
-                  {("welcome_message")} *
+                  {t("welcome_message")} *
                 </label>
                 <input
                   type="text"
@@ -406,7 +450,7 @@ export default function CreateAssistantModalModern({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block mb-1 text-sm font-medium text-white">
-                    {("response_time")} (s) - (min: 15s, max: 120s)
+                    {t("response_time")} (s) - (min: 15s, max: 120s)
                   </label>
                   <input
                     type="number"
@@ -419,10 +463,10 @@ export default function CreateAssistantModalModern({
                 </div>
                 <div>
                   <label className="block mb-1 text-sm font-medium text-white">
-                    {("status")}
+                    {t("status")}
                   </label>
                   <div className="flex items-center space-x-3">
-                    <span className="text-gray-400">{("inactive")}</span>
+                    <span className="text-gray-400">{t("inactive")}</span>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -433,7 +477,7 @@ export default function CreateAssistantModalModern({
                       <div className="w-11 h-6 bg-gray-700 peer-checked:bg-green-500 rounded-full transition-colors"></div>
                       <div className="absolute left-0.5 top-0.5 w-5 h–5 bg-white peer-checked:translate-x-5 rounded-full transition-transform" />
                     </label>
-                    <span className="text-gray-400">{("active")}</span>
+                    <span className="text-gray-400">{t("active")}</span>
                   </div>
                 </div>
               </div>
@@ -443,6 +487,8 @@ export default function CreateAssistantModalModern({
 
           {step === 2 && (
             <div>
+              <label className="block mb-1 text-lg font-medium text-white font-semibold ">{t("channels")}</label>
+              <br />
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
                 {['whatsapp', 'telegram'].map(ch => (
                   <label key={ch} className="cursor-pointer">
@@ -483,6 +529,8 @@ export default function CreateAssistantModalModern({
 
           {step === 3 && (
             <div className="space-y-4">
+              <label className="block mb-1 text-lg font-medium text-white font-semibold ">{t("prompt")}</label>
+              <br />
               <label className="block text-sm font-medium text-white mb-2">{t("Select an agent")} *</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {AGENTS.map(agent => (
@@ -523,6 +571,10 @@ export default function CreateAssistantModalModern({
           {/* Step 4 - Configuration */}
           {step === 4 && (
             <div className="space-y-6">
+              <label className="block mb-1 text-lg font-medium text-white font-semibold ">{t("configuration_response")}</label>
+              <br />
+
+
               <label className="block text-sm font-medium text-white mb-2">
                 {t("communication_style")} *
               </label>
@@ -578,6 +630,10 @@ export default function CreateAssistantModalModern({
           {/* Step 5 - Voice */}
           {step === 5 && (
             <div className="space-y-6">
+
+              <label className="block mb-1 text-lg font-medium text-white font-semibold ">{t("configuration_voice")}</label>
+              <br />
+
               <div className="flex items-center space-x-3">
                 <label className="text-sm font-medium text-white">{t("voice_response")}</label>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -670,6 +726,8 @@ export default function CreateAssistantModalModern({
           {step === 6 && (
 
             <div className="space-y-6">
+              <label className="block mb-1 text-lg font-medium text-white font-semibold ">{t("integrations")}</label>
+              <br />
 
               {/* Integración con Meta */}
               {Array.isArray(form.channels) && form.channels.includes("whatsapp") && (
@@ -678,18 +736,34 @@ export default function CreateAssistantModalModern({
                     {t("meta_account")} *
                   </label>
                   {metaAccounts && metaAccounts.length > 0 ? (
-                    <select
-                      value={form.metaAccount}
-                      onChange={e => handleChange('metaAccount', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">{t("Select Meta account")}</option>
-                      {metaAccounts.map((account) => (
-                        <option key={account._id} value={account._id}>
-                          {account.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center space-x-2">
+
+
+                      <select
+
+                        value={form.metaAccount}
+                        onChange={e => handleChange('metaAccount', e.target.value)}
+                        className="w-100 px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="">{t("Select Meta account")}</option>
+                        {metaAccounts.map((account) => (
+                          <option key={account._id} value={account._id}>
+                            {account.name}
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => window.open('/integrations', '_blank')} // Define esta función según tu lógica
+                        className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg"
+                      >
+                       <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+
+
+
                   ) : (
                     <div className="space-y-2">
                       <p className="text-sm text-gray-400">{t("There are no Meta accounts registered.")}</p>
@@ -717,7 +791,7 @@ export default function CreateAssistantModalModern({
                     <select
                       value={form.telegramBot}
                       onChange={e => handleChange('telegramBot', e.target.value)}
-                      className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                      className="w-100 px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                     >
                       <option value="">{t("Select Telegram bot")}</option>
                       {telegramBots.map((bot) => (
@@ -737,6 +811,10 @@ export default function CreateAssistantModalModern({
                       >
                         {t("Create Telegram bot")}
                       </button>
+
+
+
+
                     </div>
                   )}
                   {errors.telegramBot && <p className="mt-1 text-sm text-red-500">{errors.telegramBot}</p>}
@@ -753,15 +831,12 @@ export default function CreateAssistantModalModern({
                   placeholder={t("correo@ejemplo.com") as string}
                   value={form.emailNotifications}
                   onChange={e => handleChange('emailNotifications', e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                  className="w-100 px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                 />
                 <p className="mt-1 text-xs text-gray-400">{t("Optional: Receive email notifications")}</p>
                 {errors.emailNotifications && <p className="mt-1 text-sm text-red-500">{errors.emailNotifications}</p>}
               </div>
             </div>
-
-
-
           )}
 
 

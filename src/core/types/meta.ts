@@ -16,7 +16,7 @@ export interface N8N {
 
 }
 
-export interface connectTelegramWebhookResponse {
+export interface connectMetaWebhookResponse {
     ok: boolean,
     result?: boolean
     description: string
