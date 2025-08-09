@@ -46,19 +46,18 @@ const StatusBadge: FC<{ status: Integration["status"] }> = ({ status }) => {
 
 
 // Componente Toggle Switch
-const ToggleSwitch: FC<{ enabled: boolean; onChange: (enabled: boolean) => void; label: string }> = ({ 
-  enabled, 
-  onChange, 
-  label 
+const ToggleSwitch: FC<{ enabled: boolean; onChange: (enabled: boolean) => void; label: string }> = ({
+  enabled,
+  onChange,
+  label
 }) => {
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm font-medium text-gray-700">{label}</span>
       <button
         type="button"
-        className={`${
-          enabled ? 'bg-blue-600' : 'bg-gray-200'
-        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+        className={`${enabled ? 'bg-blue-600' : 'bg-gray-200'
+          } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
         role="switch"
         aria-checked={enabled}
         onClick={() => onChange(!enabled)}
@@ -66,9 +65,8 @@ const ToggleSwitch: FC<{ enabled: boolean; onChange: (enabled: boolean) => void;
         <span className="sr-only">{label}</span>
         <span
           aria-hidden="true"
-          className={`${
-            enabled ? 'translate-x-5' : 'translate-x-0'
-          } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+          className={`${enabled ? 'translate-x-5' : 'translate-x-0'
+            } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
         />
       </button>
     </div>
@@ -116,11 +114,11 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
     window.FB.login((response: any) => {
       if (response.authResponse) {
         console.log("Facebook login successful!", response);
-        
+
         // Obtener información adicional del usuario/página
         window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
           console.log("User info:", userInfo);
-          
+
           // Auto-llenar los campos con la información de Facebook
           setFormData(prev => ({
             ...prev,
@@ -131,16 +129,16 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
               // Puedes agregar más campos según lo que devuelva la API
             }
           }));
-          
+
           toast.success("Facebook authentication successful");
         });
       } else {
         console.log("User cancelled login or didn't authorize the app.");
         toast.error("Facebook authentication cancelled");
       }
-    }, { 
+    }, {
       scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
-      return_scopes: true 
+      return_scopes: true
     });
   };
 
@@ -234,8 +232,8 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 label="Use Facebook Login"
               />
               <p className="text-xs text-gray-500 mt-2">
-                {useFacebookLogin 
-                  ? "Authenticate with Facebook to automatically fill the required fields" 
+                {useFacebookLogin
+                  ? "Authenticate with Facebook to automatically fill the required fields"
                   : "Manually enter your Facebook app credentials"}
               </p>
             </div>
@@ -754,9 +752,9 @@ export default function IntegrationsManager() {
 
   useEffect(() => {
     initFacebookSdk()
-      .then(FB => {
-        setFb(FB);
-        FB.getLoginStatus((res: any) => console.log('Estado login:', res));
+      .then((FB) => {
+        console.log("FB SDK listo", FB);
+        FB.getLoginStatus((res: any) => console.log("Estado login:", res));
       })
       .catch(console.error);
     loadInitData();
