@@ -150,6 +150,22 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
       case "WABA":
         return (
           <>
+
+            <button
+              onClick={() => {
+                window.FB.login((response:any) => {
+                  if (response.authResponse) {
+                    console.log("Bienvenido!", response);
+                    // Aquí puedes enviar el token a tu backend
+                  } else {
+                    console.log("El usuario canceló el login o no autorizó la app.");
+                  }
+                }, { scope: 'public_profile,email' });
+              }}
+            >
+              Iniciar sesión con Facebook
+            </button>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 App ID *
@@ -390,12 +406,12 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
   );
 }
 
-function EditIntegrationModal({ 
-  integration, 
-  onIntegrationUpdated 
-}: { 
+function EditIntegrationModal({
+  integration,
+  onIntegrationUpdated
+}: {
   integration: Integration,
-  onIntegrationUpdated: (integration: Integration) => void 
+  onIntegrationUpdated: (integration: Integration) => void
 }) {
   const { hideModal } = useModal();
   const [formData, setFormData] = useState({
@@ -414,7 +430,7 @@ function EditIntegrationModal({
 
       // Simular llamada al servicio de actualización
       // const result = await integrationService.update(integration._id, formData);
-      
+
       // Por ahora simulo una respuesta exitosa
       const updatedIntegration: Integration = {
         ...integration,
@@ -507,12 +523,12 @@ function EditIntegrationModal({
   );
 }
 
-function DeleteConfirmModal({ 
-  integration, 
-  onIntegrationDeleted 
-}: { 
-  integration: Integration, 
-  onIntegrationDeleted: (integrationId: string) => void 
+function DeleteConfirmModal({
+  integration,
+  onIntegrationDeleted
+}: {
+  integration: Integration,
+  onIntegrationDeleted: (integrationId: string) => void
 }) {
   const { hideModal } = useModal();
   const [isLoading, setIsLoading] = useState(false);
@@ -525,7 +541,7 @@ function DeleteConfirmModal({
 
       // Simular llamada al servicio de eliminación
       // const result = await integrationService.delete(integration._id);
-      
+
       // Simular delay de API
       await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -612,8 +628,8 @@ export default function IntegrationsManager() {
   };
 
   const handleIntegrationUpdated = (updatedIntegration: Integration) => {
-    setIntegrations(prev => 
-      prev.map(integration => 
+    setIntegrations(prev =>
+      prev.map(integration =>
         integration._id === updatedIntegration._id ? updatedIntegration : integration
       )
     );
@@ -868,8 +884,8 @@ export default function IntegrationsManager() {
                           <button
                             onClick={() =>
                               showModal(
-                                <EditIntegrationModal 
-                                  integration={integration} 
+                                <EditIntegrationModal
+                                  integration={integration}
                                   onIntegrationUpdated={handleIntegrationUpdated}
                                 />
                               )
@@ -1164,7 +1180,7 @@ export default function IntegrationsManager() {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <button 
+              <button
                 onClick={() => {
                   // Implementar activación en lote
                   toast.info("Bulk activation not implemented yet");
@@ -1173,7 +1189,7 @@ export default function IntegrationsManager() {
               >
                 Activar
               </button>
-              <button 
+              <button
                 onClick={() => {
                   // Implementar pausa en lote
                   toast.info("Bulk pause not implemented yet");
@@ -1182,7 +1198,7 @@ export default function IntegrationsManager() {
               >
                 Pausar
               </button>
-              <button 
+              <button
                 onClick={() => {
                   // Implementar eliminación en lote
                   if (confirm(`¿Estás seguro de que quieres eliminar ${selectedIntegrations.length} integración(es)?`)) {
