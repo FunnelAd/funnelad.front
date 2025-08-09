@@ -44,7 +44,38 @@ const StatusBadge: FC<{ status: Integration["status"] }> = ({ status }) => {
   );
 };
 
-// --- Modales ---
+
+// Componente Toggle Switch
+const ToggleSwitch: FC<{ enabled: boolean; onChange: (enabled: boolean) => void; label: string }> = ({ 
+  enabled, 
+  onChange, 
+  label 
+}) => {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <button
+        type="button"
+        className={`${
+          enabled ? 'bg-blue-600' : 'bg-gray-200'
+        } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+        role="switch"
+        aria-checked={enabled}
+        onClick={() => onChange(!enabled)}
+      >
+        <span className="sr-only">{label}</span>
+        <span
+          aria-hidden="true"
+          className={`${
+            enabled ? 'translate-x-5' : 'translate-x-0'
+          } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+        />
+      </button>
+    </div>
+  );
+};
+
+// Modal modificado con toggle de autenticación
 function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (integration: Integration) => void }) {
   const { hideModal } = useModal();
   const [formData, setFormData] = useState({
@@ -54,6 +85,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
     config: {} as any,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [useFacebookLogin, setUseFacebookLogin] = useState(false); // Nuevo estado para el toggle
 
   const updateConfig = (field: string, value: string) => {
     setFormData(prev => ({
@@ -71,6 +103,45 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
       provider: newProvider,
       config: {}
     }));
+    // Resetear el toggle cuando cambie el proveedor
+    setUseFacebookLogin(false);
+  };
+
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      toast.error("Facebook SDK not loaded");
+      return;
+    }
+
+    window.FB.login((response: any) => {
+      if (response.authResponse) {
+        console.log("Facebook login successful!", response);
+        
+        // Obtener información adicional del usuario/página
+        window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
+          console.log("User info:", userInfo);
+          
+          // Auto-llenar los campos con la información de Facebook
+          setFormData(prev => ({
+            ...prev,
+            config: {
+              ...prev.config,
+              appID: userInfo.id,
+              accessToken: response.authResponse.accessToken,
+              // Puedes agregar más campos según lo que devuelva la API
+            }
+          }));
+          
+          toast.success("Facebook authentication successful");
+        });
+      } else {
+        console.log("User cancelled login or didn't authorize the app.");
+        toast.error("Facebook authentication cancelled");
+      }
+    }, { 
+      scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
+      return_scopes: true 
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,8 +155,8 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
         return;
       }
 
-      // Validar configuración según el proveedor
-      const isConfigValid = validateConfig(formData.provider, formData.config);
+      // Validar configuración según el proveedor y método de autenticación
+      const isConfigValid = validateConfig(formData.provider, formData.config, useFacebookLogin);
       if (!isConfigValid) {
         toast.error("Please complete all required configuration fields.");
         return;
@@ -111,7 +182,6 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
           const resultConnect = await telegramServices.connectTelegramWebhook(result.config.botToken || "");
           if (resultConnect.ok !== true) {
             toast.error("Integration created but failed to connect webhook", { id: toastId });
-            // Aún así agregamos la integración ya que se creó exitosamente
             onIntegrationCreated(result);
             hideModal();
             return;
@@ -119,7 +189,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
         }
 
         toast.success("Integration created successfully", { id: toastId });
-        onIntegrationCreated(result); // Agregar a la tabla
+        onIntegrationCreated(result);
         hideModal();
       } else {
         toast.error("Error creating integration", { id: toastId });
@@ -132,10 +202,16 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
     }
   };
 
-  const validateConfig = (provider: IntegrationType, config: any): boolean => {
+  const validateConfig = (provider: IntegrationType, config: any, useFacebookAuth: boolean): boolean => {
     switch (provider) {
       case "WABA":
-        return config.appID && config.accessToken;
+        if (useFacebookAuth) {
+          // Si usa Facebook login, solo necesita que los campos estén llenos (se llenan automáticamente)
+          return config.appID && config.accessToken;
+        } else {
+          // Si usa login manual, todos los campos son requeridos
+          return config.appID && config.accessToken && config.appSecret && config.metaIDBusiness;
+        }
       case "Telegram":
         return config.botToken;
       case "Email":
@@ -150,74 +226,144 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
       case "WABA":
         return (
           <>
+            {/* Toggle para elegir método de autenticación */}
+            <div className="border-b pb-4 mb-4">
+              <ToggleSwitch
+                enabled={useFacebookLogin}
+                onChange={setUseFacebookLogin}
+                label="Use Facebook Login"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                {useFacebookLogin 
+                  ? "Authenticate with Facebook to automatically fill the required fields" 
+                  : "Manually enter your Facebook app credentials"}
+              </p>
+            </div>
 
-            <button
-              onClick={() => {
-                window.FB.login((response:any) => {
-                  if (response.authResponse) {
-                    console.log("Bienvenido!", response);
-                    // Aquí puedes enviar el token a tu backend
-                  } else {
-                    console.log("El usuario canceló el login o no autorizó la app.");
-                  }
-                }, { scope: 'public_profile,email' });
-              }}
-            >
-              Iniciar sesión con Facebook
-            </button>
+            {useFacebookLogin ? (
+              // Método de Facebook Login
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <FaFacebookMessenger className="h-6 w-6 text-blue-600 mt-1" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">
+                        Facebook Authentication
+                      </h4>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Click the button below to authenticate with Facebook and automatically configure your WABA integration.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleFacebookLogin}
+                        disabled={isLoading}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaFacebookMessenger className="h-4 w-4 mr-2" />
+                        Sign in with Facebook
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                App ID *
-              </label>
-              <input
-                type="text"
-                value={formData.config.appID || ""}
-                onChange={(e) => updateConfig("appID", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="123456789"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business ID *
-              </label>
-              <input
-                type="text"
-                value={formData.config.metaIDBusiness || ""}
-                onChange={(e) => updateConfig("metaIDBusiness", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="123456789"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                App secret *
-              </label>
-              <input
-                type="password"
-                value={formData.config.appSecret || ""}
-                onChange={(e) => updateConfig("appSecret", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="EAABwz..."
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Access Token *
-              </label>
-              <input
-                type="password"
-                value={formData.config.accessToken || ""}
-                onChange={(e) => updateConfig("accessToken", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="EAABwz..."
-                required
-              />
-            </div>
+                {/* Mostrar campos auto-llenados (solo lectura) */}
+                {formData.config.appID && (
+                  <div className="space-y-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-green-900 mb-2">
+                      ✅ Authentication successful
+                    </h5>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        App ID (Auto-filled)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.config.appID || ""}
+                        readOnly
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Access Token (Auto-filled)
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.config.accessToken || ""}
+                        readOnly
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-700"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Método manual
+              <div className="space-y-3">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Manual Configuration:</strong> You'll need to provide all the required Facebook app credentials manually.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    App ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.config.appID || ""}
+                    onChange={(e) => updateConfig("appID", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="123456789"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Business ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.config.metaIDBusiness || ""}
+                    onChange={(e) => updateConfig("metaIDBusiness", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="123456789"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    App Secret *
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.config.appSecret || ""}
+                    onChange={(e) => updateConfig("appSecret", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="your-app-secret"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Access Token *
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.config.accessToken || ""}
+                    onChange={(e) => updateConfig("accessToken", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="EAABwz..."
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            )}
           </>
         );
       case "Telegram":
@@ -234,11 +380,12 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="1234567890:AAG..."
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Url Bot
+                Bot URL
               </label>
               <input
                 type="text"
@@ -246,7 +393,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 onChange={(e) => updateConfig("urlBotTelegram", e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="t.me/botName"
-                required
+                disabled={isLoading}
               />
             </div>
           </>
@@ -265,6 +412,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="smtp.gmail.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -278,11 +426,12 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="notifications@company.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Port SMTP
+                SMTP Port
               </label>
               <input
                 type="number"
@@ -290,6 +439,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 onChange={(e) => updateConfig("smtpPort", e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="587"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -302,6 +452,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
                 onChange={(e) => updateConfig("password", e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="********"
+                disabled={isLoading}
               />
             </div>
           </>
@@ -326,7 +477,7 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Mi integración"
+            placeholder="My integration"
             required
             disabled={isLoading}
           />
@@ -398,13 +549,14 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
         <details>
           <summary className="cursor-pointer text-gray-600">Debug: View form data</summary>
           <pre className="mt-2 text-gray-800 whitespace-pre-wrap">
-            {JSON.stringify(formData, null, 2)}
+            {JSON.stringify({ ...formData, useFacebookLogin }, null, 2)}
           </pre>
         </details>
       </div>
     </div>
   );
 }
+
 
 function EditIntegrationModal({
   integration,
