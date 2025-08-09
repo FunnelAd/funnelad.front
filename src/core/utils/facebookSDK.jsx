@@ -7,12 +7,11 @@ export function initFacebookSdk({ version = 'v23.0' } = {}) {
     }
     window.fbAsyncInit = function () {
       window.FB.init({
-        appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "1355829762191593",
-        cookie: true,
-        xfbml: true,
-        autoLogAppEvents : true,
-        version,
-      });
+      appId            : '1355829762191593',
+      autoLogAppEvents : true,
+      xfbml            : true,
+      version          : 'v23.0'
+    });
       resolve(window.FB);
     };
     if (!window.FB) {
