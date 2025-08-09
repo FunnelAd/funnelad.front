@@ -1,5 +1,5 @@
 
-export function initFacebookSdk({ version = 'v16.0' } = {}) {
+export function initFacebookSdk({ version = 'v23.0' } = {}) {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
       reject('No disponible en servidor');
@@ -10,6 +10,7 @@ export function initFacebookSdk({ version = 'v16.0' } = {}) {
         appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "1355829762191593",
         cookie: true,
         xfbml: true,
+        autoLogAppEvents : true,
         version,
       });
       resolve(window.FB);
