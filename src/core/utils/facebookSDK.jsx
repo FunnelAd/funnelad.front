@@ -10,7 +10,7 @@ export function initFacebookSdk({ version = 'v23.0' } = {}) {
       appId            : '1355829762191593',
       autoLogAppEvents : true,
       xfbml            : true,
-      version          : 'v23.0'
+      version          : 'v22.0'
     });
       resolve(window.FB);
     };
