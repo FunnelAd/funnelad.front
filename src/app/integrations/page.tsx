@@ -105,43 +105,122 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
     setUseFacebookLogin(false);
   };
 
+  // const handleFacebookLogin = () => {
+  //   if (!window.FB) {
+  //     toast.error("Facebook SDK not loaded");
+  //     return;
+  //   }
+
+  //   window.FB.login((response: any) => {
+  //     if (response.authResponse) {
+  //       console.log("Facebook login successful!", response);
+
+  //       // Obtener información adicional del usuario/página
+  //       window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
+  //         console.log("User info:", userInfo);
+
+  //         // Auto-llenar los campos con la información de Facebook
+  //         setFormData(prev => ({
+  //           ...prev,
+  //           config: {
+  //             ...prev.config,
+  //             appID: userInfo.id,
+  //             accessToken: response.authResponse.accessToken,
+  //             // Puedes agregar más campos según lo que devuelva la API
+  //           }
+  //         }));
+
+  //         toast.success("Facebook authentication successful");
+  //       });
+  //     } else {
+  //       console.log("User cancelled login or didn't authorize the app.");
+  //       toast.error("Facebook authentication cancelled");
+  //     }
+  //   }, {
+  //     scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
+  //     return_scopes: true
+  //   });
+  // };
+
+
   const handleFacebookLogin = () => {
     if (!window.FB) {
       toast.error("Facebook SDK not loaded");
       return;
     }
 
-    window.FB.login((response: any) => {
+
+    // Response callback
+    const fbLoginCallback = (response: any) => {
       if (response.authResponse) {
-        console.log("Facebook login successful!", response);
+        const code = response.authResponse.code;
+        // Auto-llenar los campos con la información de Facebook
+        setFormData(prev => ({
+          ...prev,
+          config: {
+            ...prev.config,
+            appID: code,
+            accessToken: response.authResponse.accessToken,
+            // Puedes agregar más campos según lo que devuelva la API
+          }
+        }));
 
-        // Obtener información adicional del usuario/página
-        window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
-          console.log("User info:", userInfo);
+        toast.success("Facebook authentication successful");
 
-          // Auto-llenar los campos con la información de Facebook
-          setFormData(prev => ({
-            ...prev,
-            config: {
-              ...prev.config,
-              appID: userInfo.id,
-              accessToken: response.authResponse.accessToken,
-              // Puedes agregar más campos según lo que devuelva la API
-            }
-          }));
 
-          toast.success("Facebook authentication successful");
-        });
+        // your code goes here
       } else {
+        console.log('response: ', response); // remove after testing
+        // your code goes here
         console.log("User cancelled login or didn't authorize the app.");
         toast.error("Facebook authentication cancelled");
       }
-    }, {
-      scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
-      return_scopes: true
-    });
-  };
+    }
 
+
+    window.FB.login(fbLoginCallback, {
+      config_id: '<CONFIGURATION_ID>', // your configuration ID goes here
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        featureType: '<FEATURE_TYPE>',
+        sessionInfoVersion: '3',
+      }
+    });
+
+
+
+    // window.FB.login((response: any) => {
+    //   if (response.authResponse) {
+    //     console.log("Facebook login successful!", response);
+
+    //     // Obtener información adicional del usuario/página
+    //     window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
+    //       console.log("User info:", userInfo);
+
+    //       // Auto-llenar los campos con la información de Facebook
+    //       setFormData(prev => ({
+    //         ...prev,
+    //         config: {
+    //           ...prev.config,
+    //           appID: userInfo.id,
+    //           accessToken: response.authResponse.accessToken,
+    //           // Puedes agregar más campos según lo que devuelva la API
+    //         }
+    //       }));
+
+    //       toast.success("Facebook authentication successful");
+    //     });
+    //   } else {
+    //     console.log("User cancelled login or didn't authorize the app.");
+    //     toast.error("Facebook authentication cancelled");
+    //   }
+    // }, {
+    //   scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
+    //   return_scopes: true
+    // });
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

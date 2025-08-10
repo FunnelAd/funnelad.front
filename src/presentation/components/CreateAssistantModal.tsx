@@ -417,7 +417,7 @@ export default function CreateAssistantModalModern({
               </div>
 
               {/* Welcome */}
-              <div>
+              {/* <div>
                 <label className="block mb-1 text-sm font-medium text-white">
                   {t("welcome_message")} *
                 </label>
@@ -429,7 +429,7 @@ export default function CreateAssistantModalModern({
                   className="w-full px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
                 />
                 {errors.welcomeMessage && <p className="mt-1 text-sm text-red-500">{errors.welcomeMessage}</p>}
-              </div>
+              </div> */}
 
               {/* Description */}
               <div>
