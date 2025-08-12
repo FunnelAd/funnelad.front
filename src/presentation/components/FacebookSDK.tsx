@@ -1,38 +1,31 @@
-// components/FacebookSDK.tsx
-"use client";
-import { useEffect } from "react";
+// facebookSDK.ts (componente client)
+'use client';
+import { useEffect } from 'react';
 
-declare global {
-  interface Window {
-    FB: any;
-  }
-}
-
-
-const FacebookSDK = () => {
+export default function FacebookSDKLoader() {
   useEffect(() => {
-    // Verifica si ya se ha cargado
-    if (window.FB) return;
+    if (typeof window === 'undefined') return;
 
-    // Crea el script
-    const script = document.createElement("script");
-    script.src = "https://connect.facebook.net/en_US/sdk.js";
-    script.async = true;
-    script.defer = true;
-    script.crossOrigin = "anonymous";
-    script.onload = () => {
-      window.FB.init({
-        appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID, // Tu App ID
-        autoLogAppEvents: true,
-        xfbml: true,
-        version: "v19.0", // o la versión más reciente
+    // cast a any para evitar comprobaciones de typings en la asignación
+    (window as any).fbAsyncInit = function () {
+      (window as any).FB.init({
+        appId: process.env.NEXT_PUBLIC_FACEBOOK_APP_ID,
+        cookie: true,
+        xfbml: false,
+        version: 'v18.0',
       });
     };
 
-    document.body.appendChild(script);
+    // inyectar el script sólo si no existe
+    if (!document.getElementById('facebook-jssdk')) {
+      const js = document.createElement('script');
+      js.id = 'facebook-jssdk';
+      js.src = 'https://connect.facebook.net/en_US/sdk.js';
+      js.async = true;
+      js.defer = true;
+      document.body.appendChild(js);
+    }
   }, []);
 
   return null;
-};
-
-export default FacebookSDK;
+}

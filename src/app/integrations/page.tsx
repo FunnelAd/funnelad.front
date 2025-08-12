@@ -179,12 +179,12 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
 
 
     window.FB.login(fbLoginCallback, {
-      config_id: '<CONFIGURATION_ID>', // your configuration ID goes here
+      config_id: '768226775889397', // your configuration ID goes here
       response_type: 'code',
       override_default_response_type: true,
       extras: {
         setup: {},
-        featureType: '<FEATURE_TYPE>',
+        // featureType: '<FEATURE_TYPE>',
         sessionInfoVersion: '3',
       }
     });
