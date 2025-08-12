@@ -184,7 +184,6 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
       override_default_response_type: true,
       extras: {
         setup: {},
-        // featureType: '<FEATURE_TYPE>',
         sessionInfoVersion: '3',
       }
     });
