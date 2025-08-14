@@ -23,7 +23,6 @@ class TokenService {
 
   static setAuthData(response: AuthResponse): void {
     if (typeof window === "undefined") return;
-    console.log("response auth: ", response);
     const decoded: { email?: string } = jwtDecode(response.access_token);
     const isProd = process.env.NODE_ENV === "test";
     const cookieOptions = {

@@ -16,17 +16,16 @@ export interface N8N {
 
 }
 
-export interface connectTelegramWebhookResponse {
+export interface connectMetaWebhookResponse {
     ok: boolean,
     result?: boolean
     description: string
     error_code?: number
 }
 
-export interface ItelegramAccount {
+export interface IMetaAccount {
     id: string;
     name: string;
     tokenTelegram: string;
-    username: string;
 
 }
