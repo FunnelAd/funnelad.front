@@ -31,7 +31,7 @@ type User = {
   lastLogin: string;
   status: "Active" | "Inactive";
   avatarUrl?: string;
-  company: string;
+  business: string;
   createdAgents: string[];
   permissions: Permissions;
 };
@@ -45,7 +45,7 @@ const initialUsers: User[] = [
     lastLogin: "2024-07-28",
     status: "Active",
     avatarUrl: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-    company: "Innovate Inc.",
+    business: "Innovate Inc.",
     createdAgents: ["Agente Alpha", "Agente Beta"],
     permissions: {
       canCreate: true,
@@ -62,7 +62,7 @@ const initialUsers: User[] = [
     lastLogin: "2024-07-25",
     status: "Active",
     avatarUrl: "https://i.pravatar.cc/150?u=a042581f4e29026704d",
-    company: "Tech Solutions",
+    business: "Tech Solutions",
     createdAgents: ["Agente Gamma"],
     permissions: {
       canCreate: true,
@@ -79,7 +79,7 @@ const initialUsers: User[] = [
     lastLogin: "2024-06-15",
     status: "Inactive",
     avatarUrl: "https://i.pravatar.cc/150?u=a04258114e29026702d",
-    company: "Creative Minds",
+    business: "Creative Minds",
     createdAgents: [],
     permissions: {
       canCreate: false,
@@ -232,7 +232,7 @@ function EditUserModal({
                 <input
                   type="text"
                   name="company"
-                  value={formData.company}
+                  value={formData.business}
                   onChange={handleInputChange}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
                 />
