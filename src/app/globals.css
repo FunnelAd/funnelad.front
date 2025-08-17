@@ -93,12 +93,12 @@
 
 /* Tema claro (por defecto) */
 .light-theme {
-  --fa-bg: #ffffff;
+  --fa-bg: #f5f8ff;
   --fa-bg-secondary: #F5F6FA;
   --fa-text: #0B2C3D;
   --fa-text-secondary: #4A5568;
   --fa-border: #E2E8F0;
-  --fa-sidebar: #0B2C3D;
+  --fa-sidebar: #0a2b3b;
   --fa-sidebar-text: #ffffff;
   --fa-input-bg: #ffffff;
   --fa-input-border: #CBD5E0;

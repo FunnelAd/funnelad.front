@@ -5,6 +5,7 @@ export interface IVoice {
   language: string;
   provider: string;
   sample_url?: string;
+  status: 'active' | 'inactive';
 }
 
 export type CreateVoiceData = Omit<

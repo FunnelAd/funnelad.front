@@ -21,6 +21,7 @@ export default function TemplatesPage() {
   const { t } = useTranslation();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("simple"); // 'simple' o 'whatsapp'
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<
     Template | undefined
@@ -39,6 +40,24 @@ export default function TemplatesPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loadSimpleTemplates = async () => {
+    // Implementar lógica para cargar templates simples
+    await loadTemplates();
+  };
+
+  const loadWhatsappTemplates = async () => {
+    // Implementar lógica para cargar templates de WhatsApp
+    await loadTemplates();
+  };
+
+  const getCurrentTemplates = () => {
+    return templates;
+  };
+
+  const setCurrentTemplates = (newTemplates: Template[]) => {
+    setTemplates(newTemplates);
   };
 
   const handleCreateTemplate = () => {
@@ -232,7 +251,11 @@ export default function TemplatesPage() {
                       {template.name}
                     </div>
                   </td>
-
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {/* {getTypeLabel(template.type || 'custom')} */}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -247,7 +270,9 @@ export default function TemplatesPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(template.createdAt)}
                   </td>
-
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(template.updatedAt || "")}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEditTemplate(template)}

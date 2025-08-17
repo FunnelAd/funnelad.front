@@ -10,15 +10,14 @@ export const integrationService = {
    * Obtiene todos los asistentes del backend.
    * @returns Una promesa que resuelve a un array de asistentes.
    */
-  async getAllIntegrations(idBusiness:string): Promise<Integration[]> {
+  async getAllIntegrations(): Promise<Integration[]> {
        try {
     
           const token = TokenService.getToken();
           const email = TokenService.getEmail();
-          console.log(token)
+          // console.log(token)
           const response = await api.post(
             "/api/integration/getAllIntegrations",
-            {idBusiness:idBusiness},
             {
               headers: {
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -45,9 +44,6 @@ export const integrationService = {
 
       const token = TokenService.getToken();
       const email = TokenService.getEmail();
-      // console.log(token)
-      // console.log(email)
-      // console.log(data)
       const response = await api.post("/api/integration/create", {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -59,7 +55,6 @@ export const integrationService = {
       return response.data as Integration;
     } catch (error) {
       console.error("Error al crear asistente:", error);
-      // Re-lanzar el error
       throw error;
     }
   },

@@ -1,7 +1,8 @@
+import { Integration } from "./integration";
 import { IVoice } from "./voices";
 
 export interface IAssistant {
-  _id: string;
+  _id?: string;
   name: string;
   phone: string;
   description: string;
@@ -58,11 +59,11 @@ export interface IAssistant {
   metaAccount:string,
   telegramBot: string,
   emailNotifications: string,
+  integrationAccount?: Integration
 }
 
 export type CreateAssistantData = Omit<
   IAssistant,
-  | "_id"
   | "createdAt"
   | "updatedAt"
   | "updatedBy"

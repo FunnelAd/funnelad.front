@@ -4,26 +4,25 @@ import { useModal } from "@/core/hooks/useModal";
 import { useState, FC, ChangeEvent, Fragment, useEffect } from "react";
 import { initFacebookSdk } from "@/core/utils/facebookSDK";
 import { Integration, IntegrationType, CreateIntegrationData } from "@/core/types/integration";
+import { FaWhatsapp, FaInstagram, FaGlobe, FaFacebookMessenger, FaEnvelope, FaPhone, FaTelegram } from 'react-icons/fa';
 import { integrationService } from "@/core/services/integrationService";
+import { telegramServices } from "@/core/services/telegramServices";
+import { Toaster, toast } from "sonner";
 
 const TypeBadge: FC<{ type: IntegrationType }> = ({ type }) => {
   const typeClasses = {
-    Meta: "bg-blue-100 text-blue-800",
+    WABA: "bg-blue-100 text-blue-800",
     Telegram: "bg-cyan-100 text-cyan-800",
     Email: "bg-green-100 text-green-800",
-  };
-
-  const typeIcons = {
-    Meta: "📘",
-    Telegram: "✈️",
-    Email: "📧",
   };
 
   return (
     <span
       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full items-center space-x-1 ${typeClasses[type]}`}
     >
-      <span>{typeIcons[type]}</span>
+      {type === "WABA" && <FaWhatsapp className="h-4 w-4" />}
+      {type === "Telegram" && <FaTelegram className="h-4 w-4" />}
+      {type === "Email" && <FaEnvelope className="h-4 w-4" />}
       <span>{type}</span>
     </span>
   );
@@ -36,33 +35,56 @@ const StatusBadge: FC<{ status: Integration["status"] }> = ({ status }) => {
     Error: "bg-red-100 text-red-800",
   };
 
-  const statusIcons = {
-    Active: "🟢",
-    Inactive: "⚪",
-    Error: "🔴",
-  };
-
   return (
     <span
       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full items-center space-x-1 ${statusClasses[status]}`}
     >
-      <span>{statusIcons[status]}</span>
       <span>{status}</span>
     </span>
   );
 };
 
-// --- Modales ---
-function AddIntegrationModal() {
+
+// Componente Toggle Switch
+const ToggleSwitch: FC<{ enabled: boolean; onChange: (enabled: boolean) => void; label: string }> = ({
+  enabled,
+  onChange,
+  label
+}) => {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+      <button
+        type="button"
+        className={`${enabled ? 'bg-blue-600' : 'bg-gray-200'
+          } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+        role="switch"
+        aria-checked={enabled}
+        onClick={() => onChange(!enabled)}
+      >
+        <span className="sr-only">{label}</span>
+        <span
+          aria-hidden="true"
+          className={`${enabled ? 'translate-x-5' : 'translate-x-0'
+            } pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+        />
+      </button>
+    </div>
+  );
+};
+
+// Modal modificado con toggle de autenticación
+function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (integration: Integration) => void }) {
   const { hideModal } = useModal();
   const [formData, setFormData] = useState({
     name: "",
-    provider: "Meta" as IntegrationType,
+    provider: "WABA" as IntegrationType,
     description: "",
-    config: {} as any, // Configuración específica por proveedor
+    config: {} as any,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [useFacebookLogin, setUseFacebookLogin] = useState(false); // Nuevo estado para el toggle
 
-  // Función para actualizar la configuración según el proveedor
   const updateConfig = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -73,55 +95,201 @@ function AddIntegrationModal() {
     }));
   };
 
-  // Función para limpiar la configuración cuando cambia el proveedor
   const handleProviderChange = (newProvider: IntegrationType) => {
     setFormData(prev => ({
       ...prev,
       provider: newProvider,
-      config: {} // Limpiar configuración anterior
+      config: {}
     }));
+    // Resetear el toggle cuando cambie el proveedor
+    setUseFacebookLogin(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // const handleFacebookLogin = () => {
+  //   if (!window.FB) {
+  //     toast.error("Facebook SDK not loaded");
+  //     return;
+  //   }
+
+  //   window.FB.login((response: any) => {
+  //     if (response.authResponse) {
+  //       console.log("Facebook login successful!", response);
+
+  //       // Obtener información adicional del usuario/página
+  //       window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
+  //         console.log("User info:", userInfo);
+
+  //         // Auto-llenar los campos con la información de Facebook
+  //         setFormData(prev => ({
+  //           ...prev,
+  //           config: {
+  //             ...prev.config,
+  //             appID: userInfo.id,
+  //             accessToken: response.authResponse.accessToken,
+  //             // Puedes agregar más campos según lo que devuelva la API
+  //           }
+  //         }));
+
+  //         toast.success("Facebook authentication successful");
+  //       });
+  //     } else {
+  //       console.log("User cancelled login or didn't authorize the app.");
+  //       toast.error("Facebook authentication cancelled");
+  //     }
+  //   }, {
+  //     scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
+  //     return_scopes: true
+  //   });
+  // };
+
+
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      toast.error("Facebook SDK not loaded");
+      return;
+    }
+
+
+    // Response callback
+    const fbLoginCallback = (response: any) => {
+      if (response.authResponse) {
+        const code = response.authResponse.code;
+        // Auto-llenar los campos con la información de Facebook
+        setFormData(prev => ({
+          ...prev,
+          config: {
+            ...prev.config,
+            appID: code,
+            accessToken: response.authResponse.accessToken,
+            // Puedes agregar más campos según lo que devuelva la API
+          }
+        }));
+
+        toast.success("Facebook authentication successful");
+
+
+        // your code goes here
+      } else {
+        console.log('response: ', response); // remove after testing
+        // your code goes here
+        console.log("User cancelled login or didn't authorize the app.");
+        toast.error("Facebook authentication cancelled");
+      }
+    }
+
+
+    window.FB.login(fbLoginCallback, {
+      config_id: '768226775889397', // your configuration ID goes here
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        sessionInfoVersion: '3',
+      }
+    });
+
+
+
+    // window.FB.login((response: any) => {
+    //   if (response.authResponse) {
+    //     console.log("Facebook login successful!", response);
+
+    //     // Obtener información adicional del usuario/página
+    //     window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
+    //       console.log("User info:", userInfo);
+
+    //       // Auto-llenar los campos con la información de Facebook
+    //       setFormData(prev => ({
+    //         ...prev,
+    //         config: {
+    //           ...prev.config,
+    //           appID: userInfo.id,
+    //           accessToken: response.authResponse.accessToken,
+    //           // Puedes agregar más campos según lo que devuelva la API
+    //         }
+    //       }));
+
+    //       toast.success("Facebook authentication successful");
+    //     });
+    //   } else {
+    //     console.log("User cancelled login or didn't authorize the app.");
+    //     toast.error("Facebook authentication cancelled");
+    //   }
+    // }, {
+    //   scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
+    //   return_scopes: true
+    // });
+  };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // Validar que todos los campos requeridos estén completos
-    if (!formData.name.trim()) {
-      alert("Name is required");
-      return;
+    try {
+      // Validar que todos los campos requeridos estén completos
+      if (!formData.name.trim()) {
+        toast.error("Name is required");
+        return;
+      }
+
+      // Validar configuración según el proveedor y método de autenticación
+      const isConfigValid = validateConfig(formData.provider, formData.config, useFacebookLogin);
+      if (!isConfigValid) {
+        toast.error("Please complete all required configuration fields.");
+        return;
+      }
+
+      const toastId = toast.loading("Creating integration...");
+
+      const newIntegration: CreateIntegrationData = {
+        ...formData,
+        status: "Active",
+        lastSync: new Date().toISOString(),
+        stats: {
+          totalRequests: 0,
+          successRate: 100,
+        },
+      };
+
+      const result = await integrationService.create(newIntegration);
+
+      if (result._id && result._id !== "") {
+        // Manejar conexiones específicas por proveedor
+        if (result.provider === "Telegram") {
+          const resultConnect = await telegramServices.connectTelegramWebhook(result.config.botToken || "");
+          if (resultConnect.ok !== true) {
+            toast.error("Integration created but failed to connect webhook", { id: toastId });
+            onIntegrationCreated(result);
+            hideModal();
+            return;
+          }
+        }
+
+        toast.success("Integration created successfully", { id: toastId });
+        onIntegrationCreated(result);
+        hideModal();
+      } else {
+        toast.error("Error creating integration", { id: toastId });
+      }
+    } catch (error) {
+      console.error("Error creating integration:", error);
+      toast.error("Error creating integration");
+    } finally {
+      setIsLoading(false);
     }
-
-    // Validar configuración según el proveedor
-    const isConfigValid = validateConfig(formData.provider, formData.config);
-    if (!isConfigValid) {
-      alert("Please complete all required configuration fields.");
-      return;
-    }
-
-    console.log("Nueva integración:", formData);
-
-    const newIntegration: CreateIntegrationData = {
-      ...formData,
-      status: "Active",
-      lastSync: new Date().toISOString(),
-      stats: {
-        totalRequests: 0,
-        successRate: 100,
-      },
-    };
-
-    const result = integrationService.create(newIntegration);
-    console.log("Integración creada:", result);
-    hideModal();
   };
 
-  // Función para validar configuración según el proveedor
-  const validateConfig = (provider: IntegrationType, config: any): boolean => {
+  const validateConfig = (provider: IntegrationType, config: any, useFacebookAuth: boolean): boolean => {
     switch (provider) {
-      case "Meta":
-        return config.appID && config.accessToken;
+      case "WABA":
+        if (useFacebookAuth) {
+          // Si usa Facebook login, solo necesita que los campos estén llenos (se llenan automáticamente)
+          return config.appID && config.accessToken;
+        } else {
+          // Si usa login manual, todos los campos son requeridos
+          return config.appID && config.accessToken && config.appSecret && config.metaIDBusiness;
+        }
       case "Telegram":
-        return config.botToken && config.webhookUrl;
+        return config.botToken;
       case "Email":
         return config.smtpServer && config.email;
       default:
@@ -131,64 +299,147 @@ function AddIntegrationModal() {
 
   const renderConfigFields = () => {
     switch (formData.provider) {
-      case "Meta":
+      case "WABA":
         return (
           <>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                App ID *
-              </label>
-              <input
-                type="text"
-                value={formData.config.appID || ""}
-                onChange={(e) => updateConfig("appID", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="123456789"
-                required
+            {/* Toggle para elegir método de autenticación */}
+            <div className="border-b pb-4 mb-4">
+              <ToggleSwitch
+                enabled={useFacebookLogin}
+                onChange={setUseFacebookLogin}
+                label="Use Facebook Login"
               />
-            </div>
-            <div>
-
-                          <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Business ID *
-              </label>
-              <input
-                type="text"
-                value={formData.config.metaIDBusiness || ""}
-                onChange={(e) => updateConfig("metaIDBusiness", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="123456789"
-                required
-              />
-            </div>
-            <div></div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                App secret *
-              </label>
-              <input
-                type="password"
-                value={formData.config.appSecret || ""}
-                onChange={(e) => updateConfig("appSecret", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="EAABwz..."
-                required
-              />
+              <p className="text-xs text-gray-500 mt-2">
+                {useFacebookLogin
+                  ? "Authenticate with Facebook to automatically fill the required fields"
+                  : "Manually enter your Facebook app credentials"}
+              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Access Token *
-              </label>
-              <input
-                type="password"
-                value={formData.config.accessToken || ""}
-                onChange={(e) => updateConfig("accessToken", e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="EAABwz..."
-                required
-              />
-            </div>
+            {useFacebookLogin ? (
+              // Método de Facebook Login
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-3">
+                    <FaFacebookMessenger className="h-6 w-6 text-blue-600 mt-1" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">
+                        Facebook Authentication
+                      </h4>
+                      <p className="text-sm text-blue-700 mb-3">
+                        Click the button below to authenticate with Facebook and automatically configure your WABA integration.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleFacebookLogin}
+                        disabled={isLoading}
+                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaFacebookMessenger className="h-4 w-4 mr-2" />
+                        Sign in with Facebook
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mostrar campos auto-llenados (solo lectura) */}
+                {formData.config.appID && (
+                  <div className="space-y-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h5 className="text-sm font-medium text-green-900 mb-2">
+                      ✅ Authentication successful
+                    </h5>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        App ID (Auto-filled)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.config.appID || ""}
+                        readOnly
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Access Token (Auto-filled)
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.config.accessToken || ""}
+                        readOnly
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-700"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Método manual
+              <div className="space-y-3">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Manual Configuration:</strong> You'll need to provide all the required Facebook app credentials manually.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    App ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.config.appID || ""}
+                    onChange={(e) => updateConfig("appID", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="123456789"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Business ID *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.config.metaIDBusiness || ""}
+                    onChange={(e) => updateConfig("metaIDBusiness", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="123456789"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    App Secret *
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.config.appSecret || ""}
+                    onChange={(e) => updateConfig("appSecret", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="your-app-secret"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Access Token *
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.config.accessToken || ""}
+                    onChange={(e) => updateConfig("accessToken", e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="EAABwz..."
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            )}
           </>
         );
       case "Telegram":
@@ -205,19 +456,20 @@ function AddIntegrationModal() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="1234567890:AAG..."
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Webhook URL *
+                Bot URL
               </label>
               <input
-                type="url"
-                value={formData.config.webhookUrl || ""}
-                onChange={(e) => updateConfig("webhookUrl", e.target.value)}
+                type="text"
+                value={formData.config.urlBotTelegram || ""}
+                onChange={(e) => updateConfig("urlBotTelegram", e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="https://myapp.com/webhook/telegram"
-                required
+                placeholder="t.me/botName"
+                disabled={isLoading}
               />
             </div>
           </>
@@ -236,6 +488,7 @@ function AddIntegrationModal() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="smtp.gmail.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -249,11 +502,12 @@ function AddIntegrationModal() {
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="notifications@company.com"
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Port SMTP
+                SMTP Port
               </label>
               <input
                 type="number"
@@ -261,6 +515,7 @@ function AddIntegrationModal() {
                 onChange={(e) => updateConfig("smtpPort", e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="587"
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -273,6 +528,7 @@ function AddIntegrationModal() {
                 onChange={(e) => updateConfig("password", e.target.value)}
                 className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="********"
+                disabled={isLoading}
               />
             </div>
           </>
@@ -283,7 +539,7 @@ function AddIntegrationModal() {
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="p-4 bg-white rounded-lg shadow-xl max-h-[80vh] overflow-y-auto">
       <h2 className="text-xl font-bold text-gray-900 mb-6">
         Create New Integration
       </h2>
@@ -297,8 +553,9 @@ function AddIntegrationModal() {
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Mi integración"
+            placeholder="My integration"
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -310,8 +567,9 @@ function AddIntegrationModal() {
             value={formData.provider}
             onChange={(e) => handleProviderChange(e.target.value as IntegrationType)}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={isLoading}
           >
-            <option value="Meta">Meta (Facebook)</option>
+            <option value="WABA">WABA (Facebook)</option>
             <option value="Telegram">Telegram</option>
             <option value="Email">Email</option>
           </select>
@@ -327,6 +585,7 @@ function AddIntegrationModal() {
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
             placeholder="Describe this integration..."
+            disabled={isLoading}
           />
         </div>
 
@@ -347,14 +606,16 @@ function AddIntegrationModal() {
             type="button"
             onClick={hideModal}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+            disabled={isLoading}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Create Integration
+            {isLoading ? "Creating..." : "Create Integration"}
           </button>
         </div>
       </form>
@@ -364,7 +625,7 @@ function AddIntegrationModal() {
         <details>
           <summary className="cursor-pointer text-gray-600">Debug: View form data</summary>
           <pre className="mt-2 text-gray-800 whitespace-pre-wrap">
-            {JSON.stringify(formData, null, 2)}
+            {JSON.stringify({ ...formData, useFacebookLogin }, null, 2)}
           </pre>
         </details>
       </div>
@@ -372,18 +633,51 @@ function AddIntegrationModal() {
   );
 }
 
-function EditIntegrationModal({ integration }: { integration: Integration }) {
+
+function EditIntegrationModal({
+  integration,
+  onIntegrationUpdated
+}: {
+  integration: Integration,
+  onIntegrationUpdated: (integration: Integration) => void
+}) {
   const { hideModal } = useModal();
   const [formData, setFormData] = useState({
     name: integration.name,
     description: integration.description,
     status: integration.status,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Integración actualizada:", { ...integration, ...formData });
-    hideModal();
+    setIsLoading(true);
+
+    try {
+      const toastId = toast.loading("Updating integration...");
+
+      // Simular llamada al servicio de actualización
+      // const result = await integrationService.update(integration._id, formData);
+
+      // Por ahora simulo una respuesta exitosa
+      const updatedIntegration: Integration = {
+        ...integration,
+        ...formData,
+        lastSync: new Date().toISOString(), // Actualizar fecha de sincronización
+      };
+
+      // Simular delay de API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success("Integration updated successfully", { id: toastId });
+      onIntegrationUpdated(updatedIntegration);
+      hideModal();
+    } catch (error) {
+      console.error("Error updating integration:", error);
+      toast.error("Error updating integration");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -402,6 +696,7 @@ function EditIntegrationModal({ integration }: { integration: Integration }) {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             required
+            disabled={isLoading}
           />
         </div>
 
@@ -413,6 +708,7 @@ function EditIntegrationModal({ integration }: { integration: Integration }) {
             value={formData.status}
             onChange={(e) => setFormData({ ...formData, status: e.target.value as Integration["status"] })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            disabled={isLoading}
           >
             <option value="Active">Activo</option>
             <option value="Inactive">Inactivo</option>
@@ -429,6 +725,7 @@ function EditIntegrationModal({ integration }: { integration: Integration }) {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
             rows={3}
+            disabled={isLoading}
           />
         </div>
 
@@ -437,14 +734,16 @@ function EditIntegrationModal({ integration }: { integration: Integration }) {
             type="button"
             onClick={hideModal}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            disabled={isLoading}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
-            Update
+            {isLoading ? "Updating..." : "Update"}
           </button>
         </div>
       </form>
@@ -452,12 +751,37 @@ function EditIntegrationModal({ integration }: { integration: Integration }) {
   );
 }
 
-function DeleteConfirmModal({ integration, onConfirm }: { integration: Integration, onConfirm: () => void }) {
+function DeleteConfirmModal({
+  integration,
+  onIntegrationDeleted
+}: {
+  integration: Integration,
+  onIntegrationDeleted: (integrationId: string) => void
+}) {
   const { hideModal } = useModal();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDelete = () => {
-    onConfirm();
-    hideModal();
+  const handleDelete = async () => {
+    setIsLoading(true);
+
+    try {
+      const toastId = toast.loading("Deleting integration...");
+
+      // Simular llamada al servicio de eliminación
+      // const result = await integrationService.delete(integration._id);
+
+      // Simular delay de API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success("Integration deleted successfully", { id: toastId });
+      onIntegrationDeleted(integration._id);
+      hideModal();
+    } catch (error) {
+      console.error("Error deleting integration:", error);
+      toast.error("Error deleting integration");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -477,14 +801,16 @@ function DeleteConfirmModal({ integration, onConfirm }: { integration: Integrati
         <button
           onClick={hideModal}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+          disabled={isLoading}
         >
           Cancel
         </button>
         <button
           onClick={handleDelete}
-          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+          className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isLoading}
         >
-          Delete
+          {isLoading ? "Deleting..." : "Delete"}
         </button>
       </div>
     </div>
@@ -503,26 +829,47 @@ export default function IntegrationsManager() {
   const [fb, setFb] = useState(null);
 
   useEffect(() => {
-
-
+    initFacebookSdk()
+      .then((FB) => {
+        console.log("FB SDK listo", FB);
+        FB.getLoginStatus((res: any) => console.log("Estado login:", res));
+      })
+      .catch(console.error);
     loadInitData();
-    //   initFacebookSdk()
-    //     .then(FB => {
-    //       setFb(FB);
-    //       FB.getLoginStatus(res => console.log('Estado login:', res));
-    //     })
-    //     .catch(console.error);
   }, []);
 
-
   async function loadInitData() {
-    const data = await integrationService.getAllIntegrations(
-      "685f5b9ad9a068c851b44116"
-    );
-    setIntegrations(data);
-    console.log(data);
+    try {
+      const data = await integrationService.getAllIntegrations();
+      setIntegrations(data);
+      console.log(data);
+    } catch (error) {
+      console.error("Error loading integrations:", error);
+      toast.error("Error loading integrations");
+    }
   }
 
+  // Handlers para actualizar el estado local
+  const handleIntegrationCreated = (newIntegration: Integration) => {
+    setIntegrations(prev => [newIntegration, ...prev]);
+    toast.success("Integration added to table");
+  };
+
+  const handleIntegrationUpdated = (updatedIntegration: Integration) => {
+    setIntegrations(prev =>
+      prev.map(integration =>
+        integration._id === updatedIntegration._id ? updatedIntegration : integration
+      )
+    );
+    toast.success("Integration updated in table");
+  };
+
+  const handleIntegrationDeleted = (integrationId: string) => {
+    setIntegrations(prev => prev.filter(integration => integration._id !== integrationId));
+    setSelectedIntegrations(prev => prev.filter(id => id !== integrationId));
+    setExpandedRows(prev => prev.filter(id => id !== integrationId));
+    toast.success("Integration removed from table");
+  };
 
   const handleToggleRow = (id: string) => {
     setExpandedRows((prev) =>
@@ -546,11 +893,6 @@ export default function IntegrationsManager() {
     }
   };
 
-  const handleDeleteIntegration = (id: string) => {
-    setIntegrations(prev => prev.filter(integration => integration._id !== id));
-    setSelectedIntegrations(prev => prev.filter(integrationId => integrationId !== id));
-  };
-
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -559,17 +901,6 @@ export default function IntegrationsManager() {
     };
     return new Date(dateString).toLocaleDateString("es-ES", options);
   };
-
-
-  // const handleLogin = () => {
-  //   fb.login(res => {
-  //     if (res.status === 'connected') {
-  //       console.log('Conectado:', res.authResponse);
-  //     } else {
-  //       console.log('No conectado:', res);
-  //     }
-  //   }, { scope: 'public_profile,email' });
-  // };
 
   // Filtrar integraciones
   const filteredIntegrations = integrations.filter(integration => {
@@ -582,7 +913,9 @@ export default function IntegrationsManager() {
   });
 
   return (
-    <div className="p-4 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-50 min-h-screen">
+      <Toaster richColors position="top-right" />
+
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -590,7 +923,7 @@ export default function IntegrationsManager() {
               Integration Management
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Manage integrations with Meta, Telegram, and Email
+              Manage integrations with WABA, Telegram, and Email
             </p>
           </div>
           <div className="text-sm text-gray-500">
@@ -633,7 +966,7 @@ export default function IntegrationsManager() {
                 className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="All">All types</option>
-                <option value="Meta">Meta</option>
+                <option value="WABA">WABA</option>
                 <option value="Telegram">Telegram</option>
                 <option value="Email">Email</option>
               </select>
@@ -652,7 +985,9 @@ export default function IntegrationsManager() {
 
             <button
               className="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full lg:w-auto justify-center text-sm font-medium"
-              onClick={() => showModal(<AddIntegrationModal />)}
+              onClick={() => showModal(
+                <AddIntegrationModal onIntegrationCreated={handleIntegrationCreated} />
+              )}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -670,8 +1005,6 @@ export default function IntegrationsManager() {
               </svg>
               <span>New Integration</span>
             </button>
-
-            {/* <button onClick={handleLogin}>Login con Facebook</button> */}
           </div>
 
           <div className="overflow-x-auto">
@@ -778,7 +1111,12 @@ export default function IntegrationsManager() {
                         <div className="flex items-center justify-center space-x-3">
                           <button
                             onClick={() =>
-                              showModal(<EditIntegrationModal integration={integration} />)
+                              showModal(
+                                <EditIntegrationModal
+                                  integration={integration}
+                                  onIntegrationUpdated={handleIntegrationUpdated}
+                                />
+                              )
                             }
                             className="text-gray-400 hover:text-indigo-600"
                             title="Editar"
@@ -801,7 +1139,7 @@ export default function IntegrationsManager() {
                             onClick={() => showModal(
                               <DeleteConfirmModal
                                 integration={integration}
-                                onConfirm={() => handleDeleteIntegration(integration._id)}
+                                onIntegrationDeleted={handleIntegrationDeleted}
                               />
                             )}
                             className="text-gray-400 hover:text-red-600"
@@ -916,12 +1254,12 @@ export default function IntegrationsManager() {
                                     ⚙️ Configuration
                                   </h4>
                                   <div className="space-y-2">
-                                    {integration.provider === "Meta" && (
+                                    {integration.provider === "WABA" && (
                                       <>
                                         <div className="text-sm">
                                           <span className="text-gray-600">Page ID:</span>
                                           <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                                            {integration.config.pageId}
+                                            {integration.config.appID}
                                           </span>
                                         </div>
                                         <div className="text-sm">
@@ -941,9 +1279,9 @@ export default function IntegrationsManager() {
                                           </span>
                                         </div>
                                         <div className="text-sm">
-                                          <span className="text-gray-600">Webhook:</span>
+                                          <span className="text-gray-600">Url:</span>
                                           <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-1 rounded">
-                                            {integration.config.webhookUrl}
+                                            {integration.config.urlBotTelegram}
                                           </span>
                                         </div>
                                       </>
@@ -1036,7 +1374,9 @@ export default function IntegrationsManager() {
               {(!searchTerm && filterType === "All" && filterStatus === "All") && (
                 <div className="mt-6">
                   <button
-                    onClick={() => showModal(<AddIntegrationModal />)}
+                    onClick={() => showModal(
+                      <AddIntegrationModal onIntegrationCreated={handleIntegrationCreated} />
+                    )}
                     className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <svg
@@ -1068,13 +1408,34 @@ export default function IntegrationsManager() {
               </span>
             </div>
             <div className="flex items-center space-x-2">
-              <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+              <button
+                onClick={() => {
+                  // Implementar activación en lote
+                  toast.info("Bulk activation not implemented yet");
+                }}
+                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
                 Activar
               </button>
-              <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+              <button
+                onClick={() => {
+                  // Implementar pausa en lote
+                  toast.info("Bulk pause not implemented yet");
+                }}
+                className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
                 Pausar
               </button>
-              <button className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+              <button
+                onClick={() => {
+                  // Implementar eliminación en lote
+                  if (confirm(`¿Estás seguro de que quieres eliminar ${selectedIntegrations.length} integración(es)?`)) {
+                    selectedIntegrations.forEach(id => handleIntegrationDeleted(id));
+                    toast.success(`${selectedIntegrations.length} integrations deleted`);
+                  }
+                }}
+                className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+              >
                 Eliminar
               </button>
             </div>

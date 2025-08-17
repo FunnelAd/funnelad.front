@@ -1,38 +1,74 @@
-export interface ChatMessage {
+// types/chat.ts
+export interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'assistant';
-  timestamp: string;
-  status: 'sending' | 'sent' | 'error' | 'received' | 'read';
-  attachments?: ChatAttachment[];
+  sender: string;
+  timestamp: Date;
+  isRead: boolean;
+  platform?: 'whatsapp' | 'instagram' | 'telegram' | 'email' | 'webchat';
+  messageType?: 'text' | 'image' | 'video' | 'audio' | 'file';
+  metadata?: {
+    phoneNumber?: string;
+    instagramUserId?: string;
+    telegramUserId?: string;
+    email?: string;
+    attachments?: Attachment[];
+  };
 }
 
-export interface ChatAttachment {
+export interface Attachment {
   id: string;
-  type: 'image' | 'audio' | 'video' | 'file';
+  name: string;
+  type: string;
   url: string;
-  fileName?: string;
-  mimeType?: string;
-  size?: number;
+  size: number;
 }
 
-export interface ChatSession {
+export interface Conversation {
   id: string;
-  name: string;
-  lastMessage?: string;
-  lastMessageTime?: string;
-  unreadCount: number;
-  isActive: boolean;
+  participants: string[];
+  messages: Message[];
   createdAt: string;
-  updatedAt: string;
+  lastMessage?: Message;
+  platform: 'whatsapp' | 'instagram' | 'telegram' | 'email' | 'webchat';
+  unreadCount: number;
+  contactInfo: ContactInfo;
 }
 
-export interface CreateChatSessionData {
+export interface ContactInfo {
   name: string;
-  isActive: boolean;
+  avatar?: string;
+  phone?: string;
+  email?: string;
+  instagramHandle?: string;
+  telegramUsername?: string;
+  isOnline: boolean;
+  lastSeen?: Date;
+  timezone?: string;
+  notes: ContactNote[];
 }
 
-export interface UpdateChatSessionData {
-  name?: string;
-  isActive?: boolean;
+export interface ContactNote {
+  id: string;
+  content: string;
+  createdAt: Date;
+  createdBy: string;
+}
+
+export interface WebhookPayload {
+  platform: 'whatsapp' | 'instagram' | 'telegram' | 'email';
+  messageId: string;
+  conversationId: string;
+  sender: string;
+  content: string;
+  timestamp: string;
+  messageType: string;
+  metadata?: any;
+}
+
+export interface BotStatus {
+  isActive: boolean;
+  platform: string;
+  lastChecked: Date;
+  responseTime: number;
 }
