@@ -1,7 +1,6 @@
 "use client";
-
 import React, { useState, FC, useEffect, KeyboardEvent } from "react";
-import { useModal } from "@/core/hooks/useModal"; // Ajusta la ruta a tu hook de modales
+import { useModal } from "@/core/hooks/useModal";
 import {
   PencilIcon,
   TrashIcon,
@@ -9,47 +8,25 @@ import {
   XMarkIcon,
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
-import Dropdown, { Option } from "@/presentation/components/ui/Dropdown"; // Asumiendo que tienes un Dropdown reutilizable
-import { Toaster, toast } from "sonner"; // Importamos Sonner
+import Dropdown, { Option } from "@/presentation/components/ui/Dropdown";
+import { Toaster, toast } from "sonner";
+import {
+  getPromptsByCompany,
+  createPrompt,
+  updatePrompt,
+  deletePrompt,
+} from "@/core/services/promptsService";
+import { IPrompt } from "@/core/types/prompt"; // Asegúrate de que la ruta sea correcta
 
-// --- Tipos y Datos de Ejemplo ---
-type Prompt = {
-  id: string;
-  type: "Fallback" | "Error" | "Welcome" | "Custom";
-  content: string;
-  tags: string[];
-};
-
-const mockPrompts: Prompt[] = [
-  {
-    id: "1",
-    type: "Welcome",
-    content: "Hola, ¿cómo puedo ayudarte hoy?",
-    tags: ["inicio", "saludo"],
-  },
-  {
-    id: "2",
-    type: "Fallback",
-    content: "Lo siento, no entendí eso. ¿Puedes reformularlo?",
-    tags: ["soporte", "duda"],
-  },
-  {
-    id: "3",
-    type: "Custom",
-    content:
-      "Para agendar una cita, necesito tu nombre y correo. ¿Me los podrías dar?",
-    tags: ["agendamiento", "ventas"],
-  },
-];
+type Prompt = IPrompt & { _id: string };
 
 const mockAssistant = {
   id: "assistant-123",
   name: "Agente de Soporte IA",
 };
 
-// --- Modales ---
 const PromptForm: FC<{
-  onSave: (data: any) => void;
+  onSave: (data: Partial<IPrompt>) => void;
   initialData?: Prompt | null;
 }> = ({ onSave, initialData }) => {
   const promptOptions: Option[] = [
@@ -172,7 +149,6 @@ const PromptForm: FC<{
   );
 };
 
-// --- Nuevo Modal de Confirmación para Eliminar ---
 const DeleteConfirmationModal: FC<{
   onConfirm: () => void;
   onCancel: () => void;
@@ -187,8 +163,8 @@ const DeleteConfirmationModal: FC<{
           ¿Eliminar Prompt?
         </h3>
         <p className="mt-2 text-sm text-gray-500">
-          Esta acción no se puede deshacer. Toda la información asociada a este
-          prompt se perderá permanentemente.
+          Esta acción no se puede deshacer. El prompt se perderá
+          permanentemente.
         </p>
         <div className="mt-6 flex justify-center gap-4 w-full">
           <button
@@ -215,24 +191,42 @@ export default function PromptsManager() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // --- DATOS DE PRUEBA PARA LA ASOCIACIÓN ---
+  const MOCK_COMPANY_ID = "60d21b4667d0d8992e610c85"; // Un ObjectId de ejemplo
+  const MOCK_USER_ID = "60d21b4667d0d8992e610c86"; // Un ObjectId de ejemplo
+
   useEffect(() => {
-    setTimeout(() => {
-      setPrompts(mockPrompts);
-      setIsLoading(false);
-    }, 500);
+    const fetchPrompts = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getPromptsByCompany(MOCK_COMPANY_ID);
+        setPrompts(data as Prompt[]);
+      } catch (error) {
+        toast.error((error as Error).message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPrompts();
   }, []);
 
   const handleCreatePrompt = () => {
     showModal(
       <PromptForm
-        onSave={(newPromptData) => {
-          const newPrompt: Prompt = {
-            ...newPromptData,
-            id: Date.now().toString(),
-          };
-          setPrompts((prev) => [...prev, newPrompt]);
-          hideModal();
-          toast.success("Prompt creado exitosamente.");
+        onSave={async (newPromptData) => {
+          try {
+            const dataToSave = {
+              ...newPromptData,
+              idCompany: MOCK_COMPANY_ID,
+              createdBy: MOCK_USER_ID,
+            };
+            const newPrompt = await createPrompt(dataToSave);
+            setPrompts((prev) => [...prev, newPrompt as Prompt]);
+            hideModal();
+            toast.success("Prompt creado exitosamente.");
+          } catch (error) {
+            toast.error((error as Error).message);
+          }
         }}
       />
     );
@@ -242,12 +236,19 @@ export default function PromptsManager() {
     showModal(
       <PromptForm
         initialData={prompt}
-        onSave={(updatedData) => {
-          setPrompts((prev) =>
-            prev.map((p) => (p.id === prompt.id ? { ...p, ...updatedData } : p))
-          );
-          hideModal();
-          toast.success("Prompt actualizado correctamente.");
+        onSave={async (updatedData) => {
+          try {
+            const updatedPrompt = await updatePrompt(prompt._id, updatedData);
+            setPrompts((prev) =>
+              prev.map((p) =>
+                p._id === prompt._id ? (updatedPrompt as Prompt) : p
+              )
+            );
+            hideModal();
+            toast.success("Prompt actualizado correctamente.");
+          } catch (error) {
+            toast.error((error as Error).message);
+          }
         }}
       />
     );
@@ -257,10 +258,15 @@ export default function PromptsManager() {
     showModal(
       <DeleteConfirmationModal
         onCancel={hideModal}
-        onConfirm={() => {
-          setPrompts((prev) => prev.filter((p) => p.id !== id));
-          hideModal();
-          toast.success("Prompt eliminado.");
+        onConfirm={async () => {
+          try {
+            await deletePrompt(id);
+            setPrompts((prev) => prev.filter((p) => p._id !== id));
+            hideModal();
+            toast.success("Prompt eliminado.");
+          } catch (error) {
+            toast.error((error as Error).message);
+          }
         }}
       />
     );
@@ -289,7 +295,7 @@ export default function PromptsManager() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {prompts.map((prompt) => (
               <div
-                key={prompt.id}
+                key={prompt._id}
                 className="bg-white rounded-lg shadow p-5 flex flex-col justify-between"
               >
                 <div>
@@ -318,7 +324,7 @@ export default function PromptsManager() {
                       <PencilIcon className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => handleDeletePrompt(prompt.id)}
+                      onClick={() => handleDeletePrompt(prompt._id)}
                       className="text-gray-400 hover:text-red-600"
                       title="Eliminar"
                     >
