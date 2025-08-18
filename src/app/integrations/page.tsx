@@ -7,6 +7,7 @@ import { Integration, IntegrationType, CreateIntegrationData } from "@/core/type
 import { FaWhatsapp, FaInstagram, FaGlobe, FaFacebookMessenger, FaEnvelope, FaPhone, FaTelegram } from 'react-icons/fa';
 import { integrationService } from "@/core/services/integrationService";
 import { telegramServices } from "@/core/services/telegramServices";
+import { metaService } from "@/core/services/metaService";
 import { Toaster, toast } from "sonner";
 
 const TypeBadge: FC<{ type: IntegrationType }> = ({ type }) => {
@@ -149,37 +150,35 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
       return;
     }
 
+    const businessId = 'business-1'; // TODO: Get this from the user/form context
 
-    // Response callback
-    const fbLoginCallback = (response: any) => {
-      if (response.authResponse) {
-        const code = response.authResponse.code;
-        // Auto-llenar los campos con la información de Facebook
-        setFormData(prev => ({
-          ...prev,
-          config: {
-            ...prev.config,
-            appID: code,
-            accessToken: response.authResponse.accessToken,
-            // Puedes agregar más campos según lo que devuelva la API
-          }
-        }));
-
-        toast.success("Facebook authentication successful");
-
-
-        // your code goes here
-      } else {
-        console.log('response: ', response); // remove after testing
-        // your code goes here
-        console.log("User cancelled login or didn't authorize the app.");
-        toast.error("Facebook authentication cancelled");
+    const processMetaAuth = async (code: string) => {
+      const toastId = toast.loading("Completing connection with Meta...");
+      try {
+        const result = await metaService.completeAuth(code, businessId);
+        if (result.success) {
+          toast.success("Meta integration connected successfully!", { id: toastId });
+          // Optionally, refresh the integrations list or update the UI
+          hideModal(); // Close the modal on success
+        } else {
+          toast.error("Failed to complete Meta connection. Please try again.", { id: toastId });
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred.", { id: toastId });
       }
-    }
+    };
 
+    const fbLoginCallback = (response: any) => {
+      if (response.authResponse && response.authResponse.code) {
+        processMetaAuth(response.authResponse.code);
+      } else {
+        console.log('User cancelled login or did not fully authorize.', response);
+        toast.error("Facebook authentication was cancelled or failed.");
+      }
+    };
 
     window.FB.login(fbLoginCallback, {
-      config_id: '768226775889397', // your configuration ID goes here
+      config_id: '768226775889397', // This is your Facebook Login for Business config ID
       response_type: 'code',
       override_default_response_type: true,
       extras: {
@@ -187,38 +186,6 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
         sessionInfoVersion: '3',
       }
     });
-
-
-
-    // window.FB.login((response: any) => {
-    //   if (response.authResponse) {
-    //     console.log("Facebook login successful!", response);
-
-    //     // Obtener información adicional del usuario/página
-    //     window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
-    //       console.log("User info:", userInfo);
-
-    //       // Auto-llenar los campos con la información de Facebook
-    //       setFormData(prev => ({
-    //         ...prev,
-    //         config: {
-    //           ...prev.config,
-    //           appID: userInfo.id,
-    //           accessToken: response.authResponse.accessToken,
-    //           // Puedes agregar más campos según lo que devuelva la API
-    //         }
-    //       }));
-
-    //       toast.success("Facebook authentication successful");
-    //     });
-    //   } else {
-    //     console.log("User cancelled login or didn't authorize the app.");
-    //     toast.error("Facebook authentication cancelled");
-    //   }
-    // }, {
-    //   scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
-    //   return_scopes: true
-    // });
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -816,6 +783,41 @@ function DeleteConfirmModal({
     </div>
   );
 }
+
+
+
+// --- Componente para la tarjeta de integración de Meta ---
+const MetaIntegrationCard: FC<{ connected: boolean }> = ({ connected }) => {
+  const handleConnect = () => {
+    // TODO: Get businessId from user session
+    const businessId = 'business-1';
+    metaService.initiateAuth(businessId);
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+      <div className="p-5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+        <h3 className="text-lg font-semibold">Meta Integration (WhatsApp & Instagram)</h3>
+        <p className="text-sm opacity-90">Connect your Meta account to manage WhatsApp and Instagram messages.</p>
+      </div>
+      <div className="p-5 flex items-center justify-between">
+        <div>
+          <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${connected ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+            {connected ? 'Connected' : 'Not Connected'}
+          </span>
+        </div>
+        <button
+          onClick={handleConnect}
+          disabled={connected}
+          className="inline-flex items-center bg-blue-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FaFacebookMessenger className="h-5 w-5 mr-2" />
+          <span>{connected ? 'Reconnect' : 'Connect with Meta'}</span>
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // --- Componente Principal ---
 export default function IntegrationsManager() {

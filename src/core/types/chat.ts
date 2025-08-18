@@ -26,6 +26,7 @@ export interface Attachment {
 
 export interface Conversation {
   id: string;
+  businessId: string; // Identificador único del negocio
   participants: string[];
   messages: Message[];
   createdAt: string;

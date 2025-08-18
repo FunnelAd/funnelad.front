@@ -82,7 +82,7 @@ export class WebhookService {
   // Registrar webhook para WhatsApp
   async registerWhatsAppWebhook(phoneNumberId: string, accessToken: string, webhookUrl: string) {
     try {
-      const response = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}`, {
+      const response = await fetch(`https://graph.facebook.com/v23.0/${phoneNumberId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -107,7 +107,7 @@ export class WebhookService {
   // Registrar webhook para Instagram
   async registerInstagramWebhook(pageId: string, accessToken: string, webhookUrl: string) {
     try {
-      const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/subscriptions`, {
+      const response = await fetch(`https://graph.facebook.com/v23.0/${pageId}/subscriptions`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -152,7 +152,7 @@ export class WebhookService {
   // Enviar mensaje a WhatsApp
   async sendWhatsAppMessage(phoneNumberId: string, accessToken: string, to: string, message: string) {
     try {
-      const response = await fetch(`https://graph.facebook.com/v18.0/${phoneNumberId}/messages`, {
+      const response = await fetch(`https://graph.facebook.com/v23.0/${phoneNumberId}/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -176,7 +176,7 @@ export class WebhookService {
   // Enviar mensaje a Instagram
   async sendInstagramMessage(pageId: string, accessToken: string, recipientId: string, message: string) {
     try {
-      const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}/messages`, {
+      const response = await fetch(`https://graph.facebook.com/v23.0/${pageId}/messages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

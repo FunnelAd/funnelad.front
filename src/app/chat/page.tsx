@@ -21,7 +21,7 @@ export default function ChatPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatService = useRef<ChatService>();
+  const chatService = useRef<ChatService>(null);
 
   // Inicializar servicio de chat
   useEffect(() => {

@@ -41,7 +41,7 @@ export class ChatService {
     try {
       const response = await fetch('/api/conversations');
       const data = await response.json();
-      
+
       data.conversations?.forEach((conv: Conversation) => {
         this.conversations.set(conv.id, conv);
       });
@@ -59,6 +59,7 @@ export class ChatService {
     const demoConversations: Conversation[] = [
       {
         id: '1',
+        businessId: 'business-1',
         participants: ['Juan Camilo ADMIN'],
         messages: [
           {
@@ -132,6 +133,7 @@ export class ChatService {
       },
       {
         id: '2',
+        businessId: 'business-2',
         participants: ['Guest 26867'],
         messages: [
           {
@@ -179,6 +181,7 @@ export class ChatService {
       },
       {
         id: '3',
+        businessId: 'business-3',
         participants: ['Juan Camilo Silva'],
         messages: [
           {
@@ -243,6 +246,11 @@ export class ChatService {
     });
   }
 
+  // Obtener conversaciones por negocio
+  getConversationsByBusiness(businessId: string): Conversation[] {
+    return Array.from(this.conversations.values()).filter(conv => conv.businessId === businessId);
+  }
+
   // Obtener conversación por ID
   getConversation(id: string): Conversation | null {
     return this.conversations.get(id) || null;
@@ -256,31 +264,47 @@ export class ChatService {
     }
 
     const newMessage: Message = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // The backend will generate a real ID
       content,
-      sender: 'user',
+      sender: 'user', // This should be the current user's ID or name
       timestamp: new Date(),
       isRead: true,
       platform: conversation.platform
     };
 
-    // Actualizar conversación
-    conversation.messages.push(newMessage);
-    conversation.lastMessage = newMessage;
-
-    // Enviar a través del webhook service según la plataforma
     try {
-      await this.sendMessageToPlatform(conversation, content);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${apiUrl}/api/chat/addNewMessage`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // TODO: Add auth token to the request
+            'email': 'user@example.com' // The backend needs an email in the headers
+          },
+          body: JSON.stringify({
+            sessionid: conversation.id, // The conversation ID is the sessionid
+            content: content,
+            createBy: 'user@example.com' // This should be the current user's email
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // The message is sent to the backend, which will then send it to WhatsApp.
+      // The incoming message will be received via WebSocket.
+      // We can optimistically add the message to the UI.
+      conversation.messages.push(newMessage);
+      conversation.lastMessage = newMessage;
+      this.emit('message_sent', { message: newMessage, conversationId });
+
     } catch (error) {
       console.error('Error enviando mensaje:', error);
+      throw error;
     }
-
-    this.emit('message_sent', { message: newMessage, conversationId });
-
-    // Simular respuesta automática después de un breve retraso
-    setTimeout(() => {
-      this.simulateAutoResponse(conversationId);
-    }, 1500);
 
     return newMessage;
   }
@@ -292,7 +316,12 @@ export class ChatService {
 
     switch (conversation.platform) {
       case 'whatsapp':
-        if (config.whatsapp && recipient.phone) {
+        if (
+          config.whatsapp &&
+          typeof config.whatsapp.phoneNumberId === 'string' &&
+          typeof config.whatsapp.accessToken === 'string' &&
+          typeof recipient.phone === 'string'
+        ) {
           await this.webhookService.sendWhatsAppMessage(
             config.whatsapp.phoneNumberId,
             config.whatsapp.accessToken,
@@ -303,7 +332,12 @@ export class ChatService {
         break;
 
       case 'instagram':
-        if (config.instagram && recipient.instagramHandle) {
+        if (
+          config.instagram &&
+          typeof config.instagram.pageId === 'string' &&
+          typeof config.instagram.accessToken === 'string' &&
+          typeof recipient.instagramHandle === 'string'
+        ) {
           await this.webhookService.sendInstagramMessage(
             config.instagram.pageId,
             config.instagram.accessToken,
@@ -314,7 +348,11 @@ export class ChatService {
         break;
 
       case 'telegram':
-        if (config.telegram && recipient.telegramUsername) {
+        if (
+          config.telegram &&
+          typeof config.telegram.botToken === 'string' &&
+          typeof recipient.telegramUsername === 'string'
+        ) {
           await this.webhookService.sendTelegramMessage(
             config.telegram.botToken,
             recipient.telegramUsername,
@@ -324,7 +362,7 @@ export class ChatService {
         break;
 
       case 'email':
-        if (recipient.email) {
+        if (typeof recipient.email === 'string') {
           await this.webhookService.sendEmail(
             recipient.email,
             'Respuesta de FunnelAd',
@@ -355,17 +393,20 @@ export class ChatService {
 
   // Manejar nuevo mensaje
   private handleNewMessage(message: Message, conversationId: string) {
-    let conversation = this.conversations.get(conversationId);
-    
+    let conversation = this.getConversation(conversationId);
     if (!conversation) {
-      // Crear nueva conversación si no existe
+      // El businessId debe venir del contexto de la conversación, no del metadata del mensaje
+      // Si no existe, se asigna 'default-business'
+      const businessId = (message as any).businessId || 'default-business';
       conversation = {
         id: conversationId,
+        businessId,
         participants: [message.sender],
-        messages: [],
+        messages: [message],
         createdAt: new Date().toISOString(),
+        lastMessage: message,
         platform: message.platform || 'webchat',
-        unreadCount: 0,
+        unreadCount: 1,
         contactInfo: {
           name: message.sender,
           isOnline: true,
@@ -373,12 +414,11 @@ export class ChatService {
         }
       };
       this.conversations.set(conversationId, conversation);
+    } else {
+      conversation.messages.push(message);
+      conversation.lastMessage = message;
+      conversation.unreadCount += 1;
     }
-
-    conversation.messages.push(message);
-    conversation.lastMessage = message;
-    conversation.unreadCount += 1;
-
     this.emit('new_message_received', { message, conversation });
   }
 
@@ -393,7 +433,7 @@ export class ChatService {
     ];
 
     const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
+
     const autoMessage: Message = {
       id: (Date.now() + 1).toString(),
       content: randomResponse,
@@ -430,7 +470,7 @@ export class ChatService {
     const searchTerm = query.toLowerCase();
     return this.getConversations().filter(conversation => {
       const nameMatch = conversation.contactInfo.name.toLowerCase().includes(searchTerm);
-      const messageMatch = conversation.messages.some(msg => 
+      const messageMatch = conversation.messages.some(msg =>
         msg.content.toLowerCase().includes(searchTerm)
       );
       return nameMatch || messageMatch;
