@@ -29,7 +29,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: HomeIcon },
   { name: "Chat", href: "/chat", icon: ChatBubbleLeftRightIcon },
   { name: "Asistente", href: "/assistants", icon: PlusCircleIcon },
-  { name: "Plantillas", href: "/templates", icon: RectangleGroupIcon },
+  { name: "Plantillas", href: "/template", icon: RectangleGroupIcon },
   { name: "Disparadores", href: "/triggers", icon: BoltIcon },
   { name: "Contactos", href: "/contacts", icon: UsersIcon },
   { name: "Integraciones", href: "/integrations", icon: PuzzlePieceIcon },
