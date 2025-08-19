@@ -20,10 +20,6 @@ import { IPrompt } from "@/core/types/prompt"; // Asegúrate de que la ruta sea 
 
 type Prompt = IPrompt & { _id: string };
 
-const mockAssistant = {
-  id: "assistant-123",
-  name: "Agente de Soporte IA",
-};
 
 const PromptForm: FC<{
   onSave: (data: Partial<IPrompt>) => void;
@@ -36,15 +32,28 @@ const PromptForm: FC<{
     { value: "Custom", label: "Personalizado" },
   ];
 
+  const categoryOptions: Option[] = [
+    { value: "core", label: "Nucleo" },
+    { value: "personality", label: "Personalidad" },
+    { value: "flow", label: "Flujo" },
+    { value: "industry", label: "Industria" },
+    { value: "channel", label: "Canal" },
+  ];
+
   const findOption = (options: Option[], value: string) =>
     options.find((opt) => opt.value === value) || null;
 
-  const [selectedType, setSelectedType] = useState<Option | null>(
-    initialData ? findOption(promptOptions, initialData.type) : null
+
+  const [selectedCategory, setSelectedCategory] = useState<Option | null>(
+    initialData && initialData.category
+      ? findOption(categoryOptions, initialData.category) // Assuming 'core' is the primary category field
+      : null
   );
+  const [description, setDescription] = useState(initialData?.description || "");
   const [content, setContent] = useState(initialData?.content || "");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [currentTag, setCurrentTag] = useState("");
+  const [isActive, setIsActive] = useState(initialData?.isActive ?? true); // Default to true if not provided
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -67,18 +76,23 @@ const PromptForm: FC<{
   };
 
   const handleSubmit = () => {
-    if (selectedType && content) {
-      onSave({ type: selectedType.value, content, tags });
+    if (content && selectedCategory && description) {
+      onSave({
+        content,
+        tags,
+        description,
+        category: selectedCategory.value as 'core' | 'personality' | 'industry' | 'channel',
+        isActive,
+      });
     } else {
-      toast.error("Por favor, selecciona un tipo y escribe un contenido.");
+      toast.error("Por favor, completa todos los campos obligatorios.");
     }
   };
 
   return (
     <div
-      className={`p-6 bg-white rounded-lg shadow-xl w-full max-w-lg transition-all duration-300 ease-out ${
-        isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
-      }`}
+      className={`  mx-auto p-6 bg-white rounded-lg shadow-xl w-full   transition-all duration-300 ease-out ${isVisible ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
     >
       <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">
         {initialData ? "Editar" : "Crear"} Prompt
@@ -86,13 +100,25 @@ const PromptForm: FC<{
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Tipo de Prompt <span className="text-red-500">*</span>
+            Categoría <span className="text-red-500">*</span>
           </label>
           <Dropdown
-            options={promptOptions}
-            onSelect={(option) => setSelectedType(option)}
-            value={selectedType}
-            placeholder="Selecciona un tipo..."
+            options={categoryOptions}
+            onSelect={(option) => setSelectedCategory(option)}
+            value={selectedCategory}
+            placeholder="Selecciona una categoría..."
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Descripción <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe el propósito del prompt..."
+            rows={2}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
         <div>
@@ -106,6 +132,19 @@ const PromptForm: FC<{
             rows={4}
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
           />
+        </div>
+        <div className="flex items-center">
+          <input
+            id="isActive"
+            name="isActive"
+            type="checkbox"
+            checked={isActive}
+            onChange={(e) => setIsActive(e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+            Publicar Prompt
+          </label>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -191,9 +230,6 @@ export default function PromptsManager() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- DATOS DE PRUEBA PARA LA ASOCIACIÓN ---
-  const MOCK_COMPANY_ID = "60d21b4667d0d8992e610c85"; // Un ObjectId de ejemplo
-  const MOCK_USER_ID = "60d21b4667d0d8992e610c86"; // Un ObjectId de ejemplo
 
   useEffect(() => {
     const fetchPrompts = async () => {
@@ -216,9 +252,7 @@ export default function PromptsManager() {
         onSave={async (newPromptData) => {
           try {
             const dataToSave = {
-              ...newPromptData,
-              idCompany: MOCK_COMPANY_ID,
-              createdBy: MOCK_USER_ID,
+              ...newPromptData
             };
             const newPrompt = await createPrompt(dataToSave);
             setPrompts((prev) => [...prev, newPrompt as Prompt]);
@@ -277,9 +311,6 @@ export default function PromptsManager() {
       <Toaster richColors position="bottom-right" />
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Prompts para {mockAssistant.name}
-          </h2>
           <button
             className="inline-flex items-center bg-blue-600 text-white px-3 py-2 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors w-full md:w-auto justify-center text-sm font-medium"
             onClick={handleCreatePrompt}
@@ -299,19 +330,39 @@ export default function PromptsManager() {
                 className="bg-white rounded-lg shadow p-5 flex flex-col justify-between"
               >
                 <div>
-                  <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full mb-3">
-                    {prompt.type}
-                  </span>
-                  <p className="text-gray-600 text-sm mb-4">{prompt.content}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {/* {prompt.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-block bg-teal-100 text-teal-800 text-xs font-medium px-2 py-1 rounded-md"
-                      >
-                        #{tag}
-                      </span>
-                    ))} */}
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                      {prompt.category}
+                    </span>
+                    <span
+                      className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${prompt.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                        }`}
+                    >
+                      {prompt.isActive ? "Activo" : "Inactivo"}
+                    </span>
+                  </div>
+                  <p className="text-gray-800 font-medium text-base mb-2">
+                    {prompt.description}
+                  </p>
+                  <p className="text-gray-600 text-sm mb-4">
+                    {prompt.content}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    { prompt.tags && prompt.tags.length > 0 &&
+
+                      prompt.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-block bg-teal-100 text-teal-800 text-xs font-medium px-2 py-1 rounded-md"
+                        >
+                          #{tag}
+                        </span>
+                      ))
+
+
+                    }
                   </div>
                 </div>
                 <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-200">

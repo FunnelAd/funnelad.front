@@ -80,12 +80,21 @@ export const assistantService = {
     }
   },
 
-  async deleteAssistant(id: string): Promise<void> {
-    // Simulación de llamada a API
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve();
-      }, 500);
-    });
-  },
-};
+  async deleteAssistant(id: string): Promise<boolean> {
+    try {
+      const token = TokenService.getToken();
+      const response = await api.delete(`/api/assistants/delete/${id}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "Content-Type": "application/json",
+        },
+      });
+      return response.data as boolean;
+    } catch (error) {
+      console.error(`Error al actualizar asistente con ID ${id}:`, error);
+      // Re-lanzar el error
+      throw error;
+
+    }
+  }
+}
