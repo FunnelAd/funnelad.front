@@ -59,4 +59,44 @@ export const integrationService = {
     }
   },
 
+  /**
+   * Deletes a single integration by its ID.
+   * @param id The ID of the integration to delete.
+   * @returns A promise that resolves when the integration is deleted.
+   */
+  async delete(id: string): Promise<void> {
+    try {
+      const token = TokenService.getToken();
+      await api.delete(`/api/integration/${id}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch (error) {
+      console.error(`Error deleting integration ${id}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Deletes multiple integrations by their IDs.
+   * @param ids An array of integration IDs to delete.
+   * @returns A promise that resolves when the integrations are deleted.
+   */
+  async deleteMany(ids: string[]): Promise<void> {
+    try {
+      const token = TokenService.getToken();
+      await api.post("/api/integration/delete-many", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "Content-Type": "application/json",
+        },
+        ids,
+      });
+    } catch (error) {
+      console.error("Error deleting multiple integrations:", error);
+      throw error;
+    }
+  },
+
 };

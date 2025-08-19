@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useModal } from "@/core/hooks/useModal";
 import { CreateAssistantData } from "@/core/types/assistant";
 import toast from "react-hot-toast";
-import { Check, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, X, RefreshCw } from "lucide-react";
 import { FaWhatsapp, FaInstagram, FaGlobe, FaFacebookMessenger, FaEnvelope, FaPhone, FaTelegram } from 'react-icons/fa';
 import { IVoice } from "@/core/types/voices";
 import VoiceDropdown from "./VoiceDropdown ";
@@ -212,6 +212,7 @@ export default function CreateAssistantModalModern({
     emailNotifications: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [integrationsLoading, setIntegrationsLoading] = useState(false);
   // Estados para las listas
   const [metaAccounts, setMetaAccounts] = useState<Integration[]>([]);
   const [telegramBots, setTelegramBots] = useState<Integration[]>([]);
@@ -226,6 +227,7 @@ export default function CreateAssistantModalModern({
 
   // Función corregida para fetchIntegrations
   async function fetchIntegrations() {
+    setIntegrationsLoading(true);
     try {
       // Reemplaza esta URL por la de tu backend
       const data = await integrationService.getAllIntegrations();
@@ -233,7 +235,7 @@ export default function CreateAssistantModalModern({
 
       // Filtra y asigna las cuentas según el tipo
       if (Array.isArray(data)) {
-        const filteredMeta = data.filter((acc: any) => acc.provider === 'Meta');
+        const filteredMeta = data.filter((acc: any) => acc.provider === 'WABA');
         const filteredTelegram = data.filter((acc: any) => acc.provider === 'Telegram');
 
         // Log de los datos filtrados ANTES de setear el estado
@@ -253,6 +255,8 @@ export default function CreateAssistantModalModern({
       // Resetea los estados en caso de error
       setMetaAccounts([]);
       setTelegramBots([]);
+    } finally {
+      setIntegrationsLoading(false);
     }
   }
 
@@ -264,7 +268,7 @@ export default function CreateAssistantModalModern({
 
       // Filtra y asigna las cuentas según el tipo
       if (Array.isArray(data)) {
-        const filteredMeta = data.filter((acc: any) => acc.provider === 'Meta');
+        const filteredMeta = data.filter((acc: any) => acc.provider === 'WABA');
         const filteredTelegram = data.filter((acc: any) => acc.provider === 'Telegram');
 
         // Log de los datos filtrados ANTES de setear el estado
@@ -755,10 +759,19 @@ export default function CreateAssistantModalModern({
 
                       <button
                         type="button"
+                        onClick={fetchIntegrations}
+                        disabled={integrationsLoading}
+                        className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Reload Integrations"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${integrationsLoading ? 'animate-spin' : ''}`} />
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => window.open('/integrations', '_blank')} // Define esta función según tu lógica
                         className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg"
                       >
-                       <Plus className="w-4 h-4" />
+                        <Plus className="w-4 h-4" />
                       </button>
                     </div>
 
@@ -774,6 +787,17 @@ export default function CreateAssistantModalModern({
                       >
                         {t("Connect Meta account")}
                       </button>
+
+
+                      <button
+                        type="button"
+                        onClick={fetchIntegrations}
+                        disabled={integrationsLoading}
+                        className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Reload Integrations"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${integrationsLoading ? 'animate-spin' : ''}`} />
+                      </button>
                     </div>
                   )}
                   {errors.metaAccount && <p className="mt-1 text-sm text-red-500">{errors.metaAccount}</p>}
@@ -788,19 +812,34 @@ export default function CreateAssistantModalModern({
                     {t("telegram_bot")} *
                   </label>
                   {telegramBots && telegramBots.length > 0 ? (
-                    <select
-                      value={form.telegramBot}
-                      onChange={e => handleChange('telegramBot', e.target.value)}
-                      className="w-100 px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
-                    >
-                      <option value="">{t("Select Telegram bot")}</option>
-                      {telegramBots.map((bot) => (
-                        <option key={bot._id} value={bot._id}>
-                          {bot.name} -
-                          {/* @{bot.username} */}
-                        </option>
-                      ))}
-                    </select>
+
+                    <div className="flex items-center space-x-2">
+                      <select
+                        value={form.telegramBot}
+                        onChange={e => handleChange('telegramBot', e.target.value)}
+                        className="w-100 px-4 py-2 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-yellow-400"
+                      >
+                        <option value="">{t("Select Telegram bot")}</option>
+                        {telegramBots.map((bot) => (
+                          <option key={bot._id} value={bot._id}>
+                            {bot.name} -
+                            {/* @{bot.username} */}
+                          </option>
+                        ))}
+                      </select>
+
+
+                      <button
+                        type="button"
+                        onClick={fetchIntegrations}
+                        disabled={integrationsLoading}
+                        className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Reload Integrations"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${integrationsLoading ? 'animate-spin' : ''}`} />
+                      </button>
+
+                    </div>
                   ) : (
                     <div className="space-y-2">
                       <p className="text-sm text-gray-400">{t("There are no registered Telegram bots.")}</p>
@@ -812,9 +851,22 @@ export default function CreateAssistantModalModern({
                         {t("Create Telegram bot")}
                       </button>
 
-
-
-
+                      <button
+                        type="button"
+                        onClick={fetchIntegrations}
+                        disabled={integrationsLoading}
+                        className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Reload Integrations"
+                      >
+                        <RefreshCw className={`w-4 h-4 ${integrationsLoading ? 'animate-spin' : ''}`} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => window.open('/integrations', '_blank')} // Define esta función según tu lógica
+                        className="p-2 bg-transparent hover:bg-blue-900 text-white rounded-lg"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                   {errors.telegramBot && <p className="mt-1 text-sm text-red-500">{errors.telegramBot}</p>}

@@ -199,7 +199,7 @@ export default function PromptsManager() {
     const fetchPrompts = async () => {
       try {
         setIsLoading(true);
-        const data = await getPromptsByCompany(MOCK_COMPANY_ID);
+        const data = await getPromptsByCompany();
         setPrompts(data as Prompt[]);
       } catch (error) {
         toast.error((error as Error).message);
@@ -304,14 +304,14 @@ export default function PromptsManager() {
                   </span>
                   <p className="text-gray-600 text-sm mb-4">{prompt.content}</p>
                   <div className="flex flex-wrap gap-2">
-                    {prompt.tags.map((tag) => (
+                    {/* {prompt.tags.map((tag) => (
                       <span
                         key={tag}
                         className="inline-block bg-teal-100 text-teal-800 text-xs font-medium px-2 py-1 rounded-md"
                       >
                         #{tag}
                       </span>
-                    ))}
+                    ))} */}
                   </div>
                 </div>
                 <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-200">

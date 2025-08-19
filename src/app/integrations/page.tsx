@@ -106,44 +106,6 @@ function AddIntegrationModal({ onIntegrationCreated }: { onIntegrationCreated: (
     setUseFacebookLogin(false);
   };
 
-  // const handleFacebookLogin = () => {
-  //   if (!window.FB) {
-  //     toast.error("Facebook SDK not loaded");
-  //     return;
-  //   }
-
-  //   window.FB.login((response: any) => {
-  //     if (response.authResponse) {
-  //       console.log("Facebook login successful!", response);
-
-  //       // Obtener información adicional del usuario/página
-  //       window.FB.api('/me', { fields: 'id,name,email' }, (userInfo: any) => {
-  //         console.log("User info:", userInfo);
-
-  //         // Auto-llenar los campos con la información de Facebook
-  //         setFormData(prev => ({
-  //           ...prev,
-  //           config: {
-  //             ...prev.config,
-  //             appID: userInfo.id,
-  //             accessToken: response.authResponse.accessToken,
-  //             // Puedes agregar más campos según lo que devuelva la API
-  //           }
-  //         }));
-
-  //         toast.success("Facebook authentication successful");
-  //       });
-  //     } else {
-  //       console.log("User cancelled login or didn't authorize the app.");
-  //       toast.error("Facebook authentication cancelled");
-  //     }
-  //   }, {
-  //     scope: 'pages_manage_metadata,pages_read_engagement,pages_messaging',
-  //     return_scopes: true
-  //   });
-  // };
-
-
   const handleFacebookLogin = () => {
     if (!window.FB) {
       toast.error("Facebook SDK not loaded");
@@ -735,10 +697,10 @@ function DeleteConfirmModal({
       const toastId = toast.loading("Deleting integration...");
 
       // Simular llamada al servicio de eliminación
-      // const result = await integrationService.delete(integration._id);
+      const result = await integrationService.delete(integration._id);
 
       // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // await new Promise(resolve => setTimeout(resolve, 1000));
 
       toast.success("Integration deleted successfully", { id: toastId });
       onIntegrationDeleted(integration._id);
@@ -1429,11 +1391,16 @@ export default function IntegrationsManager() {
                 Pausar
               </button>
               <button
-                onClick={() => {
-                  // Implementar eliminación en lote
+                onClick={async () => {
                   if (confirm(`¿Estás seguro de que quieres eliminar ${selectedIntegrations.length} integración(es)?`)) {
-                    selectedIntegrations.forEach(id => handleIntegrationDeleted(id));
-                    toast.success(`${selectedIntegrations.length} integrations deleted`);
+                    const toastId = toast.loading("Deleting selected integrations...");
+                    try {
+                      await integrationService.deleteMany(selectedIntegrations);
+                      handleIntegrationDeleted(selectedIntegrations);
+                      toast.success(`${selectedIntegrations.length} integrations deleted successfully.`, { id: toastId });
+                    } catch (error) {
+                      toast.error("Failed to delete integrations.", { id: toastId });
+                    }
                   }
                 }}
                 className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
